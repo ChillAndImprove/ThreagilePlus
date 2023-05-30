@@ -1,0 +1,395 @@
+TODOs:
+
+- ~~General wird zu Technologies~~ Das ist nicht Done, sondenr falsch, General wird nicht zu technologies
+- Die anderen müssen invisible gemacht werden, also Misc usw. in dem Menü oder Sidebar, was auch immer das ist.
+- "Format Panel" wird unbennant
+- Es muss ein neues Tab geben, wie nenne ich das?
+  - Sowie User Object" wäre am besten, also als xml speichern
+- Die ganzen technologies, als XML oder Image auswählbar machen:
+- Falls man auf Pfeil klingt, dann zeigt er einige Formen, dass sollten am besten andere werden, die!
+- Import Funktion programmieren, also dass man eine threagile.yaml angeben kann
+- Export Funktion programmieren
+- Es gibt nicht nur Technologies sondern auch Verbindungen
+  - Verbindungen dürfen nicht hängen, als müssen immer ausgeführt werden
+  - Wenn man eine verbindung erstellt muss man in Rechts aussuchen können, was das für eine Verbindung ist
+- Es muss Trust Boundaries geben
+- Es muss auch in den Technologies ein Tab mit den Data Assets geben, also zwei Tabs
+- Trusted Boundaries wird etwas komplizierter, weil man nachschauen muss ob die nested sind,
+  dass ist schon etwas schwieriger. Siehe CodeBeispiel unten:
+  Technologies:
+
+- "unknown-technology",[X]
+- "client-system",[X]
+- "browser",[X]
+- "desktop",[X]
+- "mobile-app",[X]
+- "devops-client",[X]
+- "web-server",[X]
+- "web-application",[X]
+- "application-server",[X]
+- "database",[X]
+- "file-server",[X]
+- "local-file-system",[X]
+- "erp",[X]
+- "cms",[X]
+- "web-service-rest",[X]
+- "web-service-soap",[X]
+- "ejb",
+- "search-index",
+- "search-engine",
+- "service-registry",
+- "reverse-proxy",[X]
+- "load-balancer",[X]
+- "build-pipeline",[X]
+- "sourcecode-repository",[X]
+- "artifact-registry",[X]
+- "code-inspection-platform",
+- "monitoring",
+- "ldap-server",
+- "container-platform",
+- "batch-processing",
+- "event-listener",
+- "identity-provider",
+- "identity-store-ldap",
+- "identity-store-database",
+- "tool",
+- "cli",
+- "task",
+- "function",
+- "gateway",
+- "iot-device",
+- "message-queue",
+- "stream-processing",
+- "service-mesh",
+- "data-lake",
+- "report-engine",
+- "ai",
+- "mail-server",
+- "vault",
+- "hsm",
+- "waf",
+- "ids",
+- "ips",
+- "scheduler",
+- "mainframe",
+- "block-storage",
+- "library"
+
+Sortiert:
+Unknown Technology:
+"unknown-technology"
+
+Client System:
+"client-system"
+"desktop"
+"mobile-app"
+"devops-client"
+
+Web-related:
+"browser"
+"web-server"
+"web-application"
+"reverse-proxy"
+"load-balancer"
+
+Development-related:
+"build-pipeline"
+"sourcecode-repository"
+"artifact-registry"
+"code-inspection-platform"
+
+Infrastructure-related:
+"file-server"
+"local-file-system"
+"database"
+"ldap-server"
+"container-platform"
+"mainframe"
+"block-storage"
+
+Web Services:
+"web-service-rest"
+"web-service-soap"
+
+Content Management:
+"cms"
+
+Enterprise-related:
+"erp"
+
+Security-related:
+"identity-provider"
+"identity-store-ldap"
+"identity-store-database"
+"vault"
+"hsm"
+"waf"
+"ids"
+"ips"
+
+Tools and Utilities:
+"tool"
+"cli"
+
+Task and Function:
+"task"
+"function"
+
+Messaging and Processing:
+"message-queue"
+"stream-processing"
+"batch-processing"
+"event-listener"
+
+Networking:
+"gateway"
+
+Data-related:
+
+    "data-lake"
+
+Reporting and Analytics:
+
+    "report-engine"
+    "ai"
+
+Monitoring:
+
+    "monitoring"
+
+Other:
+
+    "service-registry"
+    "scheduler"
+    "library"
+    "iot-device"
+    "service-mesh"
+    "mail-server"
+
+CodeBeispiel Nested\*\*:
+function isObjectNested(graph, cell) {
+var parent = graph.getModel().getParent(cell);
+
+// Überprüfen, ob das übergeordnete Element vorhanden ist und eine Zelle ist
+if (parent != null && graph.getModel().isVertex(parent)) {
+// Überprüfen, ob das übergeordnete Element wiederum ein übergeordnetes Element hat
+var grandparent = graph.getModel().getParent(parent);
+if (grandparent != null && graph.getModel().isVertex(grandparent)) {
+return isObjectNested(graph, parent); // Rekursiver Aufruf
+}
+}
+
+return false;
+}
+
+// Beispielanwendung
+var graph = new mxGraph(container);
+
+// Erstellen Sie Zellen und fügen Sie sie dem Graphen hinzu
+var cell1 = graph.insertVertex(parent, null, 'Cell 1', 20, 20, 80, 30);
+var cell2 = graph.insertVertex(parent, null, 'Cell 2', 150, 20, 80, 30);
+var cell3 = graph.insertVertex(parent, null, 'Cell 3', 280, 20, 80, 30);
+
+// Fügen Sie cell1 als Kind zu cell2 hinzu
+graph.addEdge(null, parent, null, cell1, cell2);
+
+// Fügen Sie cell2 als Kind zu cell3 hinzu
+graph.addEdge(null, parent, null, cell2, cell3);
+
+// Überprüfen, ob cell1 in einem anderen Objekt verschachtelt ist
+console.log(isObjectNested(graph, cell1)); // true
+console.log(isObjectNested(graph, cell2)); // true
+console.log(isObjectNested(graph, cell3)); // false
+
+Kategorie: Allgemein
+
+    Description
+
+Category: General
+
+    Description
+
+Category: Properties
+
+    Type
+    Size
+    Machine
+    Internet
+    Owner
+    Encryption
+
+    Confidentiality
+    Integrity
+    Availability
+    Justification of the rating
+
+Category: Usage
+
+    Usage
+    Used as client by human
+    Multi tenant
+    Redundant
+    Custom developed parts
+    Out of scope
+    Justification of out of scope
+
+Category: Data
+
+    Data assets processed
+    Data assets stored
+    Data formats accepted
+
+Category: Diagram Tweaking
+
+    Diagram tweak order
+
+Category: Communication Links
+
+    Communication links
+
+Category: Tags
+
+    Tags
+
+TODO:
+
+Assets:
+
+- --Asset fertig machen mit Styling--
+- --Assets speicherbar machen via model--
+- Diagram noch ein TAB mit data
+- Data einbauen mit einer Liste und + und mit und einem WIndow wo die Eingabefelder sind
+- In den Assets die Datas angebbar machen
+- --Die Verbindung nicht mehr erlauben das die frei schweben können mit mxgrpah--
+  Verbindugen:
+- Wenn man auf den Pfeil klingt, steht da nicht Asset sondern die Verbindung, also z.B. html usw.
+  - Da steht tatsächlich eine ganze Menge siehe Communication Link und da muss man dann die Daten referenzieren
+- In den Assets die Verbindung sehen können
+- Alle Assets auf Kategorien sortieren und die restlichen einfügen
+- Rechteck um die Assets, sieht besser aus
+- New rausnehmen bei den Assets
+  Trust Boundaries:
+- Trust Boundaries Kategorie erstellen mit den 4 verschiedenen Kategorien
+- Die TrustBoundaries hat auch eine Custom Tab mit Beschreibung, technicals Assets inside und trustboundaries nested, sowie Type und ID
+- Jetzt geht es los mit rekursion und überprüfen ob es Assets in den TrustBoundaries gibt oder nicht
+  Import:
+- Zeit sich den GoCode und Webassembly anzutun. Und zwar muss bei dem Import das ganze geparsed werden, dafür webassembly mit go, anschließend
+  muss man mit vis.js gucken wie das ganze aussehen würde und dann die verschiedenen Assets mit Model etc. erstellen.
+  Export:
+  - Einmal über die ganzen Elemente iterieren
+    ExtraInfos:
+- Bei dem Diagramm noch Autor etc als Feld hinzufügen.
+- Bug, man kann kante ziehen und dann hat sie keine Verbindung mehr.
+  "data_assets": {
+  "description": "Data assets",
+  "type": "object",
+  "uniqueItems": true,
+  "additionalProperties": {
+  "type": "object",
+  "properties": {
+  "id": {
+  "description": "ID",
+  "type": "string"
+  },
+  "description": {
+  "description": "Description",
+  "type": [
+  "string",
+  "null"
+  ]
+  },
+  "usage": {
+  "description": "Usage",
+  "type": "string",
+  "enum": [
+  "business",
+  "devops"
+  ]
+  },
+  "tags": {
+  "description": "Tags",
+  "type": [
+  "array",
+  "null"
+  ],
+  "uniqueItems": true,
+  "items": {
+  "type": "string"
+  }
+  },
+  "origin": {
+  "description": "Origin",
+  "type": [
+  "string",
+  "null"
+  ]
+  },
+  "owner": {
+  "description": "Owner",
+  "type": [
+  "string",
+  "null"
+  ]
+  },
+  "quantity": {
+  "description": "Quantity",
+  "type": "string",
+  "enum": [
+  "very-few",
+  "few",
+  "many",
+  "very-many"
+  ]
+  },
+  "confidentiality": {
+  "description": "Confidentiality",
+  "type": "string",
+  "enum": [
+  "public",
+  "internal",
+  "restricted",
+  "confidential",
+  "strictly-confidential"
+  ]
+  },
+  "integrity": {
+  "description": "Integrity",
+  "type": "string",
+  "enum": [
+  "archive",
+  "operational",
+  "important",
+  "critical",
+  "mission-critical"
+  ]
+  },
+  "availability": {
+  "description": "Availability",
+  "type": "string",
+  "enum": [
+  "archive",
+  "operational",
+  "important",
+  "critical",
+  "mission-critical"
+  ]
+  },
+  "justification_cia_rating": {
+  "description": "Justification of the rating",
+  "type": [
+  "string",
+  "null"
+  ]
+  }
+  },
+  "required": [
+  "id",
+  "description",
+  "usage",
+  "quantity",
+  "confidentiality",
+  "integrity",
+  "availability"
+  ]
+  }
+  },

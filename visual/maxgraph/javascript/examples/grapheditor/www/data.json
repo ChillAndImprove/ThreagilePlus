@@ -1,0 +1,398 @@
+{
+  "technical_assets": {
+    "description": "Technical assets",
+    "type": "object",
+    "uniqueItems": true,
+    "additionalProperties": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "ID",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description",
+          "type": ["string", "null"]
+        },
+        "type": {
+          "description": "Type",
+          "type": "string",
+          "enum": ["external-entity", "process", "datastore"]
+        },
+        "usage": {
+          "description": "Usage",
+          "type": "string",
+          "enum": ["business", "devops"]
+        },
+        "used_as_client_by_human": {
+          "description": "Used as client by human",
+          "type": "boolean"
+        },
+        "out_of_scope": {
+          "description": "Out of scope",
+          "type": "boolean"
+        },
+        "justification_out_of_scope": {
+          "description": "Justification of out of scope",
+          "type": ["string", "null"]
+        },
+        "size": {
+          "description": "Size",
+          "type": "string",
+          "enum": ["system", "service", "application", "component"]
+        },
+        "technology": {
+          "description": "Technology",
+          "type": "string",
+          "enum": [
+            "unknown-technology",
+            "client-system",
+            "browser",
+            "desktop",
+            "mobile-app",
+            "devops-client",
+            "web-server",
+            "web-application",
+            "application-server",
+            "database",
+            "file-server",
+            "local-file-system",
+            "erp",
+            "cms",
+            "web-service-rest",
+            "web-service-soap",
+            "ejb",
+            "search-index",
+            "search-engine",
+            "service-registry",
+            "reverse-proxy",
+            "load-balancer",
+            "build-pipeline",
+            "sourcecode-repository",
+            "artifact-registry",
+            "code-inspection-platform",
+            "monitoring",
+            "ldap-server",
+            "container-platform",
+            "batch-processing",
+            "event-listener",
+            "identity-provider",
+            "identity-store-ldap",
+            "identity-store-database",
+            "tool",
+            "cli",
+            "task",
+            "function",
+            "gateway",
+            "iot-device",
+            "message-queue",
+            "stream-processing",
+            "service-mesh",
+            "data-lake",
+            "report-engine",
+            "ai",
+            "mail-server",
+            "vault",
+            "hsm",
+            "waf",
+            "ids",
+            "ips",
+            "scheduler",
+            "mainframe",
+            "block-storage",
+            "library"
+          ]
+        },
+        "tags": {
+          "description": "Tags",
+          "type": ["array", "null"],
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "internet": {
+          "description": "Internet",
+          "type": "boolean"
+        },
+        "machine": {
+          "description": "Machine",
+          "type": "string",
+          "enum": ["physical", "virtual", "container", "serverless"]
+        },
+        "encryption": {
+          "description": "Encryption",
+          "type": "string",
+          "enum": [
+            "none",
+            "transparent",
+            "data-with-symmetric-shared-key",
+            "data-with-asymmetric-shared-key",
+            "data-with-enduser-individual-key"
+          ]
+        },
+        "owner": {
+          "description": "Owner",
+          "type": ["string", "null"]
+        },
+        "confidentiality": {
+          "description": "Confidentiality",
+          "type": "string",
+          "enum": [
+            "public",
+            "internal",
+            "restricted",
+            "confidential",
+            "strictly-confidential"
+          ]
+        },
+        "integrity": {
+          "description": "Integrity",
+          "type": "string",
+          "enum": [
+            "archive",
+            "operational",
+            "important",
+            "critical",
+            "mission-critical"
+          ]
+        },
+        "availability": {
+          "description": "Availability",
+          "type": "string",
+          "enum": [
+            "archive",
+            "operational",
+            "important",
+            "critical",
+            "mission-critical"
+          ]
+        },
+        "justification_cia_rating": {
+          "description": "Justification of the rating",
+          "type": ["string", "null"]
+        },
+        "multi_tenant": {
+          "description": "Multi tenant",
+          "type": "boolean"
+        },
+        "redundant": {
+          "description": "Redundant",
+          "type": "boolean"
+        },
+        "custom_developed_parts": {
+          "description": "Custom developed parts",
+          "type": "boolean"
+        },
+        "data_assets_processed": {
+          "description": "Data assets processed",
+          "type": ["array", "null"],
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "data_assets_stored": {
+          "description": "Data assets stored",
+          "type": ["array", "null"],
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "data_formats_accepted": {
+          "description": "Data formats accepted",
+          "type": ["array", "null"],
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["json", "xml", "serialization", "file", "csv"]
+          }
+        },
+        "diagram_tweak_order": {
+          "description": "diagram tweak order (affects left to right positioning)",
+          "type": "integer"
+        },
+        "communication_links": {
+          "description": "Communication links",
+          "type": ["object", "null"],
+          "uniqueItems": true,
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "target": {
+                "description": "Target",
+                "type": "string"
+              },
+              "description": {
+                "description": "Description",
+                "type": ["string", "null"]
+              },
+              "protocol": {
+                "description": "Protocol",
+                "type": "string",
+                "enum": [
+                  "unknown-protocol",
+                  "http",
+                  "https",
+                  "ws",
+                  "wss",
+                  "reverse-proxy-web-protocol",
+                  "reverse-proxy-web-protocol-encrypted",
+                  "mqtt",
+                  "jdbc",
+                  "jdbc-encrypted",
+                  "odbc",
+                  "odbc-encrypted",
+                  "sql-access-protocol",
+                  "sql-access-protocol-encrypted",
+                  "nosql-access-protocol",
+                  "nosql-access-protocol-encrypted",
+                  "binary",
+                  "binary-encrypted",
+                  "text",
+                  "text-encrypted",
+                  "ssh",
+                  "ssh-tunnel",
+                  "smtp",
+                  "smtp-encrypted",
+                  "pop3",
+                  "pop3-encrypted",
+                  "imap",
+                  "imap-encrypted",
+                  "ftp",
+                  "ftps",
+                  "sftp",
+                  "scp",
+                  "ldap",
+                  "ldaps",
+                  "jms",
+                  "nfs",
+                  "smb",
+                  "smb-encrypted",
+                  "local-file-access",
+                  "nrpe",
+                  "xmpp",
+                  "iiop",
+                  "iiop-encrypted",
+                  "jrmp",
+                  "jrmp-encrypted",
+                  "in-process-library-call",
+                  "container-spawning"
+                ]
+              },
+              "authentication": {
+                "description": "Authentication",
+                "type": "string",
+                "enum": [
+                  "none",
+                  "credentials",
+                  "session-id",
+                  "token",
+                  "client-certificate",
+                  "two-factor",
+                  "externalized"
+                ]
+              },
+              "authorization": {
+                "description": "Authorization",
+                "type": "string",
+                "enum": [
+                  "none",
+                  "technical-user",
+                  "enduser-identity-propagation"
+                ]
+              },
+              "tags": {
+                "description": "Tags",
+                "type": ["array", "null"],
+                "uniqueItems": true,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "vpn": {
+                "description": "VPN",
+                "type": "boolean"
+              },
+              "ip_filtered": {
+                "description": "IP filtered",
+                "type": "boolean"
+              },
+              "readonly": {
+                "description": "readonly",
+                "type": "boolean"
+              },
+              "usage": {
+                "description": "Usage",
+                "type": "string",
+                "enum": ["business", "devops"]
+              },
+              "data_assets_sent": {
+                "description": "Data assets sent",
+                "type": ["array", "null"],
+                "uniqueItems": true,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "data_assets_received": {
+                "description": "Data assets received",
+                "type": ["array", "null"],
+                "uniqueItems": true,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "diagram_tweak_weight": {
+                "description": "diagram tweak weight",
+                "type": "integer"
+              },
+              "diagram_tweak_constraint": {
+                "description": "diagram tweak constraint",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "target",
+              "description",
+              "protocol",
+              "authentication",
+              "authorization",
+              "vpn",
+              "ip_filtered",
+              "readonly",
+              "usage",
+              "data_assets_sent",
+              "data_assets_received"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "type",
+          "usage",
+          "used_as_client_by_human",
+          "out_of_scope",
+          "size",
+          "technology",
+          "internet",
+          "machine",
+          "encryption",
+          "owner",
+          "confidentiality",
+          "integrity",
+          "availability",
+          "multi_tenant",
+          "redundant",
+          "custom_developed_parts",
+          "data_assets_processed",
+          "data_assets_stored",
+          "data_formats_accepted",
+          "communication_links"
+        ]
+      }
+    }
+  }
+}
