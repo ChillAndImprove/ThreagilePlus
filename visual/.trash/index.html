@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D3.js Knoteninformationen</title>
+  <style>
+    svg {
+      border: 1px solid black;
+    }
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border: 1px solid black;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.modal::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+.modal h2 {
+  margin-top: 0;
+}
+
+.modal form {
+  margin-bottom: 20px;
+}
+
+.modal label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.modal textarea {
+  width: 100%;
+  height: 100px;
+}
+
+.modal button {
+  margin-top: 10px;
+}
+
+  </style>
+</head>
+
+<body>
+  <h1>D3.js Knoteninformationen</h1>
+  <svg id="svg-container"></svg>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
+
