@@ -1,8 +1,9 @@
-# Threagile Plus
 <p align="center">
   <img src="./www/images/logo.png" alt="Threagile Plus Logo" width="200">
 </p>
 
+
+# Threagile Plus
 
 Welcome to Threagile Plus! This open-source project, developed solely by me (vacation project), aims to enhance your experience with threat modeling.
 
