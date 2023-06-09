@@ -1,4 +1,7 @@
-![Threagile Plus Logo](./www/images/logo.png)
+<p align="center">
+  <img src="./www/images/logo.png" alt="Threagile Plus Logo" width="200">
+</p>
+
 
 # Threagile Plus
 
