@@ -23,7 +23,7 @@ To start using Threagile Plus, follow these steps:
 
 ## Technical Details
 
-Threagile Plus is built upon JGraph (also known as mxGraph) and Threagile, which was compiled to WebAssembly (WASM). It showcases how these powerful technologies can be utilized to create a highly effective threat modeling tool.
+Threagile Plus is built upon JGraph (also known as mxGraph) and Threagile, which was compiled to WebAssembly (WASM). The combination of these technologies allows for an enhanced and intuitive experience with threat modeling.
 
 ## Privacy and Security
 
