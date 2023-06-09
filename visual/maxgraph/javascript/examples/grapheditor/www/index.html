@@ -2,10 +2,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Grapheditor</title>
+    <title>Threagile+</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
+	<script src="wasm_exec.js"></script>
+	<script src="dotparser.js"></script>
+	<script src="js-yaml.min.js"></script>
+	<script src="viz.js"></script>
+	<script src="full.render.js"></script>
 	<script type="text/javascript">
 		// Parses URL parameters. Supported parameters are:
 		// - lang=xy: Specifies the language of the user interface.
@@ -68,6 +73,7 @@
 				this.actions.get('export').setEnabled(false);
 
 				// Updates action states which require a backend
+				/*
 				if (!Editor.useLocalStorage)
 				{
 					mxUtils.post(OPEN_URL, '', mxUtils.bind(this, function(req)
@@ -80,6 +86,7 @@
 						this.actions.get('export').setEnabled(enabled);
 					}));
 				}
+				*/
 			};
 			
 			// Adds required resources (disables loading of fallback properties, this can only

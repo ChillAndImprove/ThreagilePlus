@@ -1,12 +1,13 @@
 package report
 
 import (
-	"github.com/threagile/threagile/colors"
-	"github.com/threagile/threagile/model"
-	"github.com/xuri/excelize/v2"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/threagile/threagile/colors"
+	"github.com/threagile/threagile/model"
+	"github.com/xuri/excelize/v2"
 )
 
 var excelRow int

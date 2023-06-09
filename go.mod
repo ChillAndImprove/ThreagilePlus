@@ -1,6 +1,6 @@
 module github.com/threagile/threagile
 
-go 1.18
+go 1.16
 
 require (
 	github.com/blend/go-sdk v2.0.0+incompatible // indirect
