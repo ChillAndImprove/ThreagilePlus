@@ -18,31 +18,29 @@ TODOs:
   dass ist schon etwas schwieriger. Siehe CodeBeispiel unten:
   Technologies:
 
-- "unknown-technology",[X]
-- "client-system",[X]
-- "browser",[X]
-- "desktop",[X]
-- "mobile-app",[X]
-- "devops-client",[X]
-- "web-server",[X]
-- "web-application",[X]
-- "application-server",[X]
-- "database",[X]
-- "file-server",[X]
-- "local-file-system",[X]
-- "erp",[X]
-- "cms",[X]
-- "web-service-rest",[X]
-- "web-service-soap",[X]
+- "unknown-technology",
+- "client-system"
+- "browser",
+- "desktop",
+- "mobile-app",
+- "devops-client",
+- "web-server",
+- "web-application",
+- "application-server",
+- "database",
+- "file-server",
+- "local-file-system",
+- "erp",
+- "cms",
+- "web-service-rest",
+- "web-service-soap",
 - "ejb",
-- "search-index",
-- "search-engine",
-- "service-registry",
-- "reverse-proxy",[X]
-- "load-balancer",[X]
-- "build-pipeline",[X]
-- "sourcecode-repository",[X]
-- "artifact-registry",[X]
+  "service-registry",
+- "reverse-proxy",
+- "load-balancer",
+- "build-pipeline",
+- "sourcecode-repository",
+- "artifact-registry",
 - "code-inspection-platform",
 - "monitoring",
 - "ldap-server",
@@ -77,93 +75,96 @@ TODOs:
 
 Sortiert:
 Unknown Technology:
-"unknown-technology"
+"unknown-technology" x
 
 Client System:
-"client-system"
-"desktop"
-"mobile-app"
-"devops-client"
+"client-system" x
+"desktop" x
+"mobile-app" x
+"devops-client" x
 
 Web-related:
-"browser"
-"web-server"
-"web-application"
-"reverse-proxy"
-"load-balancer"
+"browser" x
+"web-server" x
+"web-application" x
+"reverse-proxy" x nginx, haproxy, traefik, envoy
+"load-balancer" x
 
 Development-related:
-"build-pipeline"
-"sourcecode-repository"
-"artifact-registry"
-"code-inspection-platform"
+"build-pipeline" x hier bitte mehr! Argo,Jenkins, Azure Pipelines, Tekton
+"sourcecode-repository" X Gitlab, Github, Bitbucket
+"artifact-registry" X
+"code-inspection-platform" Sonarqube, Crucible, CodeClimate, Eslint, PMD Source code analyzer X
 
 Infrastructure-related:
-"file-server"
-"local-file-system"
-"database"
-"ldap-server"
-"container-platform"
-"mainframe"
-"block-storage"
+"file-server"X
+"local-file-system"X
+"database" X
+"ldap-server"X
+"container-platform"X
+"mainframe"X
+"block-storage"X
 
 Web Services:
-"web-service-rest"
-"web-service-soap"
+"web-service-rest"X
+"web-service-soap"X
 
 Content Management:
-"cms"
+"cms"X
 
 Enterprise-related:
-"erp"
+"erp"X
 
 Security-related:
-"identity-provider"
-"identity-store-ldap"
-"identity-store-database"
-"vault"
-"hsm"
-"waf"
-"ids"
-"ips"
+"identity-provider"X
+"identity-store-ldap"X
+"identity-store-database"X
+"vault"X
+"hsm"X
+"waf"X
+"ids"X
+"ips"X
 
 Tools and Utilities:
-"tool"
-"cli"
+"tool"X
+"cli"X
 
 Task and Function:
-"task"
-"function"
+"task"X
+"function"X
 
 Messaging and Processing:
-"message-queue"
-"stream-processing"
-"batch-processing"
-"event-listener"
+"message-queue"X
+"stream-processing"X
+"batch-processing"X
+"event-listener"X
 
 Networking:
-"gateway"
+"gateway"X
 
 Data-related:
 
-    "data-lake"
+    "data-lake"X
 
 Reporting and Analytics:
 
-    "report-engine"
-    "ai"
+    "report-engine"X
+    "ai"X
 
 Monitoring:
+"monitoring"X
 
-    "monitoring"
+Search related:
+search-index",X
+"search-engine",X
 
 Other:
 
-    "service-registry"
-    "scheduler"
-    "library"
-    "iot-device"
-    "service-mesh"
+    "service-registry"X
+    "scheduler"X
+    "library"Xj
+    "iot-device"X
+    "service-mesh"Xjk
     "mail-server"
 
 CodeBeispiel Nested\*\*:
@@ -255,11 +256,58 @@ TODO:
 
 Assets:
 
-- --Asset fertig machen mit Styling--
-- --Assets speicherbar machen via model--
-- Diagram noch ein TAB mit data
-- Data einbauen mit einer Liste und + und mit und einem WIndow wo die Eingabefelder sind
-- In den Assets die Datas angebbar machen
+- ~~Asset fertig machen mit Styling~~
+- ~~Assets speicherbar machen via model~~
+- ~~Diagram noch ein TAB mit data~~
+
+  - ~~Das eine tab speicherbar machen~~
+  - ~~Die Datenstruktur muss sich ändern, weil wir zur Zeit die daten mit einem Array speichern also [Data1, Data2] und wenn jetzt eins gelöscht wird, dann sind die Indexe Falsch.~~
+  - ~~Muss noch ändern, dass anstatt eines clones~~
+
+- ~~Data auswählbar machen~~
+
+~~- Clip zu Trust Boundaries umbennen~~
+~~- 4 Rects einfügen mit Namen, siehe Treagile Trust Boundaries~~
+
+~~- Programmieren, falls man die 4 Rects auswählt, dass dann ein bestimmtes Tab aufgeht~~
+~~- Programmieren, das er die Elemente in dem Rect als table hat,~~
+~~- Nested trust boundaries programmieren~~
+
+- Import Function, yes
+  ~~- WebAssembly mit Go, und anfangen eine Methode zu schreiben, die den graphen zurück gibt~~
+  ~~- Viz.js benutzen um Koordinaten zu kriegen, indem ein svg~~
+  - Die Daten importieren, jetzt wird es Zeit,
+  - Neues Tab mit Threats
+  - Alle Daten in Objekte schreiben
+
+~~ - Mach alle Koordinaten positiv, damit man fit machen kann~~
+
+~~- Bau waypoints ein~~
+
+~~- Bau farben ein von threagile~~
+
+~~- Bau animation ein, also Fluß~~
+~~- Mach die TrustBoundaries dicker,die Linien~~
+
+- Schreibe README mit schönen KI generierten Bild
+- Verändere Ordnerstruktur
+- Mach Git Projekt public
+- Die jetzigen TODOS, lagere sie als Issues aus
+- Lösche deutsche Kommentare im Code
+
+~~- Bevor man importieren mit dem program testen ob der Graph korrekt ist~~
+
+- Fehlerhandling, fehler zeigen beim import
+
+- exportieren... umschreiben für threagile oder yaml
+
+Anschließend Table mit den Initalwerten und einen haken daneben den man mit doppelklick hinzufügen der löschen kann - Ein Initalwert für die Id wird der derzeitige Zeitpunkt sein.
+
+- Noch eine Table mit den ausgwählten Daten und nicht allen
+
+- Erst Initialisierung, erstelle Default werte für ID etc.
+  ~~- Data einbauen mit einer Liste und + und mit und einem WIndow wo die Eingabefelder sind~~
+  ~~- In den Assets die Datas angebbar machen~~
 - --Die Verbindung nicht mehr erlauben das die frei schweben können mit mxgrpah--
   Verbindugen:
 - Wenn man auf den Pfeil klingt, steht da nicht Asset sondern die Verbindung, also z.B. html usw.
@@ -280,6 +328,24 @@ Assets:
     ExtraInfos:
 - Bei dem Diagramm noch Autor etc als Feld hinzufügen.
 - Bug, man kann kante ziehen und dann hat sie keine Verbindung mehr.
+- Export Funktion einbauen die alle Dateien generiert
+- Einbauen das man bei den Threats schreiben können ob man Threats mtigiert hat wie in der Excel
+- Slack auf einen anderne Computer setzen https://slack.com/help/articles/207262907-Change-your-email-address
+- Vor der Veröffentlichungen eine Woche testen.
+- Merke dir den hide zustand in den DataAssets
+- Baue noch tags ein in allen Sachen wo das fehlt
+- ToolTIps
+  Das in die JSON einbauen und dann geht das super einfacher
+  descriptionButton.title = "Dies ist ein Tooltip für den X-Button";
+- Code Refactoren
+- Bug error
+- Es gibt ein Model, da sollten wir Sachen speichern, damit man exportieren kann.
+- Shared Runtimes fehlen noch
+
+Info:
+
+- Wenn veröffentlichen dann sowas schreiben wie: "Hi CoP-Security, hier ein kleines Urlaubsprojekt von mir, dass Threagile für einige etwas benutzerfreundlich machen soll. <GIF> in der README ein cooles Video
+- In der ReadME schreiben, dass keine daten verschickt werden siehe Requests Tab
   "data_assets": {
   "description": "Data assets",
   "type": "object",

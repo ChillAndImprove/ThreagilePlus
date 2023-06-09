@@ -461,11 +461,14 @@ Format.prototype.refresh = function () {
 
   var addClickHandler = mxUtils.bind(this, function (elt, panel, index) {
     var clickHandler = mxUtils.bind(this, function (evt) {
+      var cell = graph.getSelectionCell();
       if (currentLabel != elt) {
         if (containsLabel) {
           this.labelIndex = index;
         } else if (graph.isSelectionEmpty()) {
           this.diagramIndex = index;
+
+        } else if (cell != null && cell.isEdge()) {
         } else {
           this.currentIndex = index;
         }
@@ -515,6 +518,8 @@ Format.prototype.refresh = function () {
   });
 
   var idx = 0;
+
+  var cell = graph.getSelectionCell();
 
   if (graph.isSelectionEmpty()) {
     mxUtils.write(label, mxResources.get("diagram"));
@@ -583,6 +588,118 @@ Format.prototype.refresh = function () {
 
       div.appendChild(label2);
     }
+  } else if (
+    cell != null &&
+    graph.getSelectionCell().isVertex() &&
+    (graph.getSelectionCell().style.includes("rounded=0") ||
+      graph.getSelectionCell().style.includes("rounded=1") ||
+      graph.getSelectionCell().style.includes("shape=rectangle"))
+  ) {
+    label.style.backgroundColor = this.inactiveTabBackgroundColor;
+    label.style.borderLeftWidth = "1px";
+    label.style.cursor = "pointer";
+    label.style.width = containsLabel ? "50%" : "33.3%";
+    var label2 = label.cloneNode(false);
+    var label3 = label2.cloneNode(false);
+
+    // Workaround for ignored background in IE
+    label2.style.backgroundColor = this.inactiveTabBackgroundColor;
+    label3.style.backgroundColor = this.inactiveTabBackgroundColor;
+
+    // Style
+    if (containsLabel) {
+      label2.style.borderLeftWidth = "0px";
+    } else {
+      label.style.borderLeftWidth = "0px";
+      mxUtils.write(label, "Boundary");
+      div.appendChild(label);
+
+      var stylePanel = div.cloneNode(false);
+      stylePanel.style.display = "none";
+      this.panels.push(new BoundaryFormatPanel(this, ui, stylePanel));
+      this.container.appendChild(stylePanel);
+
+      addClickHandler(label, stylePanel, idx++);
+    }
+
+    // Text
+    mxUtils.write(label2, mxResources.get("text"));
+    div.appendChild(label2);
+
+    var textPanel = div.cloneNode(false);
+    textPanel.style.display = "none";
+    this.panels.push(new TextFormatPanel(this, ui, textPanel));
+    this.container.appendChild(textPanel);
+
+    // Arrange
+    mxUtils.write(label3, mxResources.get("arrange"));
+    div.appendChild(label3);
+
+    var arrangePanel = div.cloneNode(false);
+    arrangePanel.style.display = "none";
+    this.panels.push(new ArrangePanel(this, ui, arrangePanel));
+    //Style
+    var stylePanel = div.cloneNode(false);
+    stylePanel.style.display = "none";
+    this.panels.push(new StyleFormatPanel(this, ui, arrangePanel));
+
+    this.container.appendChild(arrangePanel);
+
+    addClickHandler(label2, textPanel, idx++);
+    addClickHandler(label3, arrangePanel, idx++);
+  } else if (cell != null && cell.isEdge()) {
+    label.style.backgroundColor = this.inactiveTabBackgroundColor;
+    label.style.borderLeftWidth = "1px";
+    label.style.cursor = "pointer";
+    label.style.width = containsLabel ? "50%" : "33.3%";
+    var label2 = label.cloneNode(false);
+    var label3 = label2.cloneNode(false);
+
+    // Workaround for ignored background in IE
+    label2.style.backgroundColor = this.inactiveTabBackgroundColor;
+    label3.style.backgroundColor = this.inactiveTabBackgroundColor;
+
+    // Style
+    if (containsLabel) {
+      label2.style.borderLeftWidth = "0px";
+    } else {
+      label.style.borderLeftWidth = "0px";
+      mxUtils.write(label, "Exchange");
+      div.appendChild(label);
+
+      var stylePanel = div.cloneNode(false);
+      stylePanel.style.display = "none";
+      this.panels.push(new CommunicationFormatPanel(this, ui, stylePanel));
+      this.container.appendChild(stylePanel);
+
+      addClickHandler(label, stylePanel, idx++);
+    }
+
+    // Text
+    mxUtils.write(label2, mxResources.get("text"));
+    div.appendChild(label2);
+
+    var textPanel = div.cloneNode(false);
+    textPanel.style.display = "none";
+    this.panels.push(new TextFormatPanel(this, ui, textPanel));
+    this.container.appendChild(textPanel);
+
+    // Arrange
+    mxUtils.write(label3, mxResources.get("arrange"));
+    div.appendChild(label3);
+
+    var arrangePanel = div.cloneNode(false);
+    arrangePanel.style.display = "none";
+    this.panels.push(new ArrangePanel(this, ui, arrangePanel));
+    //Style
+    var stylePanel = div.cloneNode(false);
+    stylePanel.style.display = "none";
+    this.panels.push(new StyleFormatPanel(this, ui, arrangePanel));
+
+    this.container.appendChild(arrangePanel);
+
+    addClickHandler(label2, textPanel, idx++);
+    addClickHandler(label3, arrangePanel, idx++);
   } else if (graph.isEditing()) {
     mxUtils.write(label, mxResources.get("text"));
     div.appendChild(label);
@@ -7751,6 +7868,7 @@ function addDataItemToList(container, list) {
   var xButton = document.createElement("button");
   xButton.innerHTML =
     '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEV7mr3///+wksspAAAAAnRSTlP/AOW3MEoAAAAdSURBVAgdY9jXwCDDwNDRwHCwgeExmASygSL7GgB12QiqNHZZIwAAAABJRU5ErkJggg==" alt="X">';
+
   xButton.style.marginLeft = "auto";
   xButton.style.padding = "5px";
   xButton.style.backgroundColor = "transparent";
@@ -7808,61 +7926,16 @@ DiagramFormatPanel.prototype.init = function () {
   var editor = ui.editor;
   var graph = editor.graph;
 
-  // Data Label
-  // Eine Liste mit einem add und delete button
-  // Wenn auf ein element doppelt geklickt wird, öffne das Window mit dem entsprechenden Daten
-  //Style Header
-  // Erstellen Sie ein Div-Element und setzen Sie den Stil direkt über JavaScript
-  // Erstellen Sie ein Div-Element und setzen Sie den Stil direkt über JavaScript
-  // Erstellen Sie ein Div-Element und setzen Sie den Stil direkt über JavaScript
-  // Erstellen Sie ein Div-Element und setzen Sie den Stil direkt über JavaScript
   var listContainer = document.createElement("div");
   listContainer.style.maxWidth = "400px";
   listContainer.style.margin = "0 auto";
 
-  // Erstellen Sie eine ungeordnete Liste und setzen Sie den Stil direkt über JavaScript
   var list = document.createElement("ul");
   list.style.listStyleType = "none";
   list.style.padding = "0";
 
-  // Beispielwerte für die Listenelemente
   var items = [];
 
-  // Funktion zum Hinzufügen eines Eintrags zur Liste
-  function addItem() {
-    // Eingabefeld-Wert lesen
-    var inputField = document.getElementById("inputField");
-    var newItem = inputField.value;
-
-    // Neue Listenelement erstellen
-    var listItem = document.createElement("li");
-    listItem.textContent = newItem;
-    listItem.style.display = "flex";
-    listItem.style.alignItems = "center";
-    listItem.style.padding = "8px";
-    listItem.style.borderBottom = "1px solid #ccc";
-
-    // "X" Button erstellen
-    var xButton = document.createElement("button");
-    xButton.innerHTML =
-      '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEV7mr3///+wksspAAAAAnRSTlP/AOW3MEoAAAAdSURBVAgdY9jXwCDDwNDRwHCwgeExmASygSL7GgB12QiqNHZZIwAAAABJRU5ErkJggg==" alt="X">';
-    xButton.style.marginLeft = "auto";
-    xButton.style.padding = "5px";
-    xButton.style.backgroundColor = "transparent";
-    xButton.style.border = "none";
-    xButton.style.cursor = "pointer";
-
-    // Listenelement zum "X" Button hinzufügen
-    listItem.appendChild(xButton);
-
-    // Listenelement zur Liste hinzufügen
-    list.appendChild(listItem);
-
-    // Eingabefeld leeren
-    inputField.value = "";
-  }
-
-  // Schleife über die Beispielwerte und Erstellung der Listenelemente
   for (var i = 0; i < items.length; i++) {
     var listItem = document.createElement("li");
     listItem.textContent = items[i];
@@ -7871,7 +7944,6 @@ DiagramFormatPanel.prototype.init = function () {
     listItem.style.padding = "8px";
     listItem.style.borderBottom = "1px solid #ccc";
 
-    // "X" Button erstellen
     var xButton = document.createElement("button");
     xButton.innerHTML =
       '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEV7mr3///+wksspAAAAAnRSTlP/AOW3MEoAAAAdSURBVAgdY9jXwCDDwNDRwHCwgeExmASygSL7GgB12QiqNHZZIwAAAABJRU5ErkJggg==" alt="X">';
@@ -7881,11 +7953,107 @@ DiagramFormatPanel.prototype.init = function () {
     xButton.style.border = "none";
     xButton.style.cursor = "pointer";
 
-    // Listenelement zum "X" Button hinzufügen
     listItem.appendChild(xButton);
 
-    // Listenelement zur Liste hinzufügen
     list.appendChild(listItem);
+  }
+
+  if (typeof graph.model.diagramData !== "undefined") {
+    graph.model.diagramData.forEach(
+      function (value, property) {
+        var clonedMenu = this.addDataMenu(this.createPanel());
+        clonedMenu.id = property;
+        var listItem = document.createElement("li");
+        listItem.style.display = "flex";
+        listItem.style.flexDirection = "column";
+        listItem.style.padding = "8px";
+        listItem.style.borderBottom = "1px solid #ccc";
+        var parentNode = clonedMenu.childNodes[0];
+        for (var key in value) {
+          if (value.hasOwnProperty(key)) {
+            var childNode = value[key];
+
+            for (var i = 0; i < parentNode.childNodes.length; i++) {
+              var currentChildNode = parentNode.childNodes[i];
+
+              if (
+                currentChildNode.nodeType === Node.ELEMENT_NODE &&
+                currentChildNode.children.length > 0 &&
+                currentChildNode.children[0].textContent === key
+              ) {
+                if (
+                  currentChildNode.children.length > 1 &&
+                  currentChildNode.childNode.children.length > 0
+                ) {
+                  var nextChildNode = currentChildNode.children[1].children[0];
+
+                  if (nextChildNode.nodeName === "SELECT") {
+                    nextChildNode.value = childNode;
+                  }
+                }
+              }
+            }
+          }
+        }
+        var textContainer = document.createElement("div");
+        textContainer.style.display = "flex";
+        textContainer.style.alignItems = "center";
+        textContainer.style.marginBottom = "8px";
+        var arrowIcon = document.createElement("img");
+        arrowIcon.src =
+          " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
+        arrowIcon.style.width = "10px";
+        arrowIcon.style.height = "10px";
+        arrowIcon.style.marginRight = "5px";
+
+        arrowIcon.style.transform = "rotate(270deg)";
+        textContainer.insertBefore(arrowIcon, dataText);
+
+        var dataText = document.createElement("div");
+        dataText.textContent = value.descriptionMenu;
+
+        var xButton = document.createElement("button");
+        xButton.innerHTML =
+          '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEV7mr3///+wksspAAAAAnRSTlP/AOW3MEoAAAAdSURBVAgdY9jXwCDDwNDRwHCwgeExmASygSL7GgB12QiqNHZZIwAAAABJRU5ErkJggg==" alt="X">';
+        xButton.style.marginLeft = "auto";
+        xButton.style.padding = "5px";
+        xButton.style.backgroundColor = "transparent";
+        xButton.style.border = "none";
+        xButton.style.cursor = "pointer";
+        xButton.addEventListener("click", function () {
+          var parentListItem = xButton.parentNode.parentNode;
+          var parentList = parentListItem.parentNode;
+          parentList.removeChild(parentListItem);
+
+          var menuId = graph.model.diagramData.delete(clonedMenu.id);
+        });
+
+        textContainer.appendChild(dataText);
+        textContainer.appendChild(xButton);
+
+        listItem.appendChild(textContainer);
+        listItem.appendChild(clonedMenu);
+        function toggleContent() {
+          // Überprüfe, ob die enthaltenen Elemente bereits versteckt sind
+          var isHidden = listItem.style.backgroundColor === "lightgray";
+          if (isHidden) {
+            listItem.style.backgroundColor = "";
+            arrowIcon.style.transform = "rotate(270deg)";
+            xButton.style.display = "inline-block";
+            clonedMenu.style.display = "block";
+          } else {
+            listItem.style.backgroundColor = "lightgray";
+            arrowIcon.style.transform = "rotate(90deg)";
+            xButton.style.display = "none";
+            clonedMenu.style.display = "none";
+          }
+        }
+        arrowIcon.addEventListener("click", toggleContent);
+        dataText.addEventListener("click", toggleContent);
+
+        list.appendChild(listItem);
+      }.bind(this)
+    );
   }
   var generalHeader = document.createElement("div");
   generalHeader.innerHTML = "Data:";
@@ -7896,16 +8064,6 @@ DiagramFormatPanel.prototype.init = function () {
   generalHeader.style.fontWeight = "bold";
   this.container.appendChild(generalHeader);
 
-  // "Add" Button erstellen
-
-  /*
-  var self = this;
-
-  var addButton = document.createElement("button");
-  addButton.addEventListener("click", function () {
-    addDataItemToList(self.container, list);
-  });
-*/
   var addButton = mxUtils.button(
     "Data Assets:",
     mxUtils.bind(this, function (evt) {
@@ -7924,7 +8082,6 @@ DiagramFormatPanel.prototype.init = function () {
   addButton.style.border = "none";
   addButton.style.cursor = "pointer";
   addButton.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.3)"; // Fügt einen Schatten hinzu
-
   // Hover-Effekt
   addButton.addEventListener("mouseenter", function () {
     addButton.style.backgroundColor = "#777"; // Hintergrundfarbe ändern beim Hovern (noch dunkleres Grau)
@@ -8424,356 +8581,334 @@ DiagramFormatPanel.prototype.destroy = function () {
     this.gridEnabledListener = null;
   }
 };
-/**
- * Adds the label menu items to the given menu and parent.
- */
-AssetFormatPanel = function (format, editorUi, container) {
+
+CommunicationFormatPanel = function (format, editorUi, container) {
+  BaseFormatPanel.call(this, format, editorUi, container);
+  this.init();
+};
+BoundaryFormatPanel = function (format, editorUi, container) {
   BaseFormatPanel.call(this, format, editorUi, container);
   this.init();
 };
 
-mxUtils.extend(AssetFormatPanel, BaseFormatPanel);
+mxUtils.extend(BoundaryFormatPanel, BaseFormatPanel);
 
-/**
- *
- */
-AssetFormatPanel.prototype.defaultStrokeColor = "black";
-
-/**
- * Adds the label menu items to the given menu and parent.
- */
-AssetFormatPanel.prototype.init = function () {
+BoundaryFormatPanel.prototype.init = function () {
   var ui = this.editorUi;
   var editor = ui.editor;
   var graph = editor.graph;
   var ss = this.format.getSelectionState();
 
-  this.container.appendChild(this.addThreagileMenu(this.createPanel()));
-
-  //this.container.appendChild(this.addStyleOps(opsPanel));
+  this.container.appendChild(
+    this.addBoundaryMenuDynamic(this.createPanel(), graph)
+  );
 };
+BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
+  container,
+  graph
+) {
+  var cell = graph.getSelectionCell();
 
-/**
- * Use browser for parsing CSS.
- */
-AssetFormatPanel.prototype.getCssRules = function (css) {
-  var doc = document.implementation.createHTMLDocument("");
-  var styleElement = document.createElement("style");
+  if (cell.isVertex()) {
+    var cellGeometry = cell.getGeometry();
 
-  mxUtils.setTextContent(styleElement, css);
-  doc.body.appendChild(styleElement);
+    if (cellGeometry != null) {
+      var cellX = cellGeometry.x;
+      var cellY = cellGeometry.y;
+      var cellWidth = cellGeometry.width;
+      var cellHeight = cellGeometry.height;
 
-  return styleElement.sheet.cssRules;
-};
+      // Container-Element für die Tabelle erstellen
+      var tableContainer = document.createElement("div");
+      tableContainer.style.maxWidth = "300px"; // Maximale Breite des Containers
 
-/**
- * Adds the label menu items to the given menu and parent.
- */
-AssetFormatPanel.prototype.addSvgStyles = function (container) {
-  var ui = this.editorUi;
-  var graph = ui.editor.graph;
-  var ss = this.format.getSelectionState();
-  container.style.paddingTop = "6px";
-  container.style.paddingBottom = "6px";
-  container.style.fontWeight = "bold";
-  container.style.display = "none";
+      // Tabelle erstellen
+      var table = document.createElement("table");
+      table.style.borderCollapse = "collapse";
+      table.style.width = "90%";
+      table.style.tableLayout = "fixed"; // Festgelegte Breite für Tabellenspalten
 
-  try {
-    var exp = ss.style.editableCssRules;
+      // Header-Zeile erstellen
+      var headerRow = document.createElement("tr");
+      var headerCell = document.createElement("th");
+      headerCell.textContent = "Technical Assets Inside";
+      headerCell.style.border = "1px solid #ccc";
+      headerCell.style.padding = "8px";
+      headerCell.style.backgroundColor = "#f0f0f0";
+      headerCell.style.textAlign = "left";
+      headerCell.colSpan = 2; // Spaltenübergreifende Zelle
+      headerRow.appendChild(headerCell);
+      table.appendChild(headerRow);
 
-    if (exp != null) {
-      var regex = new RegExp(exp);
+      // Schleife über alle Vertices im Graph
+      var vertices = graph.getChildVertices(graph.getDefaultParent());
 
-      var data = ss.style.image.substring(ss.style.image.indexOf(",") + 1);
-      var xml = window.atob ? atob(data) : Base64.decode(data, true);
-      var svg = mxUtils.parseXml(xml);
+      function isVertexInsideAnyRectangle(vertex, rectangles) {
+        var vertexGeometry = vertex.getGeometry(); // define vertexGeometry
+        for (let i = 0; i < rectangles.length; i++) {
+          let rectangle = rectangles[i];
+          let rectangleGeometry = rectangle.getGeometry();
 
-      if (svg != null) {
-        var styles = svg.getElementsByTagName("style");
-
-        for (var i = 0; i < styles.length; i++) {
-          var rules = this.getCssRules(mxUtils.getTextContent(styles[i]));
-
-          for (var j = 0; j < rules.length; j++) {
-            this.addSvgRule(
-              container,
-              rules[j],
-              svg,
-              styles[i],
-              rules,
-              j,
-              regex
-            );
+          if (
+            vertexGeometry.x >= rectangleGeometry.x &&
+            vertexGeometry.y >= rectangleGeometry.y &&
+            vertexGeometry.x + vertexGeometry.width <=
+              rectangleGeometry.x + rectangleGeometry.width &&
+            vertexGeometry.y + vertexGeometry.height <=
+              rectangleGeometry.y + rectangleGeometry.height
+          ) {
+            return true;
           }
+        }
+        return false;
+      }
+
+      // Sammeln Sie alle inneren Rechtecke
+      var innerRectangles = vertices.filter(function (vertex) {
+        var vertexGeometry = vertex.getGeometry();
+        var style = graph.getModel().getStyle(vertex);
+        return (
+          vertexGeometry != null &&
+          vertex !== cell &&
+          (style.includes("rounded=1") || style.includes("rounded=0")) &&
+          vertexGeometry.x >= cellX &&
+          vertexGeometry.y >= cellY &&
+          vertexGeometry.x + vertexGeometry.width <= cellX + cellWidth &&
+          vertexGeometry.y + vertexGeometry.height <= cellY + cellHeight
+        );
+      });
+
+      // Berücksichtigen Sie die Vertices, die im ausgewählten Rechteck, aber nicht in irgendeinem inneren Rechteck liegen.
+      vertices.forEach(function (vertex) {
+        var vertexGeometry = vertex.getGeometry();
+        var style = graph.getModel().getStyle(vertex);
+
+        if (
+          vertexGeometry != null &&
+          vertex !== cell &&
+          !(style.includes("rounded=1") || style.includes("rounded=0")) &&
+          vertexGeometry.x >= cellX &&
+          vertexGeometry.y >= cellY &&
+          vertexGeometry.x + vertexGeometry.width <= cellX + cellWidth &&
+          vertexGeometry.y + vertexGeometry.height <= cellY + cellHeight &&
+          !isVertexInsideAnyRectangle(vertex, innerRectangles)
+        ) {
+          addVertexToTable(vertex);
+        }
+      });
+
+      function addVertexToTable(vertex) {
+        // Neue Tabellenzeile erstellen
+        var row = document.createElement("tr");
+
+        // Elementwert in der Zelle anzeigen
+        var cellValue = document.createElement("td");
+        cellValue.textContent = vertex.getValue();
+        cellValue.style.border = "1px solid #ccc";
+        cellValue.style.padding = "8px";
+        cellValue.style.wordWrap = "break-word"; // Zeilenumbruch für lange Wörter
+
+        // Tabellenzelle zur Zeile hinzufügen
+        row.appendChild(cellValue);
+
+        // Zeile zur Tabelle hinzufügen
+        table.appendChild(row);
+      }
+
+      // Tabelle zum Container hinzufügen
+      tableContainer.appendChild(table);
+
+      // Container-Element an den gewünschten Ort in deiner Anwendung anhängen
+      // Zum Beispiel an den Body-Element:
+      container.appendChild(tableContainer);
+    }
+  }
+  // Tabelle für geschachtelte Rechtecke erstellen
+  var nestedTableContainer = document.createElement("div");
+  nestedTableContainer.style.maxWidth = "300px"; // Maximale Breite des Containers
+
+  var nestedTable = document.createElement("table");
+  nestedTable.style.borderCollapse = "collapse";
+  nestedTable.style.width = "90%";
+  nestedTable.style.tableLayout = "fixed"; // Festgelegte Breite für Tabellenspalten
+
+  // Header-Zeile erstellen
+  var nestedHeaderRow = document.createElement("tr");
+  var nestedHeaderCell = document.createElement("th");
+  nestedHeaderCell.textContent = "Trust boundaries nested:";
+  nestedHeaderCell.style.border = "1px solid #ccc";
+  nestedHeaderCell.style.padding = "8px";
+  nestedHeaderCell.style.backgroundColor = "#f0f0f0";
+  nestedHeaderCell.style.textAlign = "left";
+  nestedHeaderCell.colSpan = 2; // Spaltenübergreifende Zelle
+  nestedHeaderRow.appendChild(nestedHeaderCell);
+  nestedTable.appendChild(nestedHeaderRow);
+
+  // Rechtecke zur Tabelle hinzufügen
+  innerRectangles.forEach(function (rectangle) {
+    var row = document.createElement("tr");
+
+    var cellValue = document.createElement("td");
+    cellValue.textContent = rectangle.getValue();
+    cellValue.style.border = "1px solid #ccc";
+    cellValue.style.padding = "8px";
+    cellValue.style.wordWrap = "break-word"; // Zeilenumbruch für lange Wörter
+
+    // Tabellenzelle zur Zeile hinzufügen
+    row.appendChild(cellValue);
+
+    // Zeile zur Tabelle hinzufügen
+    nestedTable.appendChild(row);
+  });
+
+  // Tabelle zum Container hinzufügen
+  nestedTableContainer.appendChild(nestedTable);
+
+  // Container-Element an den gewünschten Ort in deiner Anwendung anhängen
+  // Zum Beispiel an den Body-Element:
+  container.appendChild(nestedTableContainer);
+  return container;
+};
+function isNestedRectangle(rectangle, graph) {
+  var nestedVertices = graph.getModel().getChildVertices(rectangle);
+  for (var i = 0; i < nestedVertices.length; i++) {
+    var nestedVertex = nestedVertices[i];
+    var nestedVertexGeometry = nestedVertex.getGeometry();
+    if (
+      nestedVertexGeometry != null &&
+      isInsideRectangle(nestedVertexGeometry, rectangle.getGeometry())
+    ) {
+      // Überprüfen, ob das verschachtelte Element ein Rechteck ist
+      if (nestedVertex.isVertex()) {
+        // Rekursiver Aufruf, um weitere Verschachtelungen zu überprüfen
+        if (isNestedRectangle(nestedVertex)) {
+          return true;
         }
       }
     }
-  } catch (e) {
-    // ignore
   }
-
-  return container;
-};
-
-/**
- * Adds the label menu items to the given menu and parent.
- */
-AssetFormatPanel.prototype.addSvgRule = function (
-  container,
-  rule,
-  svg,
-  styleElem,
-  rules,
-  ruleIndex,
-  regex
-) {
-  var ui = this.editorUi;
-  var graph = ui.editor.graph;
-
-  if (regex.test(rule.selectorText)) {
-    function rgb2hex(rgb) {
-      rgb = rgb.match(
-        /^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i
-      );
-
-      return rgb && rgb.length === 4
-        ? "#" +
-            ("0" + parseInt(rgb[1], 10).toString(16)).slice(-2) +
-            ("0" + parseInt(rgb[2], 10).toString(16)).slice(-2) +
-            ("0" + parseInt(rgb[3], 10).toString(16)).slice(-2)
-        : "";
-    }
-
-    var addStyleRule = mxUtils.bind(this, function (rule, key, label) {
-      var value = mxUtils.trim(rule.style[key]);
-
-      if (value != "" && value.substring(0, 4) != "url(") {
-        var option = this.createColorOption(
-          label + " " + rule.selectorText,
-          function () {
-            return rgb2hex(value);
-          },
-          function (color) {
-            rules[ruleIndex].style[key] = color;
-            var cssTxt = "";
-
-            for (var i = 0; i < rules.length; i++) {
-              cssTxt += rules[i].cssText + " ";
-            }
-
-            styleElem.textContent = cssTxt;
-            var xml = mxUtils.getXml(svg.documentElement);
-
-            graph.setCellStyles(
-              mxConstants.STYLE_IMAGE,
-              "data:image/svg+xml," +
-                (window.btoa ? btoa(xml) : Base64.encode(xml, true)),
-              graph.getSelectionCells()
-            );
-          },
-          "#ffffff",
-          {
-            install: function (apply) {
-              // ignore
-            },
-            destroy: function () {
-              // ignore
-            },
-          }
-        );
-
-        container.appendChild(option);
-
-        // Shows container if rules are added
-        container.style.display = "";
-      }
-    });
-
-    addStyleRule(rule, "fill", mxResources.get("fill"));
-    addStyleRule(rule, "stroke", mxResources.get("line"));
-    addStyleRule(rule, "stop-color", mxResources.get("gradient"));
-  }
-};
-
-/**
- * Adds the label menu items to the given menu and parent.
- */
-AssetFormatPanel.prototype.addEditOps = function (div) {
-  var ss = this.format.getSelectionState();
-  var btn = null;
-
-  if (this.editorUi.editor.graph.getSelectionCount() == 1) {
-    btn = mxUtils.button(
-      mxResources.get("editStyle"),
-      mxUtils.bind(this, function (evt) {
-        this.editorUi.actions.get("editStyle").funct();
-      })
-    );
-
-    btn.setAttribute(
-      "title",
-      mxResources.get("editStyle") +
-        " (" +
-        this.editorUi.actions.get("editStyle").shortcut +
-        ")"
-    );
-    btn.style.width = "202px";
-    btn.style.marginBottom = "2px";
-
-    div.appendChild(btn);
-  }
-
-  if (ss.image) {
-    var btn2 = mxUtils.button(
-      mxResources.get("editImage"),
-      mxUtils.bind(this, function (evt) {
-        this.editorUi.actions.get("image").funct();
-      })
-    );
-
-    btn2.setAttribute("title", mxResources.get("editImage"));
-    btn2.style.marginBottom = "2px";
-
-    if (btn == null) {
-      btn2.style.width = "202px";
-    } else {
-      btn.style.width = "100px";
-      btn2.style.width = "100px";
-      btn2.style.marginLeft = "2px";
-    }
-
-    div.appendChild(btn2);
-  }
-
-  return div;
-};
-
-function createSection(title) {
-  var section = document.createElement("div");
-  section.style.padding = "6px 0px 6px 0px";
-  section.style.marginTop = "8px";
-  section.style.borderTop = "1px solid rgb(192, 192, 192)";
-  section.innerHTML = title;
-  section.style.whiteSpace = "nowrap";
-  section.style.overflow = "hidden";
-  section.style.width = "200px";
-  section.style.fontWeight = "bold";
-  return section;
+  return false;
 }
+function isInsideRectangle(elementGeometry, rectangleGeometry) {
+  var elementX = elementGeometry.x;
+  var elementY = elementGeometry.y;
+  var elementWidth = elementGeometry.width;
+  var elementHeight = elementGeometry.height;
 
-function createPropertyItem(label, type, options) {
-  var item = document.createElement("div");
-  item.style.display = "flex";
-  item.style.alignItems = "baseline";
-  item.style.marginBottom = "8px";
+  var rectangleX = rectangleGeometry.x;
+  var rectangleY = rectangleGeometry.y;
+  var rectangleWidth = rectangleGeometry.width;
+  var rectangleHeight = rectangleGeometry.height;
 
-  var propertyName = document.createElement("span");
-  propertyName.innerHTML = label;
-  propertyName.style.width = "100px";
-  propertyName.style.marginRight = "10px";
-
-  if (type === "select") {
-    var selectContainer = document.createElement("div");
-    selectContainer.style.display = "flex";
-    selectContainer.style.alignItems = "center";
-    selectContainer.style.marginLeft = "auto";
-
-    var selectDropdown = document.createElement("select");
-    selectDropdown.style.width = "100px";
-    selectContainer.appendChild(selectDropdown);
-
-    for (var i = 0; i < options.length; i++) {
-      var option = document.createElement("option");
-      option.value = options[i];
-      option.text = options[i];
-      selectDropdown.appendChild(option);
-    }
-
-    item.appendChild(propertyName);
-    item.appendChild(selectContainer);
-  } else if (type === "checkbox") {
-    var checkboxInput = document.createElement("input");
-    checkboxInput.type = "checkbox";
-    item.appendChild(propertyName);
-    item.appendChild(checkboxInput);
-  } else if (type === "text") {
-    var textInput = document.createElement("input");
-    textInput.type = "text";
-    item.appendChild(propertyName);
-    item.appendChild(textInput);
-  }
-
-  return item;
-}
-function createCustomOption(self, parameter) {
-  return function () {
-    var cells = self.editorUi.editor.graph.getSelectionCells();
-    if (cells != null && cells.length > 0) {
-      var cell = self.editorUi.editor.graph.getSelectionCell();
-      if (!cell.technicalAsset) {
-        cell.technicalAsset = {
-          [parameter]: false,
-        };
-      }
-      var customValue = cell.technicalAsset[parameter];
-      return customValue;
-    }
-    return false;
-  };
-}
-
-function setCustomOption(self, parameter) {
-  return function (checked) {
-    var cells = self.editorUi.editor.graph.getSelectionCells();
-    if (cells != null && cells.length > 0) {
-      var cell = self.editorUi.editor.graph.getSelectionCell();
-      if (!cell.technicalAsset) {
-        cell.technicalAsset = {
-          [parameter]: false,
-        };
-      }
-      cell.technicalAsset[parameter] = checked;
-    }
-  };
-}
-
-DiagramFormatPanel.prototype.addDataMenu = function (container) {
-  var self = this;
-  // Add General header
-  var descriptionButton = mxUtils.button(
-    "Description:",
-    function (evt) {
-      this.editorUi.actions
-        .get("editDataDescription")
-        .funct(list.childElementCount - 1);
-    }.bind(this)
+  return (
+    elementX >= rectangleX &&
+    elementY >= rectangleY &&
+    elementX + elementWidth <= rectangleX + rectangleWidth &&
+    elementY + elementHeight <= rectangleY + rectangleHeight
   );
-  descriptionButton.innerHTML = "Description";
-  descriptionButton.style.width = "200px";
+}
+mxUtils.extend(CommunicationFormatPanel, BaseFormatPanel);
 
-  container.appendChild(descriptionButton);
+CommunicationFormatPanel.prototype.init = function () {
+  var ui = this.editorUi;
+  var editor = ui.editor;
+  var graph = editor.graph;
+  var ss = this.format.getSelectionState();
+
+  this.container.appendChild(
+    this.addCommunicationMenuDynamic(this.createPanel())
+  );
+};
+CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
+  container
+) {
+  var self = this;
 
   // Add line break
-  container.appendChild(document.createElement("br"));
-
   // Add Properties section
   var propertiesSection = createSection("Properties");
   container.appendChild(propertiesSection);
 
   // Add Type properties
   var typeProperties = {
-    Id: {
-      description: "ID",
+    Target: {
+      description: "Target",
       type: "button",
     },
     Description: {
       description: "Description",
       type: "button",
     },
-    Usage: {
-      description: "Usage",
+    Protocol: {
+      description: "Protocol",
       type: "select",
-      options: ["business", "devops"],
+      options: [
+        "unknown-protocol",
+        "http",
+        "https",
+        "ws",
+        "wss",
+        "reverse-proxy-web-protocol",
+        "reverse-proxy-web-protocol-encrypted",
+        "mqtt",
+        "jdbc",
+        "jdbc-encrypted",
+        "odbc",
+        "odbc-encrypted",
+        "sql-access-protocol",
+        "sql-access-protocol-encrypted",
+        "nosql-access-protocol",
+        "nosql-access-protocol-encrypted",
+        "binary",
+        "binary-encrypted",
+        "text",
+        "text-encrypted",
+        "ssh",
+        "ssh-tunnel",
+        "smtp",
+        "smtp-encrypted",
+        "pop3",
+        "pop3-encrypted",
+        "imap",
+        "imap-encrypted",
+        "ftp",
+        "ftps",
+        "sftp",
+        "scp",
+        "ldap",
+        "ldaps",
+        "jms",
+        "nfs",
+        "smb",
+        "smb-encrypted",
+        "local-file-access",
+        "nrpe",
+        "xmpp",
+        "iiop",
+        "iiop-encrypted",
+        "jrmp",
+        "jrmp-encrypted",
+        "in-process-library-call",
+        "container-spawning",
+      ],
+    },
+    Authentication: {
+      description: "Authentication",
+      type: "select",
+      options: [
+        "none",
+        "credentials",
+        "session-id",
+        "token",
+        "client-certificate",
+        "two-factor",
+        "externalized",
+      ],
+    },
+    Authorization: {
+      description: "Authorization",
+      type: "select",
+      options: ["none", "technical-user", "enduser-identity-propagation"],
     },
     Tags: {
       description: "Tags",
@@ -8783,55 +8918,46 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
         type: "button",
       },
     },
-    Origin: {
-      description: "Origin",
-      type: "button",
+    VPN: {
+      description: "VPN",
+      type: "checkbox",
     },
-    Owner: {
-      description: "Owner",
-      type: "button",
+    IP_filtered: {
+      description: "IP filtered",
+      type: "checkbox",
     },
-    Quantity: {
-      description: "Quantity",
+    Readonly: {
+      description: "Readonly",
+      type: "checkbox",
+    },
+    Usage: {
+      description: "Usage",
       type: "select",
-      options: ["very-few", "few", "many", "very-many"],
+      options: ["business", "devops"],
     },
-    Confidentiality: {
-      description: "Confidentiality",
-      type: "select",
-      options: [
-        "public",
-        "internal",
-        "restricted",
-        "confidential",
-        "strictly-confidential",
-      ],
+    data_assets_sent: {
+      description: "Data assets sent",
+      type: "array",
+      uniqueItems: true,
+      items: {
+        type: "button",
+      },
     },
-    Integrity: {
-      description: "Integrity",
-      type: "select",
-      options: [
-        "archive",
-        "operational",
-        "important",
-        "critical",
-        "mission-critical",
-      ],
+    data_assets_received: {
+      description: "Data assets received",
+      type: "array",
+      uniqueItems: true,
+      items: {
+        type: "button",
+      },
     },
-    Availability: {
-      description: "Availability",
-      type: "select",
-      options: [
-        "archive",
-        "operational",
-        "important",
-        "critical",
-        "mission-critical",
-      ],
+    Diagram_tweak_weight: {
+      description: "Diagram tweak weight",
+      type: "integer",
     },
-    Justification_CIA_Rating: {
-      description: "Justification of the rating",
-      type: "button",
+    Diagram_tweak_constraint: {
+      description: "Diagram tweak constraint",
+      type: "checkbox",
     },
   };
   var customListener = {
@@ -8843,7 +8969,8 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
 
   var self = this;
 
-  for (var property in typeProperties) {
+  var typePropertiesMap = {};
+  for (let property in typeProperties) {
     var typeItem = document.createElement("li");
     typeItem.style.display = "flex";
     typeItem.style.alignItems = "baseline";
@@ -8918,8 +9045,36 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
       let button = mxUtils.button(
         property,
         mxUtils.bind(this, function (evt) {
-          // This is madness! THIS IS SPARTAAAA!
-          this.editorUi.actions.get("editAssetOwner").funct();
+          var cells = self.editorUi.editor.graph.getSelectionCells();
+          var cell = cells && cells.length > 0 ? cells[0] : null;
+          var dataValue =
+            cell && cell.technicalAsset ? cell.technicalAsset[property] : "";
+
+          var dlg = new TextareaDialog(
+            this.editorUi,
+            property + ":",
+            dataValue,
+            function (newValue) {
+              if (newValue != null) {
+                if (cell) {
+                  if (!cell.technicalAsset) {
+                    cell.technicalAsset = {
+                      [property]: newValue,
+                    };
+                  } else {
+                    cell.technicalAsset[property] = newValue;
+                  }
+                }
+              }
+            },
+            null,
+            null,
+            400,
+            220
+          );
+          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
+
+          dlg.init();
         })
       );
       button.style.width = "200px";
@@ -8927,9 +9082,158 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
     }
     propertiesSection.appendChild(typeItem);
   }
+  var diagramData = this.editorUi.editor.graph.model.diagramData;
+  var dataSection = createSection("Data Sent:");
+  var selectedDataSection = createSection("Selected Data:");
+
+  // Create table
+  var table = document.createElement("table");
+  table.style.borderCollapse = "collapse";
+
+  // Create table header
+  var thead = document.createElement("thead");
+  var trHead = document.createElement("tr");
+  trHead.style.borderBottom = "2px solid black";
+  var thID = document.createElement("th");
+  thID.textContent = "ID";
+  thID.style.padding = "8px";
+  var thDescription = document.createElement("th");
+  thDescription.textContent = "Description";
+  thDescription.style.padding = "8px";
+  var thSelected = document.createElement("th");
+  thSelected.textContent = "Selected";
+  thSelected.style.padding = "8px";
+  trHead.appendChild(thID);
+  trHead.appendChild(thDescription);
+  trHead.appendChild(thSelected);
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+
+  // Create table body
+  var tbody = document.createElement("tbody");
+  table.appendChild(tbody);
+
+  // Create selected table
+  var selectedTable = document.createElement("table");
+  selectedTable.style.borderCollapse = "collapse";
+
+  // Create selected table header
+  var selectedTableHeader = document.createElement("thead");
+  var selectedTableHeaderRow = document.createElement("tr");
+  var selectedTableIDHeader = document.createElement("th");
+  selectedTableIDHeader.textContent = "ID";
+  selectedTableIDHeader.style.borderBottom = "1px solid #ccc";
+  selectedTableIDHeader.style.padding = "8px";
+  selectedTableHeaderRow.appendChild(selectedTableIDHeader);
+  var selectedTableDescriptionHeader = document.createElement("th");
+  selectedTableDescriptionHeader.textContent = "Description";
+  selectedTableDescriptionHeader.style.borderBottom = "1px solid #ccc";
+  selectedTableDescriptionHeader.style.padding = "8px";
+  selectedTableHeaderRow.appendChild(selectedTableDescriptionHeader);
+  selectedTableHeader.appendChild(selectedTableHeaderRow);
+  selectedTable.appendChild(selectedTableHeader);
+
+  // Create selected table body
+  var selectedTableBody = document.createElement("tbody");
+  selectedTable.appendChild(selectedTableBody);
+
+  // Check if diagramData is defined
+  if (typeof this.editorUi.editor.graph.model.diagramData !== "undefined") {
+    // Reference to the Map
+    var diagramData = this.editorUi.editor.graph.model.diagramData;
+
+    // Iterate over the Map and create table rows
+    diagramData.forEach(function (value, property) {
+      var tr = document.createElement("tr");
+
+      // Create ID cell
+      var tdID = document.createElement("td");
+      var idText = value.Id || "";
+      if (idText.length > 6) {
+        var truncatedId = idText.substring(0, 6) + "...";
+        tdID.textContent = truncatedId;
+        tdID.title = idText;
+      } else {
+        tdID.textContent = idText;
+      }
+      tdID.style.borderBottom = "1px solid #ccc";
+      tdID.style.padding = "8px";
+      tr.appendChild(tdID);
+
+      // Create Description cell
+      var tdDescription = document.createElement("td");
+      var descriptionText = value.Description || "";
+      if (descriptionText.length > 6) {
+        var truncatedText = descriptionText.substring(0, 6) + "...";
+        tdDescription.textContent = truncatedText;
+        tdDescription.title = descriptionText;
+      } else {
+        tdDescription.textContent = descriptionText;
+      }
+      tdDescription.style.borderBottom = "1px solid #ccc";
+      tdDescription.style.padding = "8px";
+      tr.appendChild(tdDescription);
+
+      // Create Selected cell
+      var tdSelected = document.createElement("td");
+      tdSelected.style.borderBottom = "1px solid #ccc";
+      tdSelected.style.padding = "8px";
+      var checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+
+      checkbox.addEventListener("change", function () {
+        var selected = checkbox.checked;
+        value.Selected = selected; // Set the "Selected" property in the data object
+
+        // Update selected table
+        if (selected) {
+          var trSelected = document.createElement("tr");
+          var tdSelectedID = document.createElement("td");
+          tdSelectedID.textContent = idText || "";
+          tdSelectedID.style.borderBottom = "1px solid #ccc";
+          tdSelectedID.style.padding = "8px";
+          trSelected.appendChild(tdSelectedID);
+          var tdSelectedDescription = document.createElement("td");
+          tdSelectedDescription.textContent = descriptionText || "";
+          tdSelectedDescription.style.borderBottom = "1px solid #ccc";
+          tdSelectedDescription.style.padding = "8px";
+          trSelected.appendChild(tdSelectedDescription);
+          selectedTableBody.appendChild(trSelected);
+        } else {
+          // Remove from selected table
+          var rows = selectedTableBody.getElementsByTagName("tr");
+          for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            if (
+              row.cells[0].textContent === idText &&
+              row.cells[1].textContent === descriptionText
+            ) {
+              row.parentNode.removeChild(row);
+              break;
+            }
+          }
+        }
+      });
+
+      tdSelected.appendChild(checkbox);
+      tr.appendChild(tdSelected);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  dataSection.appendChild(table);
+  selectedDataSection.appendChild(selectedTable);
+  container.appendChild(dataSection);
+  container.appendChild(selectedDataSection);
   return container;
 };
-AssetFormatPanel.prototype.addThreagileMenu = function (container) {
+/**
+ * Adds the label menu items to the given menu and parent.
+ */
+CommunicationFormatPanel.prototype.addCommunicationeMenu = function (
+  container
+) {
   var self = this;
   // Add General header
   var generalHeader = document.createElement("div");
@@ -9318,6 +9622,947 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
   );
 
   usageSection.appendChild(justificationOutOfScope);
+  return container;
+};
+AssetFormatPanel = function (format, editorUi, container) {
+  BaseFormatPanel.call(this, format, editorUi, container);
+  this.init();
+};
+
+mxUtils.extend(AssetFormatPanel, BaseFormatPanel);
+
+/**
+ *
+ */
+AssetFormatPanel.prototype.defaultStrokeColor = "black";
+
+/**
+ * Adds the label menu items to the given menu and parent.
+ */
+AssetFormatPanel.prototype.init = function () {
+  var ui = this.editorUi;
+  var editor = ui.editor;
+  var graph = editor.graph;
+  var ss = this.format.getSelectionState();
+
+  this.container.appendChild(this.addThreagileMenu(this.createPanel()));
+
+  //this.container.appendChild(this.addStyleOps(opsPanel));
+};
+
+function createSection(title) {
+  var section = document.createElement("div");
+  section.style.padding = "6px 0px 6px 0px";
+  section.style.marginTop = "8px";
+  section.style.borderTop = "1px solid rgb(192, 192, 192)";
+  section.innerHTML = title;
+  section.style.whiteSpace = "nowrap";
+  section.style.overflow = "hidden";
+  section.style.width = "200px";
+  section.style.fontWeight = "bold";
+  return section;
+}
+
+function createPropertyItem(label, type, options) {
+  var item = document.createElement("div");
+  item.style.display = "flex";
+  item.style.alignItems = "baseline";
+  item.style.marginBottom = "8px";
+
+  var propertyName = document.createElement("span");
+  propertyName.innerHTML = label;
+  propertyName.style.width = "100px";
+  propertyName.style.marginRight = "10px";
+
+  if (type === "select") {
+    var selectContainer = document.createElement("div");
+    selectContainer.style.display = "flex";
+    selectContainer.style.alignItems = "center";
+    selectContainer.style.marginLeft = "auto";
+
+    var selectDropdown = document.createElement("select");
+    selectDropdown.style.width = "100px";
+    selectContainer.appendChild(selectDropdown);
+
+    for (var i = 0; i < options.length; i++) {
+      var option = document.createElement("option");
+      option.value = options[i];
+      option.text = options[i];
+      selectDropdown.appendChild(option);
+    }
+
+    item.appendChild(propertyName);
+    item.appendChild(selectContainer);
+  } else if (type === "checkbox") {
+    var checkboxInput = document.createElement("input");
+    checkboxInput.type = "checkbox";
+    item.appendChild(propertyName);
+    item.appendChild(checkboxInput);
+  } else if (type === "text") {
+    var textInput = document.createElement("input");
+    textInput.type = "text";
+    item.appendChild(propertyName);
+    item.appendChild(textInput);
+  }
+
+  return item;
+}
+function createCustomOption(self, parameter) {
+  return function () {
+    var cells = self.editorUi.editor.graph.getSelectionCells();
+    if (cells != null && cells.length > 0) {
+      var cell = self.editorUi.editor.graph.getSelectionCell();
+      if (!cell.technicalAsset) {
+        cell.technicalAsset = {
+          [parameter]: false,
+        };
+      }
+      var customValue = cell.technicalAsset[parameter];
+      return customValue;
+    }
+    return false;
+  };
+}
+
+function setCustomOption(self, parameter) {
+  return function (checked) {
+    var cells = self.editorUi.editor.graph.getSelectionCells();
+    if (cells != null && cells.length > 0) {
+      var cell = self.editorUi.editor.graph.getSelectionCell();
+      if (!cell.technicalAsset) {
+        cell.technicalAsset = {
+          [parameter]: false,
+        };
+      }
+      cell.technicalAsset[parameter] = checked;
+    }
+  };
+}
+
+DiagramFormatPanel.prototype.addDataMenu = function (container) {
+  var self = this;
+
+  // Add line break
+  // Add Properties section
+  var propertiesSection = createSection("Properties");
+  container.appendChild(propertiesSection);
+
+  // Add Type properties
+  var typeProperties = {
+    Id: {
+      description: "ID",
+      type: "button",
+    },
+    Description: {
+      description: "Description",
+      type: "button",
+    },
+    Usage: {
+      description: "Usage",
+      type: "select",
+      options: ["business", "devops"],
+    },
+    Tags: {
+      description: "Tags",
+      type: "array",
+      uniqueItems: true,
+      items: {
+        type: "button",
+      },
+    },
+    Origin: {
+      description: "Origin",
+      type: "button",
+    },
+    Owner: {
+      description: "Owner",
+      type: "button",
+    },
+    Quantity: {
+      description: "Quantity",
+      type: "select",
+      options: ["very-few", "few", "many", "very-many"],
+    },
+    Confidentiality: {
+      description: "Confidentiality",
+      type: "select",
+      options: [
+        "public",
+        "internal",
+        "restricted",
+        "confidential",
+        "strictly-confidential",
+      ],
+    },
+    Integrity: {
+      description: "Integrity",
+      type: "select",
+      options: [
+        "archive",
+        "operational",
+        "important",
+        "critical",
+        "mission-critical",
+      ],
+    },
+    Availability: {
+      description: "Availability",
+      type: "select",
+      options: [
+        "archive",
+        "operational",
+        "important",
+        "critical",
+        "mission-critical",
+      ],
+    },
+    Justification_CIA_Rating: {
+      description: "Justification of the rating",
+      type: "button",
+    },
+  };
+  var customListener = {
+    install: function (apply) {
+      this.listener = function () {};
+    },
+    destroy: function () {},
+  };
+
+  var self = this;
+
+  var typePropertiesMap = {};
+  for (let property in typeProperties) {
+    var typeItem = document.createElement("li");
+    typeItem.style.display = "flex";
+    typeItem.style.alignItems = "baseline";
+    typeItem.style.marginBottom = "8px";
+
+    var propertyName = document.createElement("span");
+    propertyName.innerHTML = property;
+    propertyName.style.width = "100px";
+    propertyName.style.marginRight = "10px";
+
+    var propertyType = typeProperties[property].type;
+
+    if (propertyType === "select") {
+      const propertySelect = property;
+      typeItem.appendChild(propertyName);
+      var selectContainer = document.createElement("div");
+      selectContainer.style.display = "flex";
+      selectContainer.style.alignItems = "center";
+      selectContainer.style.marginLeft = "auto";
+
+      var selectDropdown = document.createElement("select");
+      selectDropdown.style.width = "100px";
+      selectContainer.appendChild(selectDropdown);
+
+      var options = typeProperties[property].options;
+      for (var i = 0; i < options.length; i++) {
+        var option = document.createElement("option");
+        option.value = options[i];
+        option.text = options[i];
+        selectDropdown.appendChild(option);
+      }
+
+      var createChangeListener = function (selectDropdown, property) {
+        var self = this.editorUi;
+        return function (evt) {
+          var menuId =
+            evt.target.parentNode.parentNode.parentNode.parentNode.id;
+          var newValue = selectDropdown.value;
+          currentValue = newValue;
+
+          let current = self.editor.graph.model.diagramData.get(menuId);
+          if (!current[property]) {
+            current[property] = "";
+          }
+          if (newValue != null) {
+            current[property] = newValue;
+          }
+        };
+      }.bind(this);
+
+      mxEvent.addListener(
+        selectDropdown,
+        "change",
+        createChangeListener(selectDropdown, property)
+      );
+
+      typeItem.appendChild(selectContainer);
+    } else if (propertyType === "checkbox") {
+      container.appendChild(
+        this.createOption(
+          property,
+          createCustomOption(self, property),
+          setCustomOption(self, property),
+          customListener
+        )
+      );
+    } else if (propertyType === "button") {
+      let functionName =
+        "editData" + property.charAt(0).toUpperCase() + property.slice(1);
+      let button = mxUtils.button(
+        property,
+        mxUtils.bind(this, function (evt) {
+          var menuId = evt.target.parentNode.parentNode.parentNode.id;
+          current = this.editorUi.editor.graph.model.diagramData.get(menuId);
+
+          if (!current[property]) {
+            current[property] = "";
+          }
+
+          var dataValue = current[property];
+
+          var dlg = new TextareaDialog(
+            this.editorUi,
+            property + ":",
+            dataValue,
+            function (newValue) {
+              if (newValue != null) {
+                current[property] = newValue;
+              }
+            },
+            null,
+            null,
+            400,
+            220
+          );
+          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
+
+          dlg.init();
+        })
+      );
+      button.style.width = "200px";
+      typeItem.appendChild(button);
+    }
+    propertiesSection.appendChild(typeItem);
+  }
+  return container;
+};
+AssetFormatPanel.prototype.addThreagileMenu = function (container) {
+  var self = this;
+  // Add General header
+  var generalHeader = document.createElement("div");
+  generalHeader.innerHTML = "General";
+  generalHeader.style.padding = "10px 0px 6px 0px";
+  generalHeader.style.whiteSpace = "nowrap";
+  generalHeader.style.overflow = "hidden";
+  generalHeader.style.width = "200px";
+  generalHeader.style.fontWeight = "bold";
+  container.appendChild(generalHeader);
+
+  // Add Description button
+  var descriptionButton = mxUtils.button(
+    "Description:",
+    mxUtils.bind(this, function (evt) {
+      this.editorUi.actions.get("editAssetDescription").funct();
+    })
+  );
+
+  descriptionButton.innerHTML = "Description";
+  descriptionButton.style.width = "200px";
+
+  container.appendChild(descriptionButton);
+
+  // Add line break
+  container.appendChild(document.createElement("br"));
+
+  // Add Properties section
+  var propertiesSection = createSection("Properties");
+  container.appendChild(propertiesSection);
+
+  // Add Type properties
+  var typeProperties = {
+    Id: {
+      description: "Id",
+      type: "button",
+    },
+    Type: {
+      description: "Type",
+      type: "select",
+      options: ["external-entity", "process", "datastore"],
+    },
+    Technologies: {
+      description: "Technologies",
+      type: "select",
+      options: [
+        "unknown-technology",
+        "client-system",
+        "browser",
+        "desktop",
+        "mobile-app",
+        "devops-client",
+        "web-server",
+        "web-application",
+        "application-server",
+        "database",
+        "file-server",
+        "local-file-system",
+        "erp",
+        "cms",
+        "web-service-rest",
+        "web-service-soap",
+        "ejb",
+        "service-registry",
+        "reverse-proxy",
+        "load-balancer",
+        "build-pipeline",
+        "sourcecode-repository",
+        "artifact-registry",
+        "code-inspection-platform",
+        "monitoring",
+        "ldap-server",
+        "container-platform",
+        "batch-processing",
+        "event-listener",
+        "identity-provider",
+        "identity-store-ldap",
+        "identity-store-database",
+        "tool",
+        "cli",
+        "task",
+        "function",
+        "gateway",
+        "iot-device",
+        "message-queue",
+        "stream-processing",
+        "service-mesh",
+        "data-lake",
+        "report-engine",
+        "ai",
+        "mail-server",
+        "vault",
+        "hsm",
+        "waf",
+        "ids",
+        "ips",
+        "scheduler",
+        "mainframe",
+        "block-storage",
+        "library",
+      ],
+    },
+
+    description: "Size",
+    type: "select",
+    options: ["system", "service", "application", "component"],
+    Size: {},
+    Machine: {
+      description: "Machine",
+      type: "select",
+      options: ["physical", "virtual", "container", "serverless"],
+    },
+    Encryption: {
+      description: "Encryption",
+      type: "select",
+      options: [
+        "none",
+        "data-with-symmetric-shared-key",
+        "data-with-asymmetric-shared-key",
+        "data-with-enduser-individual-key",
+      ],
+    },
+    Owner: {
+      description: "Owner",
+      type: "button",
+    },
+    Internet: {
+      description: "Internet",
+      type: "checkbox",
+    },
+  };
+  var customListener = {
+    install: function (apply) {
+      this.listener = function () {};
+    },
+    destroy: function () {},
+  };
+
+  var self = this;
+
+  for (let property in typeProperties) {
+    var typeItem = document.createElement("li");
+    typeItem.style.display = "flex";
+    typeItem.style.alignItems = "baseline";
+    typeItem.style.marginBottom = "8px";
+
+    var propertyName = document.createElement("span");
+    propertyName.innerHTML = property;
+    propertyName.style.width = "100px";
+    propertyName.style.marginRight = "10px";
+
+    var propertyType = typeProperties[property].type;
+
+    if (propertyType === "select") {
+      const propertySelect = property;
+      typeItem.appendChild(propertyName);
+      var selectContainer = document.createElement("div");
+      selectContainer.style.display = "flex";
+      selectContainer.style.alignItems = "center";
+      selectContainer.style.marginLeft = "auto";
+
+      var selectDropdown = document.createElement("select");
+      selectDropdown.style.width = "100px";
+      selectContainer.appendChild(selectDropdown);
+
+      var options = typeProperties[property].options;
+      for (var i = 0; i < options.length; i++) {
+        var option = document.createElement("option");
+        option.value = options[i];
+        option.text = options[i];
+        selectDropdown.appendChild(option);
+      }
+      var cell = self.editorUi.editor.graph.getSelectionCell();
+      if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
+        selectDropdown.value = cell.technicalAsset[propertySelect];
+      }
+      var createChangeListener = function (selectDropdown, propertySelect) {
+        return function (evt) {
+          var vals = selectDropdown.value;
+
+          if (vals != null) {
+            var cells = self.editorUi.editor.graph.getSelectionCells();
+            if (cells != null && cells.length > 0) {
+              var cell = self.editorUi.editor.graph.getSelectionCell();
+              if (!cell.technicalAsset) {
+                cell.technicalAsset = {
+                  [propertySelect]: selectDropdown.value,
+                };
+              } else {
+                cell.technicalAsset[propertySelect] = selectDropdown.value;
+              }
+            }
+          }
+          mxEvent.consume(evt);
+        };
+      };
+      mxEvent.addListener(
+        selectDropdown,
+        "change",
+        createChangeListener(selectDropdown, propertySelect)
+      );
+      typeItem.appendChild(selectContainer);
+    } else if (propertyType === "checkbox") {
+      container.appendChild(
+        this.createOption(
+          property,
+          createCustomOption(self, property),
+          setCustomOption(self, property),
+          customListener
+        )
+      );
+    } else if (propertyType === "button") {
+      let button = mxUtils.button(
+        property,
+        mxUtils.bind(this, function (evt) {
+          var cells = self.editorUi.editor.graph.getSelectionCells();
+          var cell = cells && cells.length > 0 ? cells[0] : null;
+          var dataValue =
+            cell && cell.technicalAsset ? cell.technicalAsset[property] : "";
+
+          var dlg = new TextareaDialog(
+            this.editorUi,
+            property + ":",
+            dataValue,
+            function (newValue) {
+              if (newValue != null) {
+                if (cell) {
+                  if (!cell.technicalAsset) {
+                    cell.technicalAsset = {
+                      [property]: newValue,
+                    };
+                  } else {
+                    cell.technicalAsset[property] = newValue;
+                  }
+                }
+              }
+            },
+            null,
+            null,
+            400,
+            220
+          );
+          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
+
+          dlg.init();
+        })
+      );
+      button.style.width = "200px";
+      typeItem.appendChild(button);
+    }
+    propertiesSection.appendChild(typeItem);
+  }
+
+  var ciaProperties = {
+    Confidentiality: {
+      description: "Confidentility",
+      type: "select",
+      options: [
+        "public",
+        "internal",
+        "restricted",
+        "confidential",
+        "strictly-confidential",
+      ],
+    },
+    Integrity: {
+      description: "Integritity",
+      type: "select",
+      options: [
+        "archive",
+        "operational",
+        "important",
+        "critical",
+        "mission-critical",
+      ],
+    },
+    Availability: {
+      description: "Availiablity",
+      type: "select",
+      options: [
+        "archive",
+        "operational",
+        "important",
+        "critical",
+        "mission-critical",
+      ],
+    },
+  };
+  // Add CIA section
+  var ciaSection = createSection("CIA");
+  ciaSection.style.marginLeft = "0"; // Set left margin to 0
+  container.appendChild(ciaSection);
+  for (var property in ciaProperties) {
+    var typeItem = document.createElement("li");
+    typeItem.style.display = "flex";
+    typeItem.style.alignItems = "baseline";
+    typeItem.style.marginBottom = "8px";
+
+    var propertyName = document.createElement("span");
+    propertyName.innerHTML = property;
+    propertyName.style.width = "100px";
+    propertyName.style.marginRight = "10px";
+
+    var propertyType = ciaProperties[property].type;
+
+    if (propertyType === "select") {
+      const propertySelect = property;
+      typeItem.appendChild(propertyName);
+      var selectContainer = document.createElement("div");
+      selectContainer.style.display = "flex";
+      selectContainer.style.alignItems = "center";
+      selectContainer.style.marginLeft = "auto";
+
+      var selectDropdown = document.createElement("select");
+      selectDropdown.style.width = "100px";
+      selectContainer.appendChild(selectDropdown);
+
+      var options = ciaProperties[property].options;
+      for (var i = 0; i < options.length; i++) {
+        var option = document.createElement("option");
+        option.value = options[i];
+        option.text = options[i];
+        selectDropdown.appendChild(option);
+      }
+      var cell = self.editorUi.editor.graph.getSelectionCell();
+      if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
+        selectDropdown.value = cell.technicalAsset[propertySelect];
+      }
+      var createChangeListener = function (selectDropdown, propertySelect) {
+        return function (evt) {
+          var vals = selectDropdown.value;
+
+          if (vals != null) {
+            var cells = self.editorUi.editor.graph.getSelectionCells();
+            if (cells != null && cells.length > 0) {
+              var cell = self.editorUi.editor.graph.getSelectionCell();
+              if (!cell.technicalAsset) {
+                cell.technicalAsset = {
+                  [propertySelect]: selectDropdown.value,
+                };
+              } else {
+                cell.technicalAsset[propertySelect] = selectDropdown.value;
+              }
+            }
+          }
+          mxEvent.consume(evt);
+        };
+      };
+      mxEvent.addListener(
+        selectDropdown,
+        "change",
+        createChangeListener(selectDropdown, propertySelect)
+      );
+      typeItem.appendChild(selectContainer);
+    }
+    ciaSection.appendChild(typeItem);
+  }
+  var justificationCIA = mxUtils.button(
+    "Justification of the rating",
+    mxUtils.bind(this, function (evt) {
+      this.editorUi.actions.get("editAssetJustificationOftheRating").funct();
+    })
+  );
+
+  justificationCIA.innerHTML = "Justification of the rating";
+  justificationCIA.style.width = "200px";
+
+  ciaSection.appendChild(justificationCIA);
+  // ...
+  //
+  var usageSection = createSection("Usage:");
+
+  usageSection.appendChild(document.createElement("br"));
+  container.appendChild(usageSection);
+
+  /*
+    Usage[X]
+    Used as client by human[X]
+    Justification of out of scope[X]
+    Multi tenant
+    Redundant
+    Custom developed parts
+    Out of scope
+  */
+  var usageLabel = document.createElement("span");
+  usageLabel.style.width = "100px";
+  usageLabel.style.marginRight = "10px";
+  usageLabel.innerHTML = "Usage:";
+
+  usageSection.appendChild(usageLabel);
+  var usageSelect = document.createElement("select");
+  usageSection.appendChild(usageSelect);
+
+  var usageOptions = ["business", "devops"];
+  for (var i = 0; i < usageOptions.length; i++) {
+    var option = document.createElement("option");
+    option.value = usageOptions[i];
+    option.text = usageOptions[i];
+    usageSelect.appendChild(option);
+  }
+  var cell = self.editorUi.editor.graph.getSelectionCell();
+  if (cell && cell.technicalAsset && cell.technicalAsset.usage) {
+    usageSelect.value = cell.technicalAsset.usage;
+  }
+  mxEvent.addListener(usageSelect, "change", function (evt) {
+    var vals = usageSelect.value;
+
+    if (vals != null) {
+      var cells = self.editorUi.editor.graph.getSelectionCells();
+      if (cells != null && cells.length > 0) {
+        var cell = self.editorUi.editor.graph.getSelectionCell();
+        if (!cell.technicalAsset) {
+          cell.technicalAsset = {
+            usage: usageSelect.value,
+          };
+        } else {
+          cell.technicalAsset.usage = usageSelect.value;
+        }
+      }
+    }
+    mxEvent.consume(evt);
+  });
+  usageSection.appendChild(
+    this.createOption(
+      "Used as client by human",
+      createCustomOption(self, "Usedasclientbyhuman"),
+      setCustomOption(self, "Usedasclientbyhuman"),
+      customListener
+    )
+  );
+  //Justification of out of scope
+  var justificationOutOfScope = mxUtils.button(
+    "Justification ouf of Scope",
+    mxUtils.bind(this, function (evt) {
+      this.editorUi.actions.get("editAssetJustificationOutOfScope").funct();
+    })
+  );
+
+  justificationOutOfScope.innerHTML = "Justification out of Scope";
+  justificationOutOfScope.style.width = "199px";
+
+  // Multi tenant
+  usageSection.appendChild(
+    this.createOption(
+      "Multi tenant",
+      createCustomOption(self, "Multitenant"),
+      setCustomOption(self, "Multitenant"),
+      customListener
+    )
+  );
+  // Redundant
+  usageSection.appendChild(
+    this.createOption(
+      "Redudant",
+      createCustomOption(self, "Redudant"),
+      setCustomOption(self, "Redudant"),
+      customListener
+    )
+  );
+
+  // Custom developed parts
+  usageSection.appendChild(
+    this.createOption(
+      "Custom developed parts",
+      createCustomOption(self, "customdevelopedparts"),
+      setCustomOption(self, "customdevelopedparts"),
+      customListener
+    )
+  );
+
+  usageSection.appendChild(
+    this.createOption(
+      "Out of Scope",
+      createCustomOption(self, "Outofscope"),
+      setCustomOption(self, "Outofscope"),
+      customListener
+    )
+  );
+
+  usageSection.appendChild(justificationOutOfScope);
+  var dataSection = createSection("Data Stored:");
+  var selectedDataSection = createSection("Selected Data:");
+
+  // Create table
+  var table = document.createElement("table");
+  table.style.borderCollapse = "collapse";
+
+  // Create table header
+  var thead = document.createElement("thead");
+  var trHead = document.createElement("tr");
+  trHead.style.borderBottom = "2px solid black";
+  var thID = document.createElement("th");
+  thID.textContent = "ID";
+  thID.style.padding = "8px";
+  var thDescription = document.createElement("th");
+  thDescription.textContent = "Description";
+  thDescription.style.padding = "8px";
+  var thSelected = document.createElement("th");
+  thSelected.textContent = "Selected";
+  thSelected.style.padding = "8px";
+  trHead.appendChild(thID);
+  trHead.appendChild(thDescription);
+  trHead.appendChild(thSelected);
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+
+  // Create table body
+  var tbody = document.createElement("tbody");
+  table.appendChild(tbody);
+
+  // Create selected table
+  var selectedTable = document.createElement("table");
+  selectedTable.style.borderCollapse = "collapse";
+
+  // Create selected table header
+  var selectedTableHeader = document.createElement("thead");
+  var selectedTableHeaderRow = document.createElement("tr");
+  var selectedTableIDHeader = document.createElement("th");
+  selectedTableIDHeader.textContent = "ID";
+  selectedTableIDHeader.style.borderBottom = "1px solid #ccc";
+  selectedTableIDHeader.style.padding = "8px";
+  selectedTableHeaderRow.appendChild(selectedTableIDHeader);
+  var selectedTableDescriptionHeader = document.createElement("th");
+  selectedTableDescriptionHeader.textContent = "Description";
+  selectedTableDescriptionHeader.style.borderBottom = "1px solid #ccc";
+  selectedTableDescriptionHeader.style.padding = "8px";
+  selectedTableHeaderRow.appendChild(selectedTableDescriptionHeader);
+  selectedTableHeader.appendChild(selectedTableHeaderRow);
+  selectedTable.appendChild(selectedTableHeader);
+
+  // Create selected table body
+  var selectedTableBody = document.createElement("tbody");
+  selectedTable.appendChild(selectedTableBody);
+
+  // Check if diagramData is defined
+  if (typeof this.editorUi.editor.graph.model.diagramData !== "undefined") {
+    // Reference to the Map
+    var diagramData = this.editorUi.editor.graph.model.diagramData;
+
+    // Iterate over the Map and create table rows
+    diagramData.forEach(function (value, property) {
+      var tr = document.createElement("tr");
+
+      // Create ID cell
+      var tdID = document.createElement("td");
+      var idText = value.Id || "";
+      if (idText.length > 6) {
+        var truncatedId = idText.substring(0, 6) + "...";
+        tdID.textContent = truncatedId;
+        tdID.title = idText;
+      } else {
+        tdID.textContent = idText;
+      }
+      tdID.style.borderBottom = "1px solid #ccc";
+      tdID.style.padding = "8px";
+      tr.appendChild(tdID);
+
+      // Create Description cell
+      var tdDescription = document.createElement("td");
+      var descriptionText = value.Description || "";
+      if (descriptionText.length > 6) {
+        var truncatedText = descriptionText.substring(0, 6) + "...";
+        tdDescription.textContent = truncatedText;
+        tdDescription.title = descriptionText;
+      } else {
+        tdDescription.textContent = descriptionText;
+      }
+      tdDescription.style.borderBottom = "1px solid #ccc";
+      tdDescription.style.padding = "8px";
+      tr.appendChild(tdDescription);
+
+      // Create Selected cell
+      var tdSelected = document.createElement("td");
+      tdSelected.style.borderBottom = "1px solid #ccc";
+      tdSelected.style.padding = "8px";
+      var checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+
+      checkbox.addEventListener("change", function () {
+        var selected = checkbox.checked;
+        value.Selected = selected; // Set the "Selected" property in the data object
+
+        // Update selected table
+        if (selected) {
+          var trSelected = document.createElement("tr");
+          var tdSelectedID = document.createElement("td");
+          tdSelectedID.textContent = idText || "";
+          tdSelectedID.style.borderBottom = "1px solid #ccc";
+          tdSelectedID.style.padding = "8px";
+          trSelected.appendChild(tdSelectedID);
+          var tdSelectedDescription = document.createElement("td");
+          tdSelectedDescription.textContent = descriptionText || "";
+          tdSelectedDescription.style.borderBottom = "1px solid #ccc";
+          tdSelectedDescription.style.padding = "8px";
+          trSelected.appendChild(tdSelectedDescription);
+          selectedTableBody.appendChild(trSelected);
+        } else {
+          // Remove from selected table
+          var rows = selectedTableBody.getElementsByTagName("tr");
+          for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            if (
+              row.cells[0].textContent === idText &&
+              row.cells[1].textContent === descriptionText
+            ) {
+              row.parentNode.removeChild(row);
+              break;
+            }
+          }
+        }
+      });
+
+      tdSelected.appendChild(checkbox);
+      tr.appendChild(tdSelected);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  dataSection.appendChild(table);
+  selectedDataSection.appendChild(selectedTable);
+  container.appendChild(dataSection);
+  container.appendChild(selectedDataSection);
 
   return container;
 };

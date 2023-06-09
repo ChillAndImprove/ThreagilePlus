@@ -12,64 +12,10 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/threagile/threagile/colors"
-	"github.com/threagile/threagile/macros/built-in/add-build-pipeline"
-	"github.com/threagile/threagile/macros/built-in/add-vault"
-	"github.com/threagile/threagile/macros/built-in/pretty-print"
-	"github.com/threagile/threagile/macros/built-in/remove-unused-tags"
-	"github.com/threagile/threagile/macros/built-in/seed-risk-tracking"
-	"github.com/threagile/threagile/macros/built-in/seed-tags"
-	"github.com/threagile/threagile/model"
-	"github.com/threagile/threagile/report"
-	"github.com/threagile/threagile/risks/built-in/accidental-secret-leak"
-	"github.com/threagile/threagile/risks/built-in/code-backdooring"
-	"github.com/threagile/threagile/risks/built-in/container-baseimage-backdooring"
-	"github.com/threagile/threagile/risks/built-in/container-platform-escape"
-	"github.com/threagile/threagile/risks/built-in/cross-site-request-forgery"
-	"github.com/threagile/threagile/risks/built-in/cross-site-scripting"
-	"github.com/threagile/threagile/risks/built-in/dos-risky-access-across-trust-boundary"
-	"github.com/threagile/threagile/risks/built-in/incomplete-model"
-	"github.com/threagile/threagile/risks/built-in/ldap-injection"
-	"github.com/threagile/threagile/risks/built-in/missing-authentication"
-	"github.com/threagile/threagile/risks/built-in/missing-authentication-second-factor"
-	"github.com/threagile/threagile/risks/built-in/missing-build-infrastructure"
-	"github.com/threagile/threagile/risks/built-in/missing-cloud-hardening"
-	"github.com/threagile/threagile/risks/built-in/missing-file-validation"
-	"github.com/threagile/threagile/risks/built-in/missing-hardening"
-	"github.com/threagile/threagile/risks/built-in/missing-identity-propagation"
-	"github.com/threagile/threagile/risks/built-in/missing-identity-provider-isolation"
-	"github.com/threagile/threagile/risks/built-in/missing-identity-store"
-	"github.com/threagile/threagile/risks/built-in/missing-network-segmentation"
-	"github.com/threagile/threagile/risks/built-in/missing-vault"
-	"github.com/threagile/threagile/risks/built-in/missing-vault-isolation"
-	"github.com/threagile/threagile/risks/built-in/missing-waf"
-	"github.com/threagile/threagile/risks/built-in/mixed-targets-on-shared-runtime"
-	"github.com/threagile/threagile/risks/built-in/path-traversal"
-	"github.com/threagile/threagile/risks/built-in/push-instead-of-pull-deployment"
-	"github.com/threagile/threagile/risks/built-in/search-query-injection"
-	"github.com/threagile/threagile/risks/built-in/server-side-request-forgery"
-	"github.com/threagile/threagile/risks/built-in/service-registry-poisoning"
-	"github.com/threagile/threagile/risks/built-in/sql-nosql-injection"
-	"github.com/threagile/threagile/risks/built-in/unchecked-deployment"
-	"github.com/threagile/threagile/risks/built-in/unencrypted-asset"
-	"github.com/threagile/threagile/risks/built-in/unencrypted-communication"
-	"github.com/threagile/threagile/risks/built-in/unguarded-access-from-internet"
-	"github.com/threagile/threagile/risks/built-in/unguarded-direct-datastore-access"
-	"github.com/threagile/threagile/risks/built-in/unnecessary-communication-link"
-	"github.com/threagile/threagile/risks/built-in/unnecessary-data-asset"
-	"github.com/threagile/threagile/risks/built-in/unnecessary-data-transfer"
-	"github.com/threagile/threagile/risks/built-in/unnecessary-technical-asset"
-	"github.com/threagile/threagile/risks/built-in/untrusted-deserialization"
-	"github.com/threagile/threagile/risks/built-in/wrong-communication-link-content"
-	"github.com/threagile/threagile/risks/built-in/wrong-trust-boundary-content"
-	"github.com/threagile/threagile/risks/built-in/xml-external-entity"
-	"golang.org/x/crypto/argon2"
-	"gopkg.in/yaml.v3"
 	"hash/fnv"
 	"io"
 	"io/ioutil"
@@ -84,7 +30,64 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall/js"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/threagile/threagile/colors"
+	add_build_pipeline "github.com/threagile/threagile/macros/built-in/add-build-pipeline"
+	add_vault "github.com/threagile/threagile/macros/built-in/add-vault"
+	pretty_print "github.com/threagile/threagile/macros/built-in/pretty-print"
+	remove_unused_tags "github.com/threagile/threagile/macros/built-in/remove-unused-tags"
+	seed_risk_tracking "github.com/threagile/threagile/macros/built-in/seed-risk-tracking"
+	seed_tags "github.com/threagile/threagile/macros/built-in/seed-tags"
+	"github.com/threagile/threagile/model"
+	"github.com/threagile/threagile/report"
+	accidental_secret_leak "github.com/threagile/threagile/risks/built-in/accidental-secret-leak"
+	code_backdooring "github.com/threagile/threagile/risks/built-in/code-backdooring"
+	container_baseimage_backdooring "github.com/threagile/threagile/risks/built-in/container-baseimage-backdooring"
+	container_platform_escape "github.com/threagile/threagile/risks/built-in/container-platform-escape"
+	cross_site_request_forgery "github.com/threagile/threagile/risks/built-in/cross-site-request-forgery"
+	cross_site_scripting "github.com/threagile/threagile/risks/built-in/cross-site-scripting"
+	dos_risky_access_across_trust_boundary "github.com/threagile/threagile/risks/built-in/dos-risky-access-across-trust-boundary"
+	incomplete_model "github.com/threagile/threagile/risks/built-in/incomplete-model"
+	ldap_injection "github.com/threagile/threagile/risks/built-in/ldap-injection"
+	missing_authentication "github.com/threagile/threagile/risks/built-in/missing-authentication"
+	missing_authentication_second_factor "github.com/threagile/threagile/risks/built-in/missing-authentication-second-factor"
+	missing_build_infrastructure "github.com/threagile/threagile/risks/built-in/missing-build-infrastructure"
+	missing_cloud_hardening "github.com/threagile/threagile/risks/built-in/missing-cloud-hardening"
+	missing_file_validation "github.com/threagile/threagile/risks/built-in/missing-file-validation"
+	missing_hardening "github.com/threagile/threagile/risks/built-in/missing-hardening"
+	missing_identity_propagation "github.com/threagile/threagile/risks/built-in/missing-identity-propagation"
+	missing_identity_provider_isolation "github.com/threagile/threagile/risks/built-in/missing-identity-provider-isolation"
+	missing_identity_store "github.com/threagile/threagile/risks/built-in/missing-identity-store"
+	missing_network_segmentation "github.com/threagile/threagile/risks/built-in/missing-network-segmentation"
+	missing_vault "github.com/threagile/threagile/risks/built-in/missing-vault"
+	missing_vault_isolation "github.com/threagile/threagile/risks/built-in/missing-vault-isolation"
+	missing_waf "github.com/threagile/threagile/risks/built-in/missing-waf"
+	mixed_targets_on_shared_runtime "github.com/threagile/threagile/risks/built-in/mixed-targets-on-shared-runtime"
+	path_traversal "github.com/threagile/threagile/risks/built-in/path-traversal"
+	push_instead_of_pull_deployment "github.com/threagile/threagile/risks/built-in/push-instead-of-pull-deployment"
+	search_query_injection "github.com/threagile/threagile/risks/built-in/search-query-injection"
+	server_side_request_forgery "github.com/threagile/threagile/risks/built-in/server-side-request-forgery"
+	service_registry_poisoning "github.com/threagile/threagile/risks/built-in/service-registry-poisoning"
+	sql_nosql_injection "github.com/threagile/threagile/risks/built-in/sql-nosql-injection"
+	unchecked_deployment "github.com/threagile/threagile/risks/built-in/unchecked-deployment"
+	unencrypted_asset "github.com/threagile/threagile/risks/built-in/unencrypted-asset"
+	unencrypted_communication "github.com/threagile/threagile/risks/built-in/unencrypted-communication"
+	unguarded_access_from_internet "github.com/threagile/threagile/risks/built-in/unguarded-access-from-internet"
+	unguarded_direct_datastore_access "github.com/threagile/threagile/risks/built-in/unguarded-direct-datastore-access"
+	unnecessary_communication_link "github.com/threagile/threagile/risks/built-in/unnecessary-communication-link"
+	unnecessary_data_asset "github.com/threagile/threagile/risks/built-in/unnecessary-data-asset"
+	unnecessary_data_transfer "github.com/threagile/threagile/risks/built-in/unnecessary-data-transfer"
+	unnecessary_technical_asset "github.com/threagile/threagile/risks/built-in/unnecessary-technical-asset"
+	untrusted_deserialization "github.com/threagile/threagile/risks/built-in/untrusted-deserialization"
+	wrong_communication_link_content "github.com/threagile/threagile/risks/built-in/wrong-communication-link-content"
+	wrong_trust_boundary_content "github.com/threagile/threagile/risks/built-in/wrong-trust-boundary-content"
+	xml_external_entity "github.com/threagile/threagile/risks/built-in/xml-external-entity"
+	"golang.org/x/crypto/argon2"
+	"gopkg.in/yaml.v3"
 )
 
 const keepDiagramSourceFiles = false
@@ -665,11 +668,18 @@ func checkErr(err error) {
 }
 
 func main() {
+	js.Global().Set("parseModelViaString", js.FuncOf(parseModelViaString))
+	js.Global().Set("printGraphvizDOT", js.FuncOf(printGraphvizDOT))
+	js.Global().Set("printDataFlowDiagramGraphvizDOT", js.FuncOf(printDataFlowDiagramGraphvizDOT))
+	js.Global().Set("applyRAAJS", js.FuncOf(applyRAAJS))
+
+	c := make(chan int)
+	<-c
 	parseCommandlineArgs()
 	if *serverPort > 0 {
 		startServer()
 	} else {
-		doIt(*modelFilename, *outputDir)
+		//doIt(*modelFilename, *outputDir)
 	}
 }
 
@@ -799,10 +809,10 @@ func doIt(inputFilename string, outputDirectory string) {
 	model.Init()
 	parseModel(inputFilename)
 	introTextRAA := applyRAA()
-	loadCustomRiskRules()
+	//loadCustomRiskRules()
 	applyRiskGeneration()
-	applyWildcardRiskTrackingEvaluation()
-	checkRiskTracking()
+	//applyWildcardRiskTrackingEvaluation()
+	//checkRiskTracking()
 
 	if len(*executeModelMacro) > 0 {
 		var macroDetails model.MacroDetails
@@ -1199,6 +1209,21 @@ func printBorder(length int, bold bool) {
 	}
 	fmt.Println()
 }
+func applyRAAJS(this js.Value, inputs []js.Value) interface{} {
+	// determine plugin to load
+	// load plugin: open the ".so" file to load the symbols
+	/*
+		plug, err := plugin.Open(*raaPlugin)
+		checkErr(err)
+		// look up a symbol (an exported function or variable): in this case, function CalculateRAA
+		symCalculateRAA, err := plug.Lookup("CalculateRAA")
+		checkErr(err)
+	*/
+	// use the plugin
+
+	// call it
+	return CalculateRAA()
+}
 
 func applyRAA() string {
 	if *verbose {
@@ -1206,18 +1231,17 @@ func applyRAA() string {
 	}
 	// determine plugin to load
 	// load plugin: open the ".so" file to load the symbols
-	plug, err := plugin.Open(*raaPlugin)
-	checkErr(err)
-	// look up a symbol (an exported function or variable): in this case, function CalculateRAA
-	symCalculateRAA, err := plug.Lookup("CalculateRAA")
-	checkErr(err)
+	/*
+		plug, err := plugin.Open(*raaPlugin)
+		checkErr(err)
+		// look up a symbol (an exported function or variable): in this case, function CalculateRAA
+		symCalculateRAA, err := plug.Lookup("CalculateRAA")
+		checkErr(err)
+	*/
 	// use the plugin
-	raaCalcFunc, ok := symCalculateRAA.(func() string) // symCalculateRAA.(func(model.ParsedModel) string)
-	if !ok {
-		panic(errors.New("RAA plugin has no 'CalculateRAA() string' function"))
-	}
+
 	// call it
-	return raaCalcFunc()
+	return CalculateRAA()
 }
 
 func loadCustomRiskRules() {
@@ -3914,6 +3938,1049 @@ func copyFile(src, dst string) (int64, error) {
 	return nBytes, err
 }
 
+func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
+	model.Init()
+
+	modelYaml := inputs[0].String()
+	modelBytes := []byte(modelYaml)
+
+	var err error
+	err = yaml.Unmarshal(modelBytes, &modelInput)
+	/*
+		jsonString := js.Global().Get("JSON").Call("stringify", inputs[0]).String()
+
+		// Deserialisiere den JSON-String in ein Go-Objekt
+		var inputObj map[string]interface{}
+			err = json.Unmarshal([]byte(jsonString), &modelInput)
+			if err != nil {
+				fmt.Println("Fehler beim Deserialisieren des Objekts:", err)
+				return nil
+			}
+
+			// Gib die Eigenschaften des Objekts aus
+			for key, value := range inputObj {
+				fmt.Println(key, "=", value)
+			}
+	*/
+	err = yaml.Unmarshal([]byte(inputs[0].String()), &modelInput)
+	var businessCriticality model.Criticality
+	switch modelInput.Business_criticality {
+	case model.Archive.String():
+		businessCriticality = model.Archive
+	case model.Operational.String():
+		businessCriticality = model.Operational
+	case model.Important.String():
+		businessCriticality = model.Important
+	case model.Critical.String():
+		businessCriticality = model.Critical
+	case model.MissionCritical.String():
+		businessCriticality = model.MissionCritical
+	default:
+		panic(errors.New("unknown 'business_criticality' value of application: " + modelInput.Business_criticality))
+	}
+
+	//reportDate := time.Now()
+	if len(modelInput.Date) > 0 {
+		//reportDate, err = time.Parse("2006-01-02", modelInput.Date)
+		if err != nil {
+			//panic(errors.New("unable to parse 'date' value of model file"))
+		}
+	}
+
+	model.ParsedModelRoot = model.ParsedModel{
+		Author:                         modelInput.Author,
+		Title:                          modelInput.Title,
+		ManagementSummaryComment:       modelInput.Management_summary_comment,
+		BusinessCriticality:            businessCriticality,
+		BusinessOverview:               removePathElementsFromImageFiles(modelInput.Business_overview),
+		TechnicalOverview:              removePathElementsFromImageFiles(modelInput.Technical_overview),
+		Questions:                      modelInput.Questions,
+		AbuseCases:                     modelInput.Abuse_cases,
+		SecurityRequirements:           modelInput.Security_requirements,
+		TagsAvailable:                  lowerCaseAndTrim(modelInput.Tags_available),
+		DiagramTweakNodesep:            modelInput.Diagram_tweak_nodesep,
+		DiagramTweakRanksep:            modelInput.Diagram_tweak_ranksep,
+		DiagramTweakEdgeLayout:         modelInput.Diagram_tweak_edge_layout,
+		DiagramTweakSuppressEdgeLabels: modelInput.Diagram_tweak_suppress_edge_labels,
+		DiagramTweakLayoutLeftToRight:  modelInput.Diagram_tweak_layout_left_to_right,
+		DiagramTweakInvisibleConnectionsBetweenAssets: modelInput.Diagram_tweak_invisible_connections_between_assets,
+		DiagramTweakSameRankAssets:                    modelInput.Diagram_tweak_same_rank_assets,
+	}
+	if model.ParsedModelRoot.DiagramTweakNodesep == 0 {
+		model.ParsedModelRoot.DiagramTweakNodesep = 2
+	}
+	if model.ParsedModelRoot.DiagramTweakRanksep == 0 {
+		model.ParsedModelRoot.DiagramTweakRanksep = 2
+	}
+
+	// Data Assets ===============================================================================
+	model.ParsedModelRoot.DataAssets = make(map[string]model.DataAsset)
+	for title, asset := range modelInput.Data_assets {
+		id := fmt.Sprintf("%v", asset.ID)
+
+		var usage model.Usage
+		switch asset.Usage {
+		case model.Business.String():
+			usage = model.Business
+		case model.DevOps.String():
+			usage = model.DevOps
+		default:
+			panic(errors.New("unknown 'usage' value of data asset '" + title + "': " + asset.Usage))
+		}
+
+		var quantity model.Quantity
+		switch asset.Quantity {
+		case model.VeryFew.String():
+			quantity = model.VeryFew
+		case model.Few.String():
+			quantity = model.Few
+		case model.Many.String():
+			quantity = model.Many
+		case model.VeryMany.String():
+			quantity = model.VeryMany
+		default:
+			panic(errors.New("unknown 'quantity' value of data asset '" + title + "': " + asset.Quantity))
+		}
+
+		var confidentiality model.Confidentiality
+		switch asset.Confidentiality {
+		case model.Public.String():
+			confidentiality = model.Public
+		case model.Internal.String():
+			confidentiality = model.Internal
+		case model.Restricted.String():
+			confidentiality = model.Restricted
+		case model.Confidential.String():
+			confidentiality = model.Confidential
+		case model.StrictlyConfidential.String():
+			confidentiality = model.StrictlyConfidential
+		default:
+			panic(errors.New("unknown 'confidentiality' value of data asset '" + title + "': " + asset.Confidentiality))
+		}
+
+		var integrity model.Criticality
+		switch asset.Integrity {
+		case model.Archive.String():
+			integrity = model.Archive
+		case model.Operational.String():
+			integrity = model.Operational
+		case model.Important.String():
+			integrity = model.Important
+		case model.Critical.String():
+			integrity = model.Critical
+		case model.MissionCritical.String():
+			integrity = model.MissionCritical
+		default:
+			panic(errors.New("unknown 'integrity' value of data asset '" + title + "': " + asset.Integrity))
+		}
+
+		var availability model.Criticality
+		switch asset.Availability {
+		case model.Archive.String():
+			availability = model.Archive
+		case model.Operational.String():
+			availability = model.Operational
+		case model.Important.String():
+			availability = model.Important
+		case model.Critical.String():
+			availability = model.Critical
+		case model.MissionCritical.String():
+			availability = model.MissionCritical
+		default:
+			panic(errors.New("unknown 'availability' value of data asset '" + title + "': " + asset.Availability))
+		}
+
+		checkIdSyntax(id)
+		if _, exists := model.ParsedModelRoot.DataAssets[id]; exists {
+			panic(errors.New("duplicate id used: " + id))
+		}
+		model.ParsedModelRoot.DataAssets[id] = model.DataAsset{
+			Id:                     id,
+			Title:                  title,
+			Usage:                  usage,
+			Description:            withDefault(fmt.Sprintf("%v", asset.Description), title),
+			Quantity:               quantity,
+			Tags:                   checkTags(lowerCaseAndTrim(asset.Tags), "data asset '"+title+"'"),
+			Origin:                 fmt.Sprintf("%v", asset.Origin),
+			Owner:                  fmt.Sprintf("%v", asset.Owner),
+			Confidentiality:        confidentiality,
+			Integrity:              integrity,
+			Availability:           availability,
+			JustificationCiaRating: fmt.Sprintf("%v", asset.Justification_cia_rating),
+		}
+	}
+
+	// Technical Assets ===============================================================================
+	model.ParsedModelRoot.TechnicalAssets = make(map[string]model.TechnicalAsset)
+	for title, asset := range modelInput.Technical_assets {
+		id := fmt.Sprintf("%v", asset.ID)
+
+		var usage model.Usage
+		switch asset.Usage {
+		case model.Business.String():
+			usage = model.Business
+		case model.DevOps.String():
+			usage = model.DevOps
+		default:
+			panic(errors.New("unknown 'usage' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Usage)))
+		}
+
+		var dataAssetsProcessed = make([]string, 0)
+		if asset.Data_assets_processed != nil {
+			dataAssetsProcessed = make([]string, len(asset.Data_assets_processed))
+			for i, parsedProcessedAsset := range asset.Data_assets_processed {
+				referencedAsset := fmt.Sprintf("%v", parsedProcessedAsset)
+				checkDataAssetTargetExists(referencedAsset, "technical asset '"+title+"'")
+				dataAssetsProcessed[i] = referencedAsset
+			}
+		}
+
+		var dataAssetsStored = make([]string, 0)
+		if asset.Data_assets_stored != nil {
+			dataAssetsStored = make([]string, len(asset.Data_assets_stored))
+			for i, parsedStoredAssets := range asset.Data_assets_stored {
+				referencedAsset := fmt.Sprintf("%v", parsedStoredAssets)
+				checkDataAssetTargetExists(referencedAsset, "technical asset '"+title+"'")
+				dataAssetsStored[i] = referencedAsset
+			}
+		}
+
+		var technicalAssetType model.TechnicalAssetType
+		switch asset.Type {
+		case model.ExternalEntity.String():
+			technicalAssetType = model.ExternalEntity
+		case model.Process.String():
+			technicalAssetType = model.Process
+		case model.Datastore.String():
+			technicalAssetType = model.Datastore
+		default:
+			panic(errors.New("unknown 'type' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Type)))
+		}
+
+		var technicalAssetSize model.TechnicalAssetSize
+		switch asset.Size {
+		case model.Service.String():
+			technicalAssetSize = model.Service
+		case model.System.String():
+			technicalAssetSize = model.System
+		case model.Application.String():
+			technicalAssetSize = model.Application
+		case model.Component.String():
+			technicalAssetSize = model.Component
+		default:
+			panic(errors.New("unknown 'size' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Size)))
+		}
+
+		var technicalAssetTechnology model.TechnicalAssetTechnology
+		switch asset.Technology {
+		case model.UnknownTechnology.String():
+			technicalAssetTechnology = model.UnknownTechnology
+		case model.ClientSystem.String():
+			technicalAssetTechnology = model.ClientSystem
+		case model.Browser.String():
+			technicalAssetTechnology = model.Browser
+		case model.Desktop.String():
+			technicalAssetTechnology = model.Desktop
+		case model.MobileApp.String():
+			technicalAssetTechnology = model.MobileApp
+		case model.DevOpsClient.String():
+			technicalAssetTechnology = model.DevOpsClient
+		case model.WebServer.String():
+			technicalAssetTechnology = model.WebServer
+		case model.WebApplication.String():
+			technicalAssetTechnology = model.WebApplication
+		case model.ApplicationServer.String():
+			technicalAssetTechnology = model.ApplicationServer
+		case model.Database.String():
+			technicalAssetTechnology = model.Database
+		case model.FileServer.String():
+			technicalAssetTechnology = model.FileServer
+		case model.LocalFileSystem.String():
+			technicalAssetTechnology = model.LocalFileSystem
+		case model.ERP.String():
+			technicalAssetTechnology = model.ERP
+		case model.CMS.String():
+			technicalAssetTechnology = model.CMS
+		case model.WebServiceREST.String():
+			technicalAssetTechnology = model.WebServiceREST
+		case model.WebServiceSOAP.String():
+			technicalAssetTechnology = model.WebServiceSOAP
+		case model.EJB.String():
+			technicalAssetTechnology = model.EJB
+		case model.SearchIndex.String():
+			technicalAssetTechnology = model.SearchIndex
+		case model.SearchEngine.String():
+			technicalAssetTechnology = model.SearchEngine
+		case model.ServiceRegistry.String():
+			technicalAssetTechnology = model.ServiceRegistry
+		case model.ReverseProxy.String():
+			technicalAssetTechnology = model.ReverseProxy
+		case model.LoadBalancer.String():
+			technicalAssetTechnology = model.LoadBalancer
+		case model.BuildPipeline.String():
+			technicalAssetTechnology = model.BuildPipeline
+		case model.SourcecodeRepository.String():
+			technicalAssetTechnology = model.SourcecodeRepository
+		case model.ArtifactRegistry.String():
+			technicalAssetTechnology = model.ArtifactRegistry
+		case model.CodeInspectionPlatform.String():
+			technicalAssetTechnology = model.CodeInspectionPlatform
+		case model.Monitoring.String():
+			technicalAssetTechnology = model.Monitoring
+		case model.LDAPServer.String():
+			technicalAssetTechnology = model.LDAPServer
+		case model.ContainerPlatform.String():
+			technicalAssetTechnology = model.ContainerPlatform
+		case model.BatchProcessing.String():
+			technicalAssetTechnology = model.BatchProcessing
+		case model.EventListener.String():
+			technicalAssetTechnology = model.EventListener
+		case model.IdentityProvider.String():
+			technicalAssetTechnology = model.IdentityProvider
+		case model.IdentityStoreLDAP.String():
+			technicalAssetTechnology = model.IdentityStoreLDAP
+		case model.IdentityStoreDatabase.String():
+			technicalAssetTechnology = model.IdentityStoreDatabase
+		case model.Tool.String():
+			technicalAssetTechnology = model.Tool
+		case model.CLI.String():
+			technicalAssetTechnology = model.CLI
+		case model.Task.String():
+			technicalAssetTechnology = model.Task
+		case model.Function.String():
+			technicalAssetTechnology = model.Function
+		case model.Gateway.String():
+			technicalAssetTechnology = model.Gateway
+		case model.IoTDevice.String():
+			technicalAssetTechnology = model.IoTDevice
+		case model.MessageQueue.String():
+			technicalAssetTechnology = model.MessageQueue
+		case model.StreamProcessing.String():
+			technicalAssetTechnology = model.StreamProcessing
+		case model.ServiceMesh.String():
+			technicalAssetTechnology = model.ServiceMesh
+		case model.DataLake.String():
+			technicalAssetTechnology = model.DataLake
+		case model.BigDataPlatform.String():
+			technicalAssetTechnology = model.BigDataPlatform
+		case model.ReportEngine.String():
+			technicalAssetTechnology = model.ReportEngine
+		case model.AI.String():
+			technicalAssetTechnology = model.AI
+		case model.MailServer.String():
+			technicalAssetTechnology = model.MailServer
+		case model.Vault.String():
+			technicalAssetTechnology = model.Vault
+		case model.HSM.String():
+			technicalAssetTechnology = model.HSM
+		case model.WAF.String():
+			technicalAssetTechnology = model.WAF
+		case model.IDS.String():
+			technicalAssetTechnology = model.IDS
+		case model.IPS.String():
+			technicalAssetTechnology = model.IPS
+		case model.Scheduler.String():
+			technicalAssetTechnology = model.Scheduler
+		case model.Mainframe.String():
+			technicalAssetTechnology = model.Mainframe
+		case model.BlockStorage.String():
+			technicalAssetTechnology = model.BlockStorage
+		case model.Library.String():
+			technicalAssetTechnology = model.Library
+		default:
+			panic(errors.New("unknown 'technology' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Technology)))
+		}
+
+		var encryption model.EncryptionStyle
+		switch asset.Encryption {
+		case model.NoneEncryption.String():
+			encryption = model.NoneEncryption
+		case model.Transparent.String():
+			encryption = model.Transparent
+		case model.DataWithSymmetricSharedKey.String():
+			encryption = model.DataWithSymmetricSharedKey
+		case model.DataWithAsymmetricSharedKey.String():
+			encryption = model.DataWithAsymmetricSharedKey
+		case model.DataWithEnduserIndividualKey.String():
+			encryption = model.DataWithEnduserIndividualKey
+		default:
+			panic(errors.New("unknown 'encryption' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Encryption)))
+		}
+
+		var technicalAssetMachine model.TechnicalAssetMachine
+		switch asset.Machine {
+		case model.Physical.String():
+			technicalAssetMachine = model.Physical
+		case model.Virtual.String():
+			technicalAssetMachine = model.Virtual
+		case model.Container.String():
+			technicalAssetMachine = model.Container
+		case model.Serverless.String():
+			technicalAssetMachine = model.Serverless
+		default:
+			panic(errors.New("unknown 'machine' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Machine)))
+		}
+
+		var confidentiality model.Confidentiality
+		switch asset.Confidentiality {
+		case model.Public.String():
+			confidentiality = model.Public
+		case model.Internal.String():
+			confidentiality = model.Internal
+		case model.Restricted.String():
+			confidentiality = model.Restricted
+		case model.Confidential.String():
+			confidentiality = model.Confidential
+		case model.StrictlyConfidential.String():
+			confidentiality = model.StrictlyConfidential
+		default:
+			panic(errors.New("unknown 'confidentiality' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Confidentiality)))
+		}
+
+		var integrity model.Criticality
+		switch asset.Integrity {
+		case model.Archive.String():
+			integrity = model.Archive
+		case model.Operational.String():
+			integrity = model.Operational
+		case model.Important.String():
+			integrity = model.Important
+		case model.Critical.String():
+			integrity = model.Critical
+		case model.MissionCritical.String():
+			integrity = model.MissionCritical
+		default:
+			panic(errors.New("unknown 'integrity' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Integrity)))
+		}
+
+		var availability model.Criticality
+		switch asset.Availability {
+		case model.Archive.String():
+			availability = model.Archive
+		case model.Operational.String():
+			availability = model.Operational
+		case model.Important.String():
+			availability = model.Important
+		case model.Critical.String():
+			availability = model.Critical
+		case model.MissionCritical.String():
+			availability = model.MissionCritical
+		default:
+			panic(errors.New("unknown 'availability' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Availability)))
+		}
+
+		dataFormatsAccepted := make([]model.DataFormat, 0)
+		if asset.Data_formats_accepted != nil {
+			for _, dataFormatName := range asset.Data_formats_accepted {
+				switch dataFormatName {
+				case model.JSON.String():
+					dataFormatsAccepted = append(dataFormatsAccepted, model.JSON)
+				case model.XML.String():
+					dataFormatsAccepted = append(dataFormatsAccepted, model.XML)
+				case model.Serialization.String():
+					dataFormatsAccepted = append(dataFormatsAccepted, model.Serialization)
+				case model.File.String():
+					dataFormatsAccepted = append(dataFormatsAccepted, model.File)
+				case model.CSV.String():
+					dataFormatsAccepted = append(dataFormatsAccepted, model.CSV)
+				default:
+					panic(errors.New("unknown 'data_formats_accepted' value of technical asset '" + title + "': " + fmt.Sprintf("%v", dataFormatName)))
+				}
+			}
+		}
+
+		communicationLinks := make([]model.CommunicationLink, 0)
+		if asset.Communication_links != nil {
+			for commLinkTitle, commLink := range asset.Communication_links {
+
+				constraint := true
+				weight := 1
+				var protocol model.Protocol
+				var authentication model.Authentication
+				var authorization model.Authorization
+				var usage model.Usage
+				var dataAssetsSent []string
+				var dataAssetsReceived []string
+
+				switch commLink.Authentication {
+				case model.NoneAuthentication.String():
+					authentication = model.NoneAuthentication
+				case model.Credentials.String():
+					authentication = model.Credentials
+				case model.SessionId.String():
+					authentication = model.SessionId
+				case model.Token.String():
+					authentication = model.Token
+				case model.ClientCertificate.String():
+					authentication = model.ClientCertificate
+				case model.TwoFactor.String():
+					authentication = model.TwoFactor
+				case model.Externalized.String():
+					authentication = model.Externalized
+				default:
+					panic(errors.New("unknown 'authentication' value of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Authentication)))
+				}
+
+				switch commLink.Authorization {
+				case model.NoneAuthorization.String():
+					authorization = model.NoneAuthorization
+				case model.TechnicalUser.String():
+					authorization = model.TechnicalUser
+				case model.EnduserIdentityPropagation.String():
+					authorization = model.EnduserIdentityPropagation
+				default:
+					panic(errors.New("unknown 'authorization' value of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Authorization)))
+				}
+
+				switch commLink.Usage {
+				case model.Business.String():
+					usage = model.Business
+				case model.DevOps.String():
+					usage = model.DevOps
+				default:
+					panic(errors.New("unknown 'usage' value of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Usage)))
+				}
+
+				switch commLink.Protocol {
+				case model.UnknownProtocol.String():
+					protocol = model.UnknownProtocol
+				case model.HTTP.String():
+					protocol = model.HTTP
+				case model.HTTPS.String():
+					protocol = model.HTTPS
+				case model.WS.String():
+					protocol = model.WS
+				case model.WSS.String():
+					protocol = model.WSS
+				case model.MQTT.String():
+					protocol = model.MQTT
+				case model.JDBC.String():
+					protocol = model.JDBC
+				case model.JDBC_encrypted.String():
+					protocol = model.JDBC_encrypted
+				case model.ODBC.String():
+					protocol = model.ODBC
+				case model.ODBC_encrypted.String():
+					protocol = model.ODBC_encrypted
+				case model.SQL_access_protocol.String():
+					protocol = model.SQL_access_protocol
+				case model.SQL_access_protocol_encrypted.String():
+					protocol = model.SQL_access_protocol_encrypted
+				case model.NoSQL_access_protocol.String():
+					protocol = model.NoSQL_access_protocol
+				case model.NoSQL_access_protocol_encrypted.String():
+					protocol = model.NoSQL_access_protocol_encrypted
+				case model.TEXT.String():
+					protocol = model.TEXT
+				case model.TEXT_encrypted.String():
+					protocol = model.TEXT_encrypted
+				case model.BINARY.String():
+					protocol = model.BINARY
+				case model.BINARY_encrypted.String():
+					protocol = model.BINARY_encrypted
+				case model.SSH.String():
+					protocol = model.SSH
+				case model.SSH_tunnel.String():
+					protocol = model.SSH_tunnel
+				case model.SMTP.String():
+					protocol = model.SMTP
+				case model.SMTP_encrypted.String():
+					protocol = model.SMTP_encrypted
+				case model.POP3.String():
+					protocol = model.POP3
+				case model.POP3_encrypted.String():
+					protocol = model.POP3_encrypted
+				case model.IMAP.String():
+					protocol = model.IMAP
+				case model.IMAP_encrypted.String():
+					protocol = model.IMAP_encrypted
+				case model.FTP.String():
+					protocol = model.FTP
+				case model.FTPS.String():
+					protocol = model.FTPS
+				case model.SFTP.String():
+					protocol = model.SFTP
+				case model.SCP.String():
+					protocol = model.SCP
+				case model.LDAP.String():
+					protocol = model.LDAP
+				case model.LDAPS.String():
+					protocol = model.LDAPS
+				case model.JMS.String():
+					protocol = model.JMS
+				case model.NFS.String():
+					protocol = model.NFS
+				case model.SMB.String():
+					protocol = model.SMB
+				case model.SMB_encrypted.String():
+					protocol = model.SMB_encrypted
+				case model.LocalFileAccess.String():
+					protocol = model.LocalFileAccess
+				case model.NRPE.String():
+					protocol = model.NRPE
+				case model.XMPP.String():
+					protocol = model.XMPP
+				case model.IIOP.String():
+					protocol = model.IIOP
+				case model.IIOP_encrypted.String():
+					protocol = model.IIOP_encrypted
+				case model.JRMP.String():
+					protocol = model.JRMP
+				case model.JRMP_encrypted.String():
+					protocol = model.JRMP_encrypted
+				case model.InProcessLibraryCall.String():
+					protocol = model.InProcessLibraryCall
+				case model.ContainerSpawning.String():
+					protocol = model.ContainerSpawning
+				default:
+					panic(errors.New("unknown 'protocol' of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Protocol)))
+				}
+
+				if commLink.Data_assets_sent != nil {
+					for _, dataAssetSent := range commLink.Data_assets_sent {
+						referencedAsset := fmt.Sprintf("%v", dataAssetSent)
+						checkDataAssetTargetExists(referencedAsset, "communication link '"+commLinkTitle+"' of technical asset '"+title+"'")
+						dataAssetsSent = append(dataAssetsSent, referencedAsset)
+					}
+				}
+
+				if commLink.Data_assets_received != nil {
+					for _, dataAssetReceived := range commLink.Data_assets_received {
+						referencedAsset := fmt.Sprintf("%v", dataAssetReceived)
+						checkDataAssetTargetExists(referencedAsset, "communication link '"+commLinkTitle+"' of technical asset '"+title+"'")
+						dataAssetsReceived = append(dataAssetsReceived, referencedAsset)
+					}
+				}
+
+				if commLink.Diagram_tweak_weight > 0 {
+					weight = commLink.Diagram_tweak_weight
+				}
+
+				constraint = !commLink.Diagram_tweak_constraint
+
+				checkErr(err)
+
+				dataFlowTitle := fmt.Sprintf("%v", commLinkTitle)
+				commLink := model.CommunicationLink{
+					Id:                     createDataFlowId(id, dataFlowTitle),
+					SourceId:               id,
+					TargetId:               commLink.Target,
+					Title:                  dataFlowTitle,
+					Description:            withDefault(commLink.Description, dataFlowTitle),
+					Protocol:               protocol,
+					Authentication:         authentication,
+					Authorization:          authorization,
+					Usage:                  usage,
+					Tags:                   checkTags(lowerCaseAndTrim(commLink.Tags), "communication link '"+commLinkTitle+"' of technical asset '"+title+"'"),
+					VPN:                    commLink.VPN,
+					IpFiltered:             commLink.IP_filtered,
+					Readonly:               commLink.Readonly,
+					DataAssetsSent:         dataAssetsSent,
+					DataAssetsReceived:     dataAssetsReceived,
+					DiagramTweakWeight:     weight,
+					DiagramTweakConstraint: constraint,
+				}
+				communicationLinks = append(communicationLinks, commLink)
+				// track all comm links
+				model.CommunicationLinks[commLink.Id] = commLink
+				// keep track of map of *all* comm links mapped by target-id (to be able to lookup "who is calling me" kind of things)
+				model.IncomingTechnicalCommunicationLinksMappedByTargetId[commLink.TargetId] = append(
+					model.IncomingTechnicalCommunicationLinksMappedByTargetId[commLink.TargetId], commLink)
+			}
+		}
+
+		checkIdSyntax(id)
+		if _, exists := model.ParsedModelRoot.TechnicalAssets[id]; exists {
+			panic(errors.New("duplicate id used: " + id))
+		}
+		model.ParsedModelRoot.TechnicalAssets[id] = model.TechnicalAsset{
+			Id:                      id,
+			Usage:                   usage,
+			Title:                   title, //fmt.Sprintf("%v", asset["title"]),
+			Description:             withDefault(fmt.Sprintf("%v", asset.Description), title),
+			Type:                    technicalAssetType,
+			Size:                    technicalAssetSize,
+			Technology:              technicalAssetTechnology,
+			Tags:                    checkTags(lowerCaseAndTrim(asset.Tags), "technical asset '"+title+"'"),
+			Machine:                 technicalAssetMachine,
+			Internet:                asset.Internet,
+			Encryption:              encryption,
+			MultiTenant:             asset.Multi_tenant,
+			Redundant:               asset.Redundant,
+			CustomDevelopedParts:    asset.Custom_developed_parts,
+			UsedAsClientByHuman:     asset.Used_as_client_by_human,
+			OutOfScope:              asset.Out_of_scope,
+			JustificationOutOfScope: fmt.Sprintf("%v", asset.Justification_out_of_scope),
+			Owner:                   fmt.Sprintf("%v", asset.Owner),
+			Confidentiality:         confidentiality,
+			Integrity:               integrity,
+			Availability:            availability,
+			JustificationCiaRating:  fmt.Sprintf("%v", asset.Justification_cia_rating),
+			DataAssetsProcessed:     dataAssetsProcessed,
+			DataAssetsStored:        dataAssetsStored,
+			DataFormatsAccepted:     dataFormatsAccepted,
+			CommunicationLinks:      communicationLinks,
+			DiagramTweakOrder:       asset.Diagram_tweak_order,
+		}
+	}
+
+	// Trust Boundaries ===============================================================================
+	checklistToAvoidAssetBeingModeledInMultipleTrustBoundaries := make(map[string]bool)
+	model.ParsedModelRoot.TrustBoundaries = make(map[string]model.TrustBoundary)
+	for title, boundary := range modelInput.Trust_boundaries {
+		id := fmt.Sprintf("%v", boundary.ID)
+
+		var technicalAssetsInside = make([]string, 0)
+		if boundary.Technical_assets_inside != nil {
+			parsedInsideAssets := boundary.Technical_assets_inside
+			technicalAssetsInside = make([]string, len(parsedInsideAssets))
+			for i, parsedInsideAsset := range parsedInsideAssets {
+				technicalAssetsInside[i] = fmt.Sprintf("%v", parsedInsideAsset)
+				_, found := model.ParsedModelRoot.TechnicalAssets[technicalAssetsInside[i]]
+				if !found {
+					panic(errors.New("missing referenced technical asset " + technicalAssetsInside[i] + " at trust boundary '" + title + "'"))
+				}
+				if checklistToAvoidAssetBeingModeledInMultipleTrustBoundaries[technicalAssetsInside[i]] == true {
+					panic(errors.New("referenced technical asset " + technicalAssetsInside[i] + " at trust boundary '" + title + "' is modeled in multiple trust boundaries"))
+				}
+				checklistToAvoidAssetBeingModeledInMultipleTrustBoundaries[technicalAssetsInside[i]] = true
+				//fmt.Println("asset "+technicalAssetsInside[i]+" at i="+strconv.Itoa(i))
+			}
+		}
+
+		var trustBoundariesNested = make([]string, 0)
+		if boundary.Trust_boundaries_nested != nil {
+			parsedNestedBoundaries := boundary.Trust_boundaries_nested
+			trustBoundariesNested = make([]string, len(parsedNestedBoundaries))
+			for i, parsedNestedBoundary := range parsedNestedBoundaries {
+				trustBoundariesNested[i] = fmt.Sprintf("%v", parsedNestedBoundary)
+			}
+		}
+
+		var trustBoundaryType model.TrustBoundaryType
+		switch boundary.Type {
+		case model.NetworkOnPrem.String():
+			trustBoundaryType = model.NetworkOnPrem
+		case model.NetworkDedicatedHoster.String():
+			trustBoundaryType = model.NetworkDedicatedHoster
+		case model.NetworkVirtualLAN.String():
+			trustBoundaryType = model.NetworkVirtualLAN
+		case model.NetworkCloudProvider.String():
+			trustBoundaryType = model.NetworkCloudProvider
+		case model.NetworkCloudSecurityGroup.String():
+			trustBoundaryType = model.NetworkCloudSecurityGroup
+		case model.NetworkPolicyNamespaceIsolation.String():
+			trustBoundaryType = model.NetworkPolicyNamespaceIsolation
+		case model.ExecutionEnvironment.String():
+			trustBoundaryType = model.ExecutionEnvironment
+		default:
+			panic(errors.New("unknown 'type' of trust boundary '" + title + "': " + fmt.Sprintf("%v", boundary.Type)))
+		}
+
+		trustBoundary := model.TrustBoundary{
+			Id:                    id,
+			Title:                 title, //fmt.Sprintf("%v", boundary["title"]),
+			Description:           withDefault(fmt.Sprintf("%v", boundary.Description), title),
+			Type:                  trustBoundaryType,
+			Tags:                  checkTags(lowerCaseAndTrim(boundary.Tags), "trust boundary '"+title+"'"),
+			TechnicalAssetsInside: technicalAssetsInside,
+			TrustBoundariesNested: trustBoundariesNested,
+		}
+		checkIdSyntax(id)
+		if _, exists := model.ParsedModelRoot.TrustBoundaries[id]; exists {
+			panic(errors.New("duplicate id used: " + id))
+		}
+		model.ParsedModelRoot.TrustBoundaries[id] = trustBoundary
+		for _, technicalAsset := range trustBoundary.TechnicalAssetsInside {
+			model.DirectContainingTrustBoundaryMappedByTechnicalAssetId[technicalAsset] = trustBoundary
+			//fmt.Println("Asset "+technicalAsset+" is directly in trust boundary "+trustBoundary.Id)
+		}
+	}
+	checkNestedTrustBoundariesExisting()
+
+	// Shared Runtime ===============================================================================
+	model.ParsedModelRoot.SharedRuntimes = make(map[string]model.SharedRuntime)
+	for title, runtime := range modelInput.Shared_runtimes {
+		id := fmt.Sprintf("%v", runtime.ID)
+
+		var technicalAssetsRunning = make([]string, 0)
+		if runtime.Technical_assets_running != nil {
+			parsedRunningAssets := runtime.Technical_assets_running
+			technicalAssetsRunning = make([]string, len(parsedRunningAssets))
+			for i, parsedRunningAsset := range parsedRunningAssets {
+				assetId := fmt.Sprintf("%v", parsedRunningAsset)
+				checkTechnicalAssetExists(assetId, "shared runtime '"+title+"'", false)
+				technicalAssetsRunning[i] = assetId
+			}
+		}
+
+		sharedRuntime := model.SharedRuntime{
+			Id:                     id,
+			Title:                  title, //fmt.Sprintf("%v", boundary["title"]),
+			Description:            withDefault(fmt.Sprintf("%v", runtime.Description), title),
+			Tags:                   checkTags((runtime.Tags), "shared runtime '"+title+"'"),
+			TechnicalAssetsRunning: technicalAssetsRunning,
+		}
+		checkIdSyntax(id)
+		if _, exists := model.ParsedModelRoot.SharedRuntimes[id]; exists {
+			panic(errors.New("duplicate id used: " + id))
+		}
+		model.ParsedModelRoot.SharedRuntimes[id] = sharedRuntime
+		for _, technicalAssetId := range sharedRuntime.TechnicalAssetsRunning {
+			model.DirectContainingSharedRuntimeMappedByTechnicalAssetId[technicalAssetId] = sharedRuntime
+		}
+	}
+
+	// Individual Risk Categories (just used as regular risk categories) ===============================================================================
+	model.ParsedModelRoot.IndividualRiskCategories = make(map[string]model.RiskCategory)
+	for title, indivCat := range modelInput.Individual_risk_categories {
+		id := fmt.Sprintf("%v", indivCat.ID)
+
+		var function model.RiskFunction
+		switch indivCat.Function {
+		case model.BusinessSide.String():
+			function = model.BusinessSide
+		case model.Architecture.String():
+			function = model.Architecture
+		case model.Development.String():
+			function = model.Development
+		case model.Operations.String():
+			function = model.Operations
+		default:
+			panic(errors.New("unknown 'function' value of individual risk category '" + title + "': " + fmt.Sprintf("%v", indivCat.Function)))
+		}
+
+		var stride model.STRIDE
+		switch indivCat.STRIDE {
+		case model.Spoofing.String():
+			stride = model.Spoofing
+		case model.Tampering.String():
+			stride = model.Tampering
+		case model.Repudiation.String():
+			stride = model.Repudiation
+		case model.InformationDisclosure.String():
+			stride = model.InformationDisclosure
+		case model.DenialOfService.String():
+			stride = model.DenialOfService
+		case model.ElevationOfPrivilege.String():
+			stride = model.ElevationOfPrivilege
+		default:
+			panic(errors.New("unknown 'stride' value of individual risk category '" + title + "': " + fmt.Sprintf("%v", indivCat.STRIDE)))
+		}
+
+		cat := model.RiskCategory{
+			Id:                         id,
+			Title:                      title,
+			Description:                withDefault(fmt.Sprintf("%v", indivCat.Description), title),
+			Impact:                     fmt.Sprintf("%v", indivCat.Impact),
+			ASVS:                       fmt.Sprintf("%v", indivCat.ASVS),
+			CheatSheet:                 fmt.Sprintf("%v", indivCat.Cheat_sheet),
+			Action:                     fmt.Sprintf("%v", indivCat.Action),
+			Mitigation:                 fmt.Sprintf("%v", indivCat.Mitigation),
+			Check:                      fmt.Sprintf("%v", indivCat.Check),
+			DetectionLogic:             fmt.Sprintf("%v", indivCat.Detection_logic),
+			RiskAssessment:             fmt.Sprintf("%v", indivCat.Risk_assessment),
+			FalsePositives:             fmt.Sprintf("%v", indivCat.False_positives),
+			Function:                   function,
+			STRIDE:                     stride,
+			ModelFailurePossibleReason: indivCat.Model_failure_possible_reason,
+			CWE:                        indivCat.CWE,
+		}
+		checkIdSyntax(id)
+		if _, exists := model.ParsedModelRoot.IndividualRiskCategories[id]; exists {
+			panic(errors.New("duplicate id used: " + id))
+		}
+		model.ParsedModelRoot.IndividualRiskCategories[id] = cat
+
+		// NOW THE INDIVIDUAL RISK INSTANCES:
+		//individualRiskInstances := make([]model.Risk, 0)
+		if indivCat.Risks_identified != nil { // TODO: also add syntax checks of input YAML when linked asset is not found or when syntehtic-id is already used...
+			for title, indivRiskInstance := range indivCat.Risks_identified {
+				var severity model.RiskSeverity
+				var exploitationLikelihood model.RiskExploitationLikelihood
+				var exploitationImpact model.RiskExploitationImpact
+				var mostRelevantDataAssetId, mostRelevantTechnicalAssetId, mostRelevantCommunicationLinkId, mostRelevantTrustBoundaryId, mostRelevantSharedRuntimeId string
+				var dataBreachProbability model.DataBreachProbability
+				var dataBreachTechnicalAssetIDs []string
+
+				switch indivRiskInstance.Severity {
+				case model.LowSeverity.String():
+					severity = model.LowSeverity
+				case model.MediumSeverity.String():
+					severity = model.MediumSeverity
+				case model.ElevatedSeverity.String():
+					severity = model.ElevatedSeverity
+				case model.HighSeverity.String():
+					severity = model.HighSeverity
+				case model.CriticalSeverity.String():
+					severity = model.CriticalSeverity
+				case "": // added default
+					severity = model.MediumSeverity
+				default:
+					panic(errors.New("unknown 'severity' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Severity)))
+				}
+
+				switch indivRiskInstance.Exploitation_likelihood {
+				case model.Unlikely.String():
+					exploitationLikelihood = model.Unlikely
+				case model.Likely.String():
+					exploitationLikelihood = model.Likely
+				case model.VeryLikely.String():
+					exploitationLikelihood = model.VeryLikely
+				case model.Frequent.String():
+					exploitationLikelihood = model.Frequent
+				case "": // added default
+					exploitationLikelihood = model.Likely
+				default:
+					panic(errors.New("unknown 'exploitation_likelihood' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Exploitation_likelihood)))
+				}
+
+				switch indivRiskInstance.Exploitation_impact {
+				case model.LowImpact.String():
+					exploitationImpact = model.LowImpact
+				case model.MediumImpact.String():
+					exploitationImpact = model.MediumImpact
+				case model.HighImpact.String():
+					exploitationImpact = model.HighImpact
+				case model.VeryHighImpact.String():
+					exploitationImpact = model.VeryHighImpact
+				case "": // added default
+					exploitationImpact = model.MediumImpact
+				default:
+					panic(errors.New("unknown 'exploitation_impact' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Exploitation_impact)))
+				}
+
+				if len(indivRiskInstance.Most_relevant_data_asset) > 0 {
+					mostRelevantDataAssetId = fmt.Sprintf("%v", indivRiskInstance.Most_relevant_data_asset)
+					checkDataAssetTargetExists(mostRelevantDataAssetId, "individual risk '"+title+"'")
+				}
+
+				if len(indivRiskInstance.Most_relevant_technical_asset) > 0 {
+					mostRelevantTechnicalAssetId = fmt.Sprintf("%v", indivRiskInstance.Most_relevant_technical_asset)
+					checkTechnicalAssetExists(mostRelevantTechnicalAssetId, "individual risk '"+title+"'", false)
+				}
+
+				if len(indivRiskInstance.Most_relevant_communication_link) > 0 {
+					mostRelevantCommunicationLinkId = fmt.Sprintf("%v", indivRiskInstance.Most_relevant_communication_link)
+					checkCommunicationLinkExists(mostRelevantCommunicationLinkId, "individual risk '"+title+"'")
+				}
+
+				if len(indivRiskInstance.Most_relevant_trust_boundary) > 0 {
+					mostRelevantTrustBoundaryId = fmt.Sprintf("%v", indivRiskInstance.Most_relevant_trust_boundary)
+					checkTrustBoundaryExists(mostRelevantTrustBoundaryId, "individual risk '"+title+"'")
+				}
+
+				if len(indivRiskInstance.Most_relevant_shared_runtime) > 0 {
+					mostRelevantSharedRuntimeId = fmt.Sprintf("%v", indivRiskInstance.Most_relevant_shared_runtime)
+					checkSharedRuntimeExists(mostRelevantSharedRuntimeId, "individual risk '"+title+"'")
+				}
+
+				switch indivRiskInstance.Data_breach_probability {
+				case model.Improbable.String():
+					dataBreachProbability = model.Improbable
+				case model.Possible.String():
+					dataBreachProbability = model.Possible
+				case model.Probable.String():
+					dataBreachProbability = model.Probable
+				case "": // added default
+					dataBreachProbability = model.Possible
+				default:
+					panic(errors.New("unknown 'data_breach_probability' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Data_breach_probability)))
+				}
+
+				if indivRiskInstance.Data_breach_technical_assets != nil {
+					dataBreachTechnicalAssetIDs = make([]string, len(indivRiskInstance.Data_breach_technical_assets))
+					for i, parsedReferencedAsset := range indivRiskInstance.Data_breach_technical_assets {
+						assetId := fmt.Sprintf("%v", parsedReferencedAsset)
+						checkTechnicalAssetExists(assetId, "data breach technical assets of individual risk '"+title+"'", false)
+						dataBreachTechnicalAssetIDs[i] = assetId
+					}
+				}
+
+				checkErr(err)
+
+				indivRiskInstance := model.Risk{
+					SyntheticId:                     createSyntheticId(cat.Id, mostRelevantDataAssetId, mostRelevantTechnicalAssetId, mostRelevantCommunicationLinkId, mostRelevantTrustBoundaryId, mostRelevantSharedRuntimeId),
+					Title:                           fmt.Sprintf("%v", title),
+					Category:                        cat,
+					Severity:                        severity,
+					ExploitationLikelihood:          exploitationLikelihood,
+					ExploitationImpact:              exploitationImpact,
+					MostRelevantDataAssetId:         mostRelevantDataAssetId,
+					MostRelevantTechnicalAssetId:    mostRelevantTechnicalAssetId,
+					MostRelevantCommunicationLinkId: mostRelevantCommunicationLinkId,
+					MostRelevantTrustBoundaryId:     mostRelevantTrustBoundaryId,
+					MostRelevantSharedRuntimeId:     mostRelevantSharedRuntimeId,
+					DataBreachProbability:           dataBreachProbability,
+					DataBreachTechnicalAssetIDs:     dataBreachTechnicalAssetIDs,
+				}
+				model.GeneratedRisksByCategory[cat] = append(model.GeneratedRisksByCategory[cat], indivRiskInstance)
+			}
+		}
+	}
+
+	// Risk Tracking ===============================================================================
+	model.ParsedModelRoot.RiskTracking = make(map[string]model.RiskTracking)
+	for syntheticRiskId, riskTracking := range modelInput.Risk_tracking {
+		justification := fmt.Sprintf("%v", riskTracking.Justification)
+		checkedBy := fmt.Sprintf("%v", riskTracking.Checked_by)
+		ticket := fmt.Sprintf("%v", riskTracking.Ticket)
+		var date time.Time
+		if len(riskTracking.Date) > 0 {
+			date, err = time.Parse("2006-01-02", riskTracking.Date)
+			if err != nil {
+				panic(errors.New("unable to parse 'date' of risk tracking '" + syntheticRiskId + "': " + riskTracking.Date))
+			}
+		}
+
+		var status model.RiskStatus
+		switch riskTracking.Status {
+		case model.Unchecked.String():
+			status = model.Unchecked
+		case model.Mitigated.String():
+			status = model.Mitigated
+		case model.InProgress.String():
+			status = model.InProgress
+		case model.Accepted.String():
+			status = model.Accepted
+		case model.InDiscussion.String():
+			status = model.InDiscussion
+		case model.FalsePositive.String():
+			status = model.FalsePositive
+		default:
+			panic(errors.New("unknown 'status' value of risk tracking '" + syntheticRiskId + "': " + riskTracking.Status))
+		}
+
+		tracking := model.RiskTracking{
+			SyntheticRiskId: strings.TrimSpace(syntheticRiskId),
+			Justification:   justification,
+			CheckedBy:       checkedBy,
+			Ticket:          ticket,
+			Date:            date,
+			Status:          status,
+		}
+		if strings.Contains(syntheticRiskId, "*") { // contains a wildcard char
+			deferredRiskTrackingDueToWildcardMatching[syntheticRiskId] = tracking
+		} else {
+			model.ParsedModelRoot.RiskTracking[syntheticRiskId] = tracking
+		}
+	}
+
+	// ====================== model consistency check (linking)
+	for _, technicalAsset := range model.ParsedModelRoot.TechnicalAssets {
+		for _, commLink := range technicalAsset.CommunicationLinks {
+			checkTechnicalAssetExists(commLink.TargetId, "communication link '"+commLink.Title+"' of technical asset '"+technicalAsset.Title+"'", false)
+		}
+	}
+	fmt.Print("Bis hier?")
+	jsonBytes, err := json.Marshal(model.ParsedModelRoot)
+	if err != nil {
+		return err
+	}
+	jsonString := string(jsonBytes)
+	return jsonString
+}
+
 func parseModel(inputFilename string) {
 	if *verbose {
 		fmt.Println("Parsing model:", inputFilename)
@@ -5098,7 +6165,84 @@ func hash(s string) string {
 	h.Write([]byte(s))
 	return fmt.Sprintf("%v", h.Sum32())
 }
+func printGraphvizDOT(this js.Value, inputs []js.Value) interface{} {
+	dot := ""
+	dot += ("digraph generatedModel { concentrate=true \n")
 
+	// Metadata init ===============================================================================
+	dot += (`	graph [
+		dpi=` + strconv.Itoa(20) + `
+		fontname="Verdana"
+		labelloc="c"
+		fontsize="20"
+		splines=false
+		rankdir="LR"
+		nodesep=1.0
+		ranksep=3.0
+        outputorder="nodesfirst"
+	];
+	node [
+		fontcolor="white"
+		fontname="Verdana"
+		fontsize="20"
+	];
+	edge [
+		shape="none"
+		fontname="Verdana"
+		fontsize="18"
+	];
+`)
+
+	// Technical Assets ===============================================================================
+	techAssets := make([]model.TechnicalAsset, 0)
+	for _, techAsset := range model.ParsedModelRoot.TechnicalAssets {
+		techAssets = append(techAssets, techAsset)
+	}
+	sort.Sort(model.ByOrderAndIdSort(techAssets))
+	for _, technicalAsset := range techAssets {
+		if len(technicalAsset.DataAssetsStored) > 0 || len(technicalAsset.DataAssetsProcessed) > 0 {
+			dot += (makeTechAssetNode(technicalAsset, true))
+			dot += ("\n")
+		}
+	}
+
+	// Data Assets ===============================================================================
+	dataAssets := make([]model.DataAsset, 0)
+	for _, dataAsset := range model.ParsedModelRoot.DataAssets {
+		dataAssets = append(dataAssets, dataAsset)
+	}
+	sort.Sort(model.ByDataAssetDataBreachProbabilityAndTitleSort(dataAssets))
+	for _, dataAsset := range dataAssets {
+		dot += (makeDataAssetNode(dataAsset))
+		dot += ("\n")
+	}
+
+	// Data Asset to Tech Asset links ===============================================================================
+	for _, technicalAsset := range techAssets {
+		for _, sourceId := range technicalAsset.DataAssetsStored {
+			targetId := technicalAsset.Id
+			dot += ("\n")
+			dot += (hash(sourceId) + " -> " + hash(targetId) +
+				` [ color="blue" style="solid" ];`)
+			dot += ("\n")
+		}
+		for _, sourceId := range technicalAsset.DataAssetsProcessed {
+			if !model.Contains(technicalAsset.DataAssetsStored, sourceId) { // here only if not already drawn above
+				targetId := technicalAsset.Id
+				dot += ("\n")
+				dot += (hash(sourceId) + " -> " + hash(targetId) +
+					` [ color="#666666" style="dashed" ];`)
+				dot += ("\n")
+			}
+		}
+	}
+
+	dot += ("}")
+
+	// Write the DOT file
+
+	return dot
+}
 func writeDataAssetDiagramGraphvizDOT(diagramFilenameDOT string, dpi int) *os.File {
 	if *verbose {
 		fmt.Println("Writing data asset diagram input")
@@ -5184,7 +6328,240 @@ func writeDataAssetDiagramGraphvizDOT(diagramFilenameDOT string, dpi int) *os.Fi
 	checkErr(err)
 	return file
 }
+func printDataFlowDiagramGraphvizDOT(this js.Value, inputs []js.Value) interface{} {
+	var dotContent strings.Builder
+	dpi := 20
+	dotContent.WriteString("digraph generatedModel { concentrate=false \n")
 
+	// Metadata init ===============================================================================
+	tweaks := ""
+	if model.ParsedModelRoot.DiagramTweakNodesep > 0 {
+		tweaks += "\n		nodesep=\"" + strconv.Itoa(model.ParsedModelRoot.DiagramTweakNodesep) + "\""
+	}
+	if model.ParsedModelRoot.DiagramTweakRanksep > 0 {
+		tweaks += "\n		ranksep=\"" + strconv.Itoa(model.ParsedModelRoot.DiagramTweakRanksep) + "\""
+	}
+	suppressBidirectionalArrows := true
+	splines := "ortho"
+	if len(model.ParsedModelRoot.DiagramTweakEdgeLayout) > 0 {
+		switch model.ParsedModelRoot.DiagramTweakEdgeLayout {
+		case "spline":
+			splines = "spline"
+			drawSpaceLinesForLayoutUnfortunatelyFurtherSeparatesAllRanks = false
+		case "polyline":
+			splines = "polyline"
+			drawSpaceLinesForLayoutUnfortunatelyFurtherSeparatesAllRanks = false
+		case "ortho":
+			splines = "ortho"
+			suppressBidirectionalArrows = true
+		case "curved":
+			splines = "curved"
+			drawSpaceLinesForLayoutUnfortunatelyFurtherSeparatesAllRanks = false
+		case "false":
+			splines = "false"
+			drawSpaceLinesForLayoutUnfortunatelyFurtherSeparatesAllRanks = false
+		default:
+			panic(errors.New("unknown value for diagram_tweak_suppress_edge_labels (spline, polyline, ortho, curved, false): " +
+				model.ParsedModelRoot.DiagramTweakEdgeLayout))
+		}
+	}
+	rankdir := "TB"
+	if model.ParsedModelRoot.DiagramTweakLayoutLeftToRight {
+		rankdir = "LR"
+	}
+	modelTitle := ""
+	addModelTitle := false
+	if addModelTitle {
+		modelTitle = `label="` + model.ParsedModelRoot.Title + `"`
+	}
+	dotContent.WriteString(`	graph [ ` + modelTitle + `
+		labelloc=t
+		fontname="Verdana"
+		fontsize=40
+        outputorder="nodesfirst"
+		dpi=` + strconv.Itoa(dpi) + `
+		splines=` + splines + `
+		rankdir="` + rankdir + `"
+` + tweaks + `
+	];
+	node [
+		fontname="Verdana"
+		fontsize="20"
+	];
+	edge [
+		shape="none"
+		fontname="Verdana"
+		fontsize="18"
+	];
+`)
+
+	// Trust Boundaries ===============================================================================
+	var subgraphSnippetsById = make(map[string]string)
+	// first create them in memory (see the link replacement below for nested trust boundaries) - otherwise in Go ranging over map is random order
+	// range over them in sorted (hence re-producible) way:
+	keys := make([]string, 0)
+	for k, _ := range model.ParsedModelRoot.TrustBoundaries {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		trustBoundary := model.ParsedModelRoot.TrustBoundaries[key]
+		var snippet strings.Builder
+		if len(trustBoundary.TechnicalAssetsInside) > 0 || len(trustBoundary.TrustBoundariesNested) > 0 {
+			if drawSpaceLinesForLayoutUnfortunatelyFurtherSeparatesAllRanks {
+				// see https://stackoverflow.com/questions/17247455/how-do-i-add-extra-space-between-clusters?noredirect=1&lq=1
+				snippet.WriteString("\n subgraph cluster_space_boundary_for_layout_only_1" + hash(trustBoundary.Id) + " {\n")
+				snippet.WriteString(`	graph [
+                                              dpi=` + strconv.Itoa(dpi) + `
+											  label=<<table border="0" cellborder="0" cellpadding="0" bgcolor="#FFFFFF55"><tr><td><b> </b></td></tr></table>>
+											  fontsize="21"
+											  style="invis"
+											  color="green"
+											  fontcolor="green"
+											  margin="50.0"
+											  penwidth="6.5"
+                                              outputorder="nodesfirst"
+											];`)
+			}
+			snippet.WriteString("\n subgraph cluster_" + hash(trustBoundary.Id) + " {\n")
+			color, fontColor, bgColor, style, fontname := colors.RgbHexColorTwilight(), colors.RgbHexColorTwilight() /*"#550E0C"*/, "#FAFAFA", "dashed", "Verdana"
+			penwidth := 4.5
+			if len(trustBoundary.TrustBoundariesNested) > 0 {
+				//color, fontColor, style, fontname = colors.Blue, colors.Blue, "dashed", "Verdana"
+				penwidth = 5.5
+			}
+			if len(trustBoundary.ParentTrustBoundaryID()) > 0 {
+				bgColor = "#F1F1F1"
+			}
+			if trustBoundary.Type == model.NetworkPolicyNamespaceIsolation {
+				fontColor, bgColor = "#222222", "#DFF4FF"
+			}
+			if trustBoundary.Type == model.ExecutionEnvironment {
+				fontColor, bgColor, style = "#555555", "#FFFFF0", "dotted"
+			}
+			snippet.WriteString(`	graph [
+      dpi=` + strconv.Itoa(dpi) + `
+      label=<<table border="0" cellborder="0" cellpadding="0"><tr><td><b>` + trustBoundary.Title + `</b> (` + trustBoundary.Type.String() + `)</td></tr></table>>
+      fontsize="21"
+      style="` + style + `"
+      color="` + color + `"
+      bgcolor="` + bgColor + `"
+      fontcolor="` + fontColor + `"
+      fontname="` + fontname + `"
+      penwidth="` + fmt.Sprintf("%f", penwidth) + `"
+      forcelabels=true
+      outputorder="nodesfirst"
+	  margin="50.0"
+    ];`)
+			snippet.WriteString("\n")
+			keys := trustBoundary.TechnicalAssetsInside
+			sort.Strings(keys)
+			for _, technicalAssetInside := range keys {
+				//log.Println("About to add technical asset link to trust boundary: ", technicalAssetInside)
+				technicalAsset := model.ParsedModelRoot.TechnicalAssets[technicalAssetInside]
+				snippet.WriteString(hash(technicalAsset.Id))
+				snippet.WriteString(";\n")
+			}
+			keys = trustBoundary.TrustBoundariesNested
+			sort.Strings(keys)
+			for _, trustBoundaryNested := range keys {
+				//log.Println("About to add nested trust boundary to trust boundary: ", trustBoundaryNested)
+				trustBoundaryNested := model.ParsedModelRoot.TrustBoundaries[trustBoundaryNested]
+				snippet.WriteString("LINK-NEEDS-REPLACED-BY-cluster_" + hash(trustBoundaryNested.Id))
+				snippet.WriteString(";\n")
+			}
+			snippet.WriteString(" }\n\n")
+			if drawSpaceLinesForLayoutUnfortunatelyFurtherSeparatesAllRanks {
+				snippet.WriteString(" }\n\n")
+			}
+		}
+		subgraphSnippetsById[hash(trustBoundary.Id)] = snippet.String()
+	}
+	// here replace links and remove from map after replacement (i.e. move snippet into nested)
+	for i, _ := range subgraphSnippetsById {
+		re := regexp.MustCompile(`LINK-NEEDS-REPLACED-BY-cluster_([0-9]*);`)
+		for {
+			matches := re.FindStringSubmatch(subgraphSnippetsById[i])
+			if len(matches) > 0 {
+				embeddedSnippet := " //nested:" + subgraphSnippetsById[matches[1]]
+				subgraphSnippetsById[i] = strings.ReplaceAll(subgraphSnippetsById[i], matches[0], embeddedSnippet)
+				subgraphSnippetsById[matches[1]] = "" // to something like remove it
+			} else {
+				break
+			}
+		}
+	}
+	// now write them all
+	keys = make([]string, 0)
+	for k, _ := range subgraphSnippetsById {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		snippet := subgraphSnippetsById[key]
+		dotContent.WriteString(snippet)
+	}
+
+	// Technical Assets ===============================================================================
+	// first create them in memory (see the link replacement below for nested trust boundaries) - otherwise in Go ranging over map is random order
+	// range over them in sorted (hence re-producible) way:
+	// Convert map to slice of values:
+	techAssets := []model.TechnicalAsset{}
+	for _, techAsset := range model.ParsedModelRoot.TechnicalAssets {
+		techAssets = append(techAssets, techAsset)
+	}
+	sort.Sort(model.ByOrderAndIdSort(techAssets))
+	for _, technicalAsset := range techAssets {
+		dotContent.WriteString(makeTechAssetNode(technicalAsset, false))
+		dotContent.WriteString("\n")
+	}
+
+	// Data Flows (Technical Communication Links) ===============================================================================
+	for _, technicalAsset := range techAssets {
+		for _, dataFlow := range technicalAsset.CommunicationLinks {
+			sourceId := technicalAsset.Id
+			targetId := dataFlow.TargetId
+			//log.Println("About to add link from", sourceId, "to", targetId, "with id", dataFlow.Id)
+			var arrowStyle, arrowColor, readOrWriteHead, readOrWriteTail string
+			if dataFlow.Readonly {
+				readOrWriteHead = "empty"
+				readOrWriteTail = "odot"
+			} else {
+				readOrWriteHead = "normal"
+				readOrWriteTail = "dot"
+			}
+			dir := "forward"
+			if dataFlow.IsBidirectional() {
+				if !suppressBidirectionalArrows { // as it does not work as bug in grahviz with ortho: https://gitlab.com/graphviz/graphviz/issues/144
+					dir = "both"
+				}
+			}
+			arrowStyle = ` style="` + dataFlow.DetermineArrowLineStyle() + `" penwidth="` + dataFlow.DetermineArrowPenWidth() + `" arrowtail="` + readOrWriteTail + `" arrowhead="` + readOrWriteHead + `" dir="` + dir + `" arrowsize="2.0" `
+			arrowColor = ` color="` + dataFlow.DetermineArrowColor() + `"`
+			tweaks := ""
+			if dataFlow.DiagramTweakWeight > 0 {
+				tweaks += " weight=\"" + strconv.Itoa(dataFlow.DiagramTweakWeight) + "\" "
+			}
+
+			dotContent.WriteString("\n")
+			dotContent.WriteString("  " + hash(sourceId) + " -> " + hash(targetId) +
+				` [` + arrowColor + ` ` + arrowStyle + tweaks + ` constraint=` + strconv.FormatBool(dataFlow.DiagramTweakConstraint) + ` `)
+			if !model.ParsedModelRoot.DiagramTweakSuppressEdgeLabels {
+				dotContent.WriteString(` xlabel="` + encode(dataFlow.Protocol.String()) + `" fontcolor="` + dataFlow.DetermineLabelColor() + `" `)
+			}
+			dotContent.WriteString(" ];\n")
+		}
+	}
+
+	dotContent.WriteString(makeDiagramInvisibleConnectionsTweaks())
+	dotContent.WriteString(makeDiagramSameRankNodeTweaks())
+
+	dotContent.WriteString("}")
+
+	//fmt.Println(dotContent.String())
+
+	return dotContent.String()
+}
 func writeDataFlowDiagramGraphvizDOT(diagramFilenameDOT string, dpi int) *os.File {
 	if *verbose {
 		fmt.Println("Writing data flow diagram input")

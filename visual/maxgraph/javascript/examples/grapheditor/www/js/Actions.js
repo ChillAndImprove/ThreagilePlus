@@ -47,10 +47,441 @@ Actions.prototype.init = function () {
     window.openFile.setConsumer(
       mxUtils.bind(this, function (xml, filename) {
         try {
-          var doc = mxUtils.parseXml(xml);
-          editor.graph.setSelectionCells(
-            editor.graph.importGraphModel(doc.documentElement)
-          );
+          if (filename.endsWith(".yaml")) {
+            var parsedYaml = jsyaml.load(xml);
+            const go = new Go();
+            WebAssembly.instantiateStreaming(
+              fetch("main.wasm"),
+              go.importObject
+            ).then((result) => {
+              go.run(result.instance);
+
+              let jsonObj = JSON.parse(parseModelViaString(xml));
+              applyRAAJS();
+              dot = printDataFlowDiagramGraphvizDOT();
+              //let jsonObj = dotParser.parse(dot);
+              let dotJson = dotParser.parse(dot)[0];
+
+              let cells = [];
+              let nodeIdMap = {};
+              var vizInstance = new Viz();
+              vizInstance
+                .renderString(dot)
+                .then(function (result) {
+                  let svg = result;
+                  let parser = new DOMParser();
+                  let svgDoc = parser.parseFromString(svg, "image/svg+xml");
+
+                  let edgeSVGs = svgDoc.querySelectorAll(".edge");
+                  let nodes = svgDoc.querySelectorAll(".node");
+                  let coordinates = {};
+                  graph.getModel().clear();
+                  let clusters = svgDoc.querySelectorAll(".cluster");
+
+                  for (var i = 0; i < clusters.length; i++) {
+                    let cluster = clusters[i];
+                    let polygon = cluster.querySelector("polygon");
+                    let points = polygon.getAttribute("points");
+                    let title = cluster.querySelector("title").textContent;
+                    let titleCluster = cluster.querySelector(
+                      'text[font-weight="bold"]'
+                    );
+                    let fill = polygon.getAttribute("fill");
+                    let stroke = polygon.getAttribute("stroke");
+                    let strokeWidth = polygon.getAttribute("stroke-width");
+                    let coordinatesArray = points
+                      .split(" ")
+                      .map(function (point) {
+                        var coords = point.split(",");
+                        var x = parseFloat(coords[0]);
+                        var y = parseFloat(coords[1]);
+                        return { x: x, y: y };
+                      });
+
+                    let minX = Math.min.apply(
+                      null,
+                      coordinatesArray.map((coord) => coord.x)
+                    );
+                    let maxX = Math.max.apply(
+                      null,
+                      coordinatesArray.map((coord) => coord.x)
+                    );
+                    let minY = Math.min.apply(
+                      null,
+                      coordinatesArray.map((coord) => coord.y)
+                    );
+                    let maxY = Math.max.apply(
+                      null,
+                      coordinatesArray.map((coord) => coord.y)
+                    );
+
+                    let width = maxX - minX;
+                    let height = maxY - minY;
+                    if (!title.includes("space_boundary")) {
+                      let textWithCoords = ` (x: ${minX}, y: ${minY}) width: ${width} height: ${height}`;
+                      let clusterStyle =
+                        mxConstants.STYLE_SHAPE +
+                        "=rectangle;dashed=1;verticalAlign=top;fontStyle=1;fontSize=18;fillColor=" +
+                        fill +
+                        ";strokeColor=" +
+                        stroke +
+                        ";strokeWidth=" +
+                        strokeWidth;
+                      let clusterVertex = graph.insertVertex(
+                        null,
+                        titleCluster.textContent,
+                        titleCluster.textContent,
+                        minX,
+                        minY,
+                        width,
+                        height,
+                        clusterStyle
+                      );
+                      clusterVertex.setConnectable(false);
+                    }
+                  }
+                  for (var i = 0; i < nodes.length; i++) {
+                    let node = nodes[i];
+                    let nodeId = node.getAttribute("id");
+                    let nodeTitle = node.querySelector("title").textContent;
+
+                    let paths = node.querySelectorAll("path");
+                    let is3DCylinder = paths.length === 2;
+                    if (node.querySelector("ellipse") != null) {
+                      let ellipse = node.querySelector("ellipse");
+                      let cx = parseFloat(ellipse.getAttribute("cx"));
+                      let cy = parseFloat(ellipse.getAttribute("cy"));
+                      let rx = parseFloat(ellipse.getAttribute("rx"));
+                      let ry = parseFloat(ellipse.getAttribute("ry"));
+                      let fill = ellipse.getAttribute("fill");
+                      let stroke = ellipse.getAttribute("stroke");
+                      let strokeWidth = ellipse.getAttribute("stroke-width");
+
+                      let x = cx - rx;
+                      let y = cy - ry;
+
+                      let width = 2 * rx;
+                      let height = 2 * ry;
+
+                      coordinates[nodeId] = {
+                        x: x,
+                        y: y,
+                        width: width,
+                        height: height,
+                        nodeTitle: nodeTitle,
+                        shape: "ellipse",
+                        fill: fill,
+                        stroke: stroke,
+                        strokeWidth: strokeWidth,
+                      };
+                    } else if (node.querySelector("polygon") != null) {
+                      let points = node
+                        .querySelector("polygon")
+                        .getAttribute("points");
+                      let polygon = node.querySelector("polygon");
+                      let coordinatesArray = points
+                        .split(" ")
+                        .map(function (point) {
+                          let coords = point.split(",");
+                          let x = parseFloat(coords[0]);
+                          let y = parseFloat(coords[1]);
+                          return { x: x, y: y };
+                        });
+                      let fill = polygon.getAttribute("fill");
+                      let stroke = polygon.getAttribute("stroke");
+                      let strokeWidth = polygon.getAttribute("stroke-width");
+                      let minX = Math.min.apply(
+                        null,
+                        coordinatesArray.map((coord) => coord.x)
+                      );
+                      let maxX = Math.max.apply(
+                        null,
+                        coordinatesArray.map((coord) => coord.x)
+                      );
+                      let minY = Math.min.apply(
+                        null,
+                        coordinatesArray.map((coord) => coord.y)
+                      );
+                      let maxY = Math.max.apply(
+                        null,
+                        coordinatesArray.map((coord) => coord.y)
+                      );
+
+                      let width = maxX - minX;
+                      let height = maxY - minY;
+
+                      coordinates[nodeId] = {
+                        x: minX,
+                        y: minY,
+                        width: width,
+                        height: height,
+                        nodeTitle: nodeTitle,
+                        shape: "hexagon",
+                        fill: fill,
+                        stroke: stroke,
+                        strokeWidth: strokeWidth,
+                      };
+                    } else if (is3DCylinder) {
+                      let firstPath = paths[0];
+                      let d = firstPath.getAttribute("d");
+                      let values = d.match(/[0-9\.]+/g);
+                      let valuesFloat = values.map(parseFloat);
+
+                      let x = valuesFloat[0];
+                      let y = valuesFloat[1];
+                      let width = valuesFloat[6] - x;
+                      let height = valuesFloat[8] - y;
+                      let fill = firstPath.getAttribute("fill");
+                      let stroke = firstPath.getAttribute("stroke");
+                      let strokeWidth = firstPath.getAttribute("stroke-width");
+
+                      coordinates[nodeId] = {
+                        x: x,
+                        y: y,
+                        width: width,
+                        height: height,
+                        nodeTitle: nodeTitle,
+                        shape: "datastore",
+                        fill: fill,
+                        stroke: stroke,
+                        strokeWidth: strokeWidth,
+                      };
+                    }
+                  }
+                  let style = graph.getStylesheet().getDefaultEdgeStyle();
+                  style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom;
+
+                  let parent = graph.getDefaultParent();
+
+                  try {
+                    for (let nodeId in coordinates) {
+                      let nodeCoords = coordinates[nodeId];
+
+                      let minX, minY, maxX, maxY;
+
+                      if (Array.isArray(nodeCoords)) {
+                        minX = Math.min.apply(
+                          null,
+                          nodeCoords.map((coord) => coord.x)
+                        );
+                        maxX = Math.max.apply(
+                          null,
+                          nodeCoords.map((coord) => coord.x)
+                        );
+                        minY = Math.min.apply(
+                          null,
+                          nodeCoords.map((coord) => coord.y)
+                        );
+                        maxY = Math.max.apply(
+                          null,
+                          nodeCoords.map((coord) => coord.y)
+                        );
+                      } else {
+                        minX = nodeCoords.x;
+                        minY = nodeCoords.y;
+                        maxX = nodeCoords.x + nodeCoords.width;
+                        maxY = nodeCoords.y + nodeCoords.height;
+                      }
+
+                      let nodeElement = svgDoc.querySelector("#" + nodeId);
+                      let paths = nodeElement.querySelectorAll("path");
+                      let textElement = nodeElement.querySelector(
+                        'text[font-weight="bold"]'
+                      );
+
+                      if (!textElement) {
+                        textElement = nodeElement.querySelector(
+                          'text[text-anchor="start"]'
+                        );
+                      }
+                      let text = textElement.textContent;
+                      // Check if it's a 3D cylinder
+                      let is3DCylinder = paths.length === 2;
+
+                      //var textWithCoords = `${text} (x: ${minX}, y: ${minY}) width: ${width} height: ${height}`;
+                      let vertex;
+                      if (is3DCylinder) {
+                        let widthScaleFactor = 2.0;
+                        let heightScaleFactor = 0.07;
+
+                        // Create a 3D cylinder vertex
+                        let style =
+                          "shape=datastore;fontStyle=1;fontSize=18;shadow=1;fillColor=" +
+                          nodeCoords.fill +
+                          ";strokeColor=" +
+                          nodeCoords.stroke +
+                          ";strokeWidth=" +
+                          nodeCoords.strokeWidth;
+                        vertex = graph.insertVertex(
+                          parent,
+                          null,
+                          text,
+                          minX - Math.abs(maxX - minX) * widthScaleFactor,
+                          -minY,
+                          Math.abs(maxX - minX) * widthScaleFactor,
+                          Math.abs(maxY - minY) * heightScaleFactor,
+                          style
+                        );
+                      } else if (nodeCoords.shape === "ellipse") {
+                        let widthScaleFactor = 0.6;
+                        let heightScaleFactor = 0.6;
+                        let style =
+                          "shape=ellipse;fontStyle=1;fontSize=18;shadow=1;fillColor=" +
+                          nodeCoords.fill +
+                          ";strokeColor=" +
+                          nodeCoords.stroke +
+                          ";strokeWidth=" +
+                          nodeCoords.strokeWidth;
+
+                        vertex = graph.insertVertex(
+                          parent,
+                          null,
+                          text,
+                          minX,
+                          minY,
+                          Math.abs(maxX - minX),
+                          Math.abs(maxY - minY),
+                          style
+                        );
+                      } else {
+                        let widthScaleFactor = 0.6;
+                        let heightScaleFactor = 0.6;
+                        let style =
+                          "shape=hexagon;fontStyle=1;fontSize=18;shadow=1;fillColor=" +
+                          nodeCoords.fill +
+                          ";strokeColor=" +
+                          nodeCoords.stroke +
+                          ";strokeWidth=" +
+                          nodeCoords.strokeWidth;
+                        vertex = graph.insertVertex(
+                          parent,
+                          null,
+                          text,
+                          minX,
+                          minY,
+                          Math.abs(maxX - minX),
+                          Math.abs(maxY - minY),
+                          style
+                        );
+                      }
+
+                      vertex.setVertex(true);
+                      nodeIdMap[nodeCoords.nodeTitle] = vertex;
+
+                      let bounds = graph.getCellGeometry(vertex);
+                      let textWidth = mxUtils.getSizeForString(
+                        text,
+                        12,
+                        mxConstants.DEFAULT_FONTFAMILY
+                      ).width;
+                      let textHeight = mxUtils.getSizeForString(
+                        text,
+                        12,
+                        mxConstants.DEFAULT_FONTFAMILY
+                      ).height;
+
+                      let padding = 20;
+                      if (bounds.width < textWidth + padding) {
+                        bounds.width = textWidth + padding;
+                      }
+                      if (bounds.height < textHeight + padding) {
+                        bounds.height = textHeight + padding;
+                      }
+                      graph.resizeCell(vertex, bounds);
+                    }
+
+                    // Parse edges
+                    let edgeStmts = dotJson.children.filter(
+                      (child) => child.type === "edge_stmt"
+                    );
+                    let edgeMap = {};
+                    let uniqueEdgeStmts = [];
+
+                    edgeStmts.forEach((edgeStmt) => {
+                      let key =
+                        edgeStmt.edge_list[0].id +
+                        "->" +
+                        edgeStmt.edge_list[1].id;
+                      if (!(key in edgeMap)) {
+                        edgeMap[key] = true;
+                        uniqueEdgeStmts.push(edgeStmt);
+                      }
+                    });
+
+                    edgeStmts = uniqueEdgeStmts;
+                    edgeStmts.forEach((edgeStmt) => {
+                      let sourceTitle = edgeStmt.edge_list[0].id;
+                      let targetTitle = edgeStmt.edge_list[1].id;
+                      let edgeStyle = "edgeStyle=orthogonalEdgeStyle;";
+
+                      // Validate IDs
+                      if (
+                        !(sourceTitle in nodeIdMap) ||
+                        !(targetTitle in nodeIdMap)
+                      ) {
+                        console.log("Invalid edge source or target id");
+                        return;
+                      }
+
+                      let pathPoints;
+                      edgeSVGs.forEach((edgeSVG) => {
+                        let title = edgeSVG.querySelector("title").textContent;
+                        // Iterate through parsed edges
+                        let edgeString = `${sourceTitle}->${targetTitle}`;
+                        // Compare SVG edge title to parsed edge title
+                        if (title === edgeString) {
+                          let path = edgeSVG
+                            .querySelector("path")
+                            .getAttribute("d");
+                          pathPoints = path.split(" ");
+                          pathPoints.shift(); // Remove first element
+                          pathPoints.pop(); // Remove last element
+
+                          // Convert path points to mxPoints
+                          pathPoints = pathPoints.map((pointString) => {
+                            let [x, y] = pointString.split(",").map(Number);
+                            return new mxPoint(x, y);
+                          });
+                        }
+                      });
+
+                      // Get source and target vertices
+                      let sourceVertex = nodeIdMap[sourceTitle];
+                      let targetVertex = nodeIdMap[targetTitle];
+
+                      // Insert edge
+                      let edge = graph.insertEdge(
+                        parent,
+                        null,
+                        "",
+                        sourceVertex,
+                        targetVertex,
+                        edgeStyle
+                      );
+                      // Assign waypoints to edge if they exist
+                      if (pathPoints) {
+                        let edgeGeometry = edge.getGeometry();
+                        edgeGeometry = edgeGeometry.clone();
+                        edgeGeometry.points = pathPoints;
+                        graph.getModel().setGeometry(edge, edgeGeometry);
+                      }
+                    });
+                  } catch (error) {
+                    console.error(error);
+                  } finally {
+                    graph.fit();
+                  }
+                })
+                .catch(function (error) {
+                  console.error(error);
+                });
+            });
+          } else {
+            var doc = mxUtils.parseXml(xml);
+            editor.graph.setSelectionCells(
+              editor.graph.importGraphModel(doc.documentElement)
+            );
+          }
         } catch (e) {
           mxUtils.alert(
             mxResources.get("invalidOrMissingFile") + ": " + e.message
@@ -59,6 +490,27 @@ Actions.prototype.init = function () {
       })
     );
 
+    function getPolygonPoints(coordinates) {
+      var points = [];
+      for (var i = 0; i < coordinates.length; i++) {
+        points.push(coordinates[i].x + "," + coordinates[i].y);
+      }
+      return points.join(" ");
+    }
+    function downloadSVG(svgData, fileName) {
+      var blob = new Blob([svgData], { type: "image/svg+xml" });
+      var url = URL.createObjectURL(blob);
+
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
     // Removes openFile if dialog is closed
     ui.showDialog(
       new OpenDialog(this).container,
@@ -1257,12 +1709,12 @@ Actions.prototype.init = function () {
 
   this.put(
     "about",
-    new Action(mxResources.get("about") + " Graph Editor...", function () {
+    new Action(mxResources.get("about") + " Threagile+...", function () {
       if (!showingAbout) {
         ui.showDialog(
           new AboutDialog(ui).container,
           320,
-          280,
+          380,
           true,
           true,
           function () {
@@ -1584,7 +2036,6 @@ Actions.prototype.init = function () {
         "DataAssets:",
         "SomeStuff",
         function (newValue) {
-          // Hier kannst du den neuen Wert verwenden, z.B. speichern oder verarbeiten
           console.log("Neuer Wert:", newValue);
         },
         null,
@@ -1593,7 +2044,6 @@ Actions.prototype.init = function () {
         220
       );
 
-      // Scrollbar-Komponente erstellen und dem Dialogfenster hinzufügen
       var scrollbar = new graph.mxUtils.scrollbar(dlg.container);
       scrollbar.style.height = "100%";
       scrollbar.style.width = "100%";
@@ -1607,18 +2057,118 @@ Actions.prototype.init = function () {
     Editor.ctrlKey + "+E"
   );
   this.addAction(
+    "loadDiagramData",
+    mxUtils.bind(this, function (list, menu) {
+      var diagramData = graph.model.diagramData;
+      if (typeof diagramData !== "undefined") {
+        diagramData.forEach(
+          function (value, property) {
+            var clonedMenu = this.addDataMenu(this.createPanel());
+            var listItem = document.createElement("li");
+            listItem.style.display = "flex";
+            listItem.style.flexDirection = "column";
+            listItem.style.padding = "8px";
+            listItem.style.borderBottom = "1px solid #ccc";
+            var parentNode = clonedMenu.childNodes[0];
+            for (var key in value) {
+              if (value.hasOwnProperty(key)) {
+                var childNode = value[key];
+
+                for (var i = 0; i < parentNode.childNodes.length; i++) {
+                  var currentChildNode = parentNode.childNodes[i];
+
+                  if (
+                    currentChildNode.nodeType === Node.ELEMENT_NODE &&
+                    currentChildNode.children.length > 0 &&
+                    currentChildNode.children[0].textContent === key
+                  ) {
+                    if (i < parentNode.childNodes.length - 1) {
+                      var nextChildNode =
+                        currentChildNode.children[1].children[0];
+
+                      if (nextChildNode.nodeName === "SELECT") {
+                        nextChildNode.value = childNode;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            var textContainer = document.createElement("div");
+            textContainer.style.display = "flex";
+            textContainer.style.alignItems = "center";
+            textContainer.style.marginBottom = "8px";
+            var arrowIcon = document.createElement("img");
+            arrowIcon.src =
+              " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
+            arrowIcon.style.width = "10px";
+            arrowIcon.style.height = "10px";
+            arrowIcon.style.marginRight = "5px";
+
+            arrowIcon.style.transform = "rotate(270deg)";
+            textContainer.insertBefore(arrowIcon, dataText);
+
+            var dataText = document.createElement("div");
+            dataText.textContent = value.descriptionMenu;
+
+            var xButton = document.createElement("button");
+            xButton.innerHTML =
+              '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEV7mr3///+wksspAAAAAnRSTlP/AOW3MEoAAAAdSURBVAgdY9jXwCDDwNDRwHCwgeExmASygSL7GgB12QiqNHZZIwAAAABJRU5ErkJggg==" alt="X">';
+            xButton.style.marginLeft = "auto";
+            xButton.style.padding = "5px";
+            xButton.style.backgroundColor = "transparent";
+            xButton.style.border = "none";
+            xButton.style.cursor = "pointer";
+            xButton.addEventListener("click", function () {
+              var parentListItem = xButton.parentNode.parentNode;
+              var parentList = parentListItem.parentNode;
+              parentList.removeChild(parentListItem);
+              graph.model.diagramData.delete(menu.id);
+            });
+
+            textContainer.appendChild(dataText);
+            textContainer.appendChild(xButton);
+
+            listItem.appendChild(textContainer);
+            listItem.appendChild(clonedMenu);
+            function toggleContent() {
+              // Überprüfe, ob die enthaltenen Elemente bereits versteckt sind
+              var isHidden = listItem.style.backgroundColor === "lightgray";
+              if (isHidden) {
+                listItem.style.backgroundColor = "";
+                arrowIcon.style.transform = "rotate(270deg)";
+                xButton.style.display = "inline-block";
+                menu.style.display = "block";
+              } else {
+                listItem.style.backgroundColor = "lightgray";
+                arrowIcon.style.transform = "rotate(90deg)";
+                xButton.style.display = "none";
+                menu.style.display = "none";
+              }
+            }
+            arrowIcon.addEventListener("click", toggleContent);
+            dataText.addEventListener("click", toggleContent);
+
+            list.appendChild(listItem);
+          }.bind(this)
+        );
+      }
+    })
+  );
+  this.addAction(
     "addDataAssets",
     mxUtils.bind(this, function (list, menu) {
       if (typeof graph.model.diagramData === "undefined") {
-        graph.model.diagramData = [];
+        graph.model.diagramData = new Map();
       }
-
-      if (Array.isArray(graph.model.diagramData)) {
-        graph.model.diagramData.push({
+      if (graph.model.diagramData instanceof Map) {
+        var menuId = "menu_" + list.childElementCount;
+        graph.model.diagramData.set(menuId, {
           descriptionMenu: "Data" + list.childElementCount + ":",
         });
+        menu.id = menuId;
       } else {
-        console.error("diagramData not array");
+        console.error("diagramData is not a Map");
       }
       var listItem = document.createElement("li");
       listItem.style.display = "flex";
@@ -1641,7 +2191,7 @@ Actions.prototype.init = function () {
       textContainer.insertBefore(arrowIcon, dataText);
 
       var dataText = document.createElement("div");
-      dataText.textContent = "Data " + (list.childElementCount + 1) + ":";
+      dataText.textContent = "Data " + list.childElementCount + ":";
 
       var xButton = document.createElement("button");
       xButton.innerHTML =
@@ -1655,6 +2205,8 @@ Actions.prototype.init = function () {
         var parentListItem = xButton.parentNode.parentNode;
         var parentList = parentListItem.parentNode;
         parentList.removeChild(parentListItem);
+
+        var menuId = graph.model.diagramData.delete(menuId);
       });
 
       textContainer.appendChild(dataText);
@@ -1695,7 +2247,6 @@ Actions.prototype.init = function () {
       if (cells != null && cells.length > 0) {
         var cell = graph.getSelectionCell();
 
-        // Fügen Sie benutzerdefinierte Eigenschaften zur Zelle hinzu
         if (!cell.technicalAsset) {
           cell.technicalAsset = {
             justificationoutofscope: "",
@@ -1818,8 +2369,9 @@ Actions.prototype.init = function () {
   );
   this.addAction(
     "editDataDescription...",
-    mxUtils.bind(this, function (index) {
-      var current = graph.model.diagramData[index];
+    mxUtils.bind(this, function (evt) {
+      var menuId = evt.target.parentNode.id;
+      var current = graph.model.diagramData.get(menuId);
 
       if (!current.description) {
         current.description = "";
