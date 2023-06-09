@@ -1,3 +1,5 @@
+![Threagile Plus Logo](./www/images/logo.png)
+
 # Threagile Plus
 
 Welcome to Threagile Plus! This open-source project, developed solely by me (vacation project), aims to enhance your experience with threat modeling.
