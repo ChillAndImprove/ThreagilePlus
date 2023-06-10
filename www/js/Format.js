@@ -467,7 +467,6 @@ Format.prototype.refresh = function () {
           this.labelIndex = index;
         } else if (graph.isSelectionEmpty()) {
           this.diagramIndex = index;
-
         } else if (cell != null && cell.isEdge()) {
         } else {
           this.currentIndex = index;
@@ -8822,7 +8821,7 @@ CommunicationFormatPanel.prototype.init = function () {
 CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   container
 ) {
-  var self = this;
+  let self = this;
 
   // Add line break
   // Add Properties section
@@ -8966,8 +8965,6 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
     },
     destroy: function () {},
   };
-
-  var self = this;
 
   var typePropertiesMap = {};
   for (let property in typeProperties) {
@@ -9234,7 +9231,7 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
 CommunicationFormatPanel.prototype.addCommunicationeMenu = function (
   container
 ) {
-  var self = this;
+  let self = this;
   // Add General header
   var generalHeader = document.createElement("div");
   generalHeader.innerHTML = "General";
@@ -9307,8 +9304,6 @@ CommunicationFormatPanel.prototype.addCommunicationeMenu = function (
     },
     destroy: function () {},
   };
-
-  var self = this;
 
   for (var property in typeProperties) {
     var typeItem = document.createElement("li");
@@ -9940,7 +9935,7 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
   return container;
 };
 AssetFormatPanel.prototype.addThreagileMenu = function (container) {
-  var self = this;
+  let self = this;
   // Add General header
   var generalHeader = document.createElement("div");
   generalHeader.innerHTML = "General";
@@ -9967,108 +9962,213 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
   // Add line break
   container.appendChild(document.createElement("br"));
 
-  // Add Properties section
-  var propertiesSection = createSection("Properties");
-  container.appendChild(propertiesSection);
-
   // Add Type properties
   var typeProperties = {
     Id: {
       description: "Id",
       type: "button",
+      section: "Properties",
+      tooltip: "All id attribute values must be unique ",
+      defaultValue: "<Your ID>",
     },
     Type: {
       description: "Type",
       type: "select",
-      options: ["external-entity", "process", "datastore"],
+      options: [
+        {
+          group: "Category 1",
+          options: ["external-entity", "process", "datastore"],
+          defaultValue: "external-entity",
+        },
+      ],
+      section: "Properties",
+      tooltip:
+        "Select the 'Type' for your threat model component. 'external-entity' represents an outside actor or system, 'process' indicates an operational component, and 'datastore' refers to data storage within the system.",
     },
     Technologies: {
       description: "Technologies",
       type: "select",
+      defaultValue: "unknown-technology",
       options: [
-        "unknown-technology",
-        "client-system",
-        "browser",
-        "desktop",
-        "mobile-app",
-        "devops-client",
-        "web-server",
-        "web-application",
-        "application-server",
-        "database",
-        "file-server",
-        "local-file-system",
-        "erp",
-        "cms",
-        "web-service-rest",
-        "web-service-soap",
-        "ejb",
-        "service-registry",
-        "reverse-proxy",
-        "load-balancer",
-        "build-pipeline",
-        "sourcecode-repository",
-        "artifact-registry",
-        "code-inspection-platform",
-        "monitoring",
-        "ldap-server",
-        "container-platform",
-        "batch-processing",
-        "event-listener",
-        "identity-provider",
-        "identity-store-ldap",
-        "identity-store-database",
-        "tool",
-        "cli",
-        "task",
-        "function",
-        "gateway",
-        "iot-device",
-        "message-queue",
-        "stream-processing",
-        "service-mesh",
-        "data-lake",
-        "report-engine",
-        "ai",
-        "mail-server",
-        "vault",
-        "hsm",
-        "waf",
-        "ids",
-        "ips",
-        "scheduler",
-        "mainframe",
-        "block-storage",
-        "library",
+        {
+          group: "Unknown Technology",
+          options: ["unknown-technology"],
+        },
+        {
+          group: "Client System",
+          options: ["client-system", "desktop", "mobile-app", "devops-client"],
+        },
+        {
+          group: "Web-related",
+          options: [
+            "browser",
+            "web-server",
+            "web-application",
+            "reverse-proxy",
+            "load-balancer",
+          ],
+        },
+        {
+          group: "Development-related",
+          options: [
+            "code-inspection-platform",
+            "build-pipeline",
+            "artifact-registry",
+            "sourcecode-repository",
+          ],
+        },
+        {
+          group: "Infrastructure-related",
+          options: [
+            "file-server",
+            "local-file-system",
+            "database",
+            "ldap-server",
+            "container-platform",
+            "mainframe",
+            "block-storage",
+          ],
+        },
+        {
+          group: "Web Services",
+          options: ["web-service-rest", "web-service-soap"],
+        },
+        {
+          group: "Content Management",
+          options: ["cms"],
+        },
+        {
+          group: "Enterprise related",
+          options: ["erp"],
+        },
+        {
+          group: "Security-related",
+          options: [
+            "identity-provider",
+            "identity-store-ldap",
+            "identity-store-database",
+            "vault",
+            "hsm",
+            "waf",
+            "ids",
+            "ips",
+          ],
+        },
+        {
+          group: "Tools and Utilities",
+          options: ["tool", "cli"],
+        },
+        {
+          group: "Message and Processing",
+          options: [
+            "message-queue",
+            "stream-processing",
+            "batch-processing",
+            "event-listener",
+          ],
+        },
+        {
+          group: "Networking:",
+          options: ["gateway", "service-mesh"],
+        },
+        {
+          group: "Date-related",
+          options: ["data-lake"],
+        },
+        {
+          group: "Reporting and Analytics",
+          options: ["report-engine", "ai"],
+        },
+        {
+          group: "Monitoring",
+          options: ["monitoring"],
+        },
+        {
+          group: "Search-related",
+          options: ["search-index", "search-engine"],
+        },
+        {
+          group: "Other",
+          options: [
+            "application-server",
+            "ejb",
+            "service-registry",
+            "task",
+            "function",
+            "iot-device",
+            "data-lake",
+            "mail-server",
+            "scheduler",
+            "library",
+          ],
+        },
       ],
+      section: "Properties",
+      tooltip:
+        "The 'Technologies' field allows you to classify your components based on the underlying technologies ",
     },
-
-    description: "Size",
-    type: "select",
-    options: ["system", "service", "application", "component"],
-    Size: {},
+    Size: {
+      description: "Size",
+      type: "select",
+      defaultValue: "system",
+      options: [
+        {
+          group: "Category 1",
+          options: ["system", "service", "application", "component"],
+        },
+      ],
+      section: "Properties",
+      tooltip:
+        "The 'Size' option classifies the component based on its scope in your system hierarchy - 'system' for a whole system, 'service' for an individual service, 'application' for a specific application, and 'component' for smaller, constituent parts.",
+    },
     Machine: {
       description: "Machine",
       type: "select",
-      options: ["physical", "virtual", "container", "serverless"],
+      defaultValue: "physical",
+      options: [
+        {
+          group: "Category 1",
+          options: ["physical", "virtual", "container", "serverless"],
+        },
+      ],
+      section: "Properties",
+      tooltip:
+        "The 'Machine' option indicates the infrastructure type of your component - 'physical' for traditional hardware, 'virtual' for virtualized environments, 'container' for containerized applications, and 'serverless' for serverless architectures.",
     },
     Encryption: {
       description: "Encryption",
       type: "select",
+      defaultValue: "none",
       options: [
-        "none",
-        "data-with-symmetric-shared-key",
-        "data-with-asymmetric-shared-key",
-        "data-with-enduser-individual-key",
+        {
+          group: "Category 1",
+          options: [
+            "none",
+            "data-with-symmetric-shared-key",
+            "data-with-asymmetric-shared-key",
+            "data-with-enduser-individual-key",
+          ],
+        },
       ],
+      section: "Properties",
+      tooltip:
+        "The 'Encryption' option specifies the type of encryption used for your data - 'none' for no encryption, 'data-with-symmetric-shared-key' for symmetric encryption, 'data-with-asymmetric-shared-key' for asymmetric encryption, and 'data-with-enduser-individual-key' for encryption with unique keys per end user.",
     },
     Owner: {
       description: "Owner",
       type: "button",
+      section: "Properties",
+      defaultValue: "<Captain Awesome>",
+      tooltip:
+        "The 'Owner' field designates the individual or the entity that has administrative authority or control over the component.",
     },
     Internet: {
+      defaultValue: "false",
       description: "Internet",
       type: "checkbox",
+      section: "Properties",
+      tooltip:
+        "The 'Internet' field indicates whether the component is connected to the internet or not.",
     },
   };
   var customListener = {
@@ -10078,9 +10178,13 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
     destroy: function () {},
   };
 
-  var self = this;
-
+  var sections = {};
   for (let property in typeProperties) {
+    let sectionName = typeProperties[property].section;
+    if (!sections[sectionName]) {
+      sections[sectionName] = createSection(sectionName);
+    }
+    console.log(sections["Properties"].childElementCount);
     var typeItem = document.createElement("li");
     typeItem.style.display = "flex";
     typeItem.style.alignItems = "baseline";
@@ -10100,17 +10204,23 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       selectContainer.style.display = "flex";
       selectContainer.style.alignItems = "center";
       selectContainer.style.marginLeft = "auto";
-
       var selectDropdown = document.createElement("select");
       selectDropdown.style.width = "100px";
+      selectDropdown.title = typeProperties[property].tooltip;
       selectContainer.appendChild(selectDropdown);
 
-      var options = typeProperties[property].options;
-      for (var i = 0; i < options.length; i++) {
-        var option = document.createElement("option");
-        option.value = options[i];
-        option.text = options[i];
-        selectDropdown.appendChild(option);
+      var optionGroups = typeProperties[property].options;
+      for (var i = 0; i < optionGroups.length; i++) {
+        var optgroup = document.createElement("optgroup");
+        optgroup.label = optionGroups[i].group;
+        var options = optionGroups[i].options;
+        for (var j = 0; j < options.length; j++) {
+          var option = document.createElement("option");
+          option.value = options[j];
+          option.text = options[j];
+          optgroup.appendChild(option);
+        }
+        selectDropdown.appendChild(optgroup);
       }
       var cell = self.editorUi.editor.graph.getSelectionCell();
       if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
@@ -10142,6 +10252,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
         createChangeListener(selectDropdown, propertySelect)
       );
       typeItem.appendChild(selectContainer);
+      sections[sectionName].appendChild(typeItem);
     } else if (propertyType === "checkbox") {
       container.appendChild(
         this.createOption(
@@ -10151,6 +10262,16 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
           customListener
         )
       );
+      let optionElement = this.createOption(
+        property,
+        createCustomOption(self, property),
+        setCustomOption(self, property),
+        customListener
+      );
+      optionElement.querySelector('input[type="checkbox"]').title =
+        typeProperties[property].tooltip;
+
+      sections[sectionName].appendChild(optionElement);
     } else if (propertyType === "button") {
       let button = mxUtils.button(
         property,
@@ -10158,7 +10279,9 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
           var cells = self.editorUi.editor.graph.getSelectionCells();
           var cell = cells && cells.length > 0 ? cells[0] : null;
           var dataValue =
-            cell && cell.technicalAsset ? cell.technicalAsset[property] : "";
+            cell && cell.technicalAsset && cell.technicalAsset[property]
+              ? cell.technicalAsset[property]
+              : typeProperties[property].defaultValue;
 
           var dlg = new TextareaDialog(
             this.editorUi,
@@ -10175,6 +10298,14 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
                     cell.technicalAsset[property] = newValue;
                   }
                 }
+              } else {
+                if (cell) {
+                  if (!cell.technicalAsset) {
+                    cell.technicalAsset = {
+                      [property]: typeProperties[property].defaultValue,
+                    };
+                  }
+                }
               }
             },
             null,
@@ -10187,13 +10318,17 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
           dlg.init();
         })
       );
+      button.title = typeProperties[property].tooltip;
       button.style.width = "200px";
       typeItem.appendChild(button);
+      sections[sectionName].appendChild(typeItem);
     }
-    propertiesSection.appendChild(typeItem);
+  }
+  for (let sectionName in sections) {
+    container.appendChild(sections[sectionName]);
   }
 
-  var ciaProperties = {
+  ciaProperties = {
     Confidentiality: {
       description: "Confidentility",
       type: "select",
@@ -10410,16 +10545,20 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
     )
   );
 
-  usageSection.appendChild(
-    this.createOption(
-      "Out of Scope",
-      createCustomOption(self, "Outofscope"),
-      setCustomOption(self, "Outofscope"),
-      customListener
-    )
+  let optionElement = this.createOption(
+    "Out of Scope",
+    createCustomOption(self, "Outofscope"),
+    setCustomOption(self, "Outofscope"),
+    customListener
   );
 
+  optionElement.querySelector('input[type="checkbox"]').title =
+    "Ihr Tooltip Text";
+
+  usageSection.appendChild(optionElement);
+
   usageSection.appendChild(justificationOutOfScope);
+  // <--------------Data Section -------------->
   var dataSection = createSection("Data Stored:");
   var selectedDataSection = createSection("Selected Data:");
 
