@@ -7854,6 +7854,7 @@ DiagramStylePanel.prototype.addView = function (div) {
 
   return div;
 };
+/*
 function addDataItemToList(container, list) {
   //container.appendChild(items);
   var listItem = document.createElement("li");
@@ -7885,7 +7886,7 @@ function addDataItemToList(container, list) {
   listItem.addEventListener("click", function () {
     // Überprüfe, ob die enthaltenen Elemente bereits versteckt sind
     var isHidden = listItem.style.backgroundColor === "lightgray";
-
+    console.log("hier");
     if (isHidden) {
       // Wenn die enthaltenen Elemente bereits versteckt sind, zeige sie an
       listItem.style.backgroundColor = "";
@@ -7897,6 +7898,7 @@ function addDataItemToList(container, list) {
     }
   });
 }
+*/
 /**
  * Adds the label menu items to the given menu and parent.
  */
@@ -8029,13 +8031,30 @@ DiagramFormatPanel.prototype.init = function () {
 
         textContainer.appendChild(dataText);
         textContainer.appendChild(xButton);
+        let current = graph.model.diagramData.get(clonedMenu.id);
+        if (current["visible"] === undefined) {
+          current["visible"] = true;
+        }
+        let state = current["visible"];
+        if (state) {
+          listItem.style.backgroundColor = "";
+          arrowIcon.style.transform = "rotate(270deg)";
+          xButton.style.display = "inline-block";
+          clonedMenu.style.display = "block";
+        } else {
+          listItem.style.backgroundColor = "lightgray";
+          arrowIcon.style.transform = "rotate(90deg)";
+          xButton.style.display = "none";
+          clonedMenu.style.display = "none";
+        }
 
         listItem.appendChild(textContainer);
         listItem.appendChild(clonedMenu);
         function toggleContent() {
           // Überprüfe, ob die enthaltenen Elemente bereits versteckt sind
-          var isHidden = listItem.style.backgroundColor === "lightgray";
-          if (isHidden) {
+          let state = current["visible"];
+          current["visible"] = !current["visible"];
+          if (!state) {
             listItem.style.backgroundColor = "";
             arrowIcon.style.transform = "rotate(270deg)";
             xButton.style.display = "inline-block";
@@ -9936,38 +9955,19 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
 };
 AssetFormatPanel.prototype.addThreagileMenu = function (container) {
   let self = this;
-  // Add General header
-  var generalHeader = document.createElement("div");
-  generalHeader.innerHTML = "General";
-  generalHeader.style.padding = "10px 0px 6px 0px";
-  generalHeader.style.whiteSpace = "nowrap";
-  generalHeader.style.overflow = "hidden";
-  generalHeader.style.width = "200px";
-  generalHeader.style.fontWeight = "bold";
-  container.appendChild(generalHeader);
-
-  // Add Description button
-  var descriptionButton = mxUtils.button(
-    "Description:",
-    mxUtils.bind(this, function (evt) {
-      this.editorUi.actions.get("editAssetDescription").funct();
-    })
-  );
-
-  descriptionButton.innerHTML = "Description";
-  descriptionButton.style.width = "200px";
-
-  container.appendChild(descriptionButton);
-
-  // Add line break
-  container.appendChild(document.createElement("br"));
-
-  // Add Type properties
   var typeProperties = {
+    Description: {
+      description: "Description",
+      type: "button",
+      section: "General",
+      tooltip: "Provide a brief description of the technology asset. ",
+      defaultValue:
+        "<This technology asset is responsible for managing the secure transmission of data between client applications and the server infrastructure.>",
+    },
     Id: {
       description: "Id",
       type: "button",
-      section: "Properties",
+      section: "General",
       tooltip: "All id attribute values must be unique ",
       defaultValue: "<Your ID>",
     },
@@ -10170,63 +10170,184 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "The 'Internet' field indicates whether the component is connected to the internet or not.",
     },
+    Confidentiality: {
+      section: "CIA",
+      description: "Confidentility",
+      type: "select",
+      options: [
+        {
+          group: "Category 1",
+          options: [
+            "public",
+            "internal",
+            "restricted",
+            "confidential",
+            "strictly-confidential",
+          ],
+        },
+      ],
+      defaultValue: "public",
+      tooltip:
+        "Confidentiality: refers to the practice of keeping sensitive information private and secure from unauthorized access. This ensures that only authorized individuals can view the sensitive data.",
+    },
+    Integrity: {
+      section: "CIA",
+      description: "Integritity",
+      type: "select",
+      options: [
+        {
+          group: "Category 1",
+          options: [
+            "archive",
+            "operational",
+            "important",
+            "critical",
+            "mission-critical",
+          ],
+        },
+      ],
+      defaultValue: "archive",
+      tooltip:
+        "Integrity: refers to the assurance that the information is trustworthy and accurate. It ensures that the data has not been improperly modified, whether intentionally or accidentally, and remains consistent and accurate in its intended lifecycle.",
+    },
+    Availability: {
+      section: "CIA",
+      description: "Availiablity",
+      type: "select",
+      options: [
+        {
+          group: "Category 1",
+          options: [
+            "archive",
+            "operational",
+            "important",
+            "critical",
+            "mission-critical",
+          ],
+        },
+      ],
+      defaultValue: "archive",
+      tooltip:
+        "Availability: refers to the guarantee that information and resources are accessible to authorized individuals when needed. This ensures that systems, applications, and data are always up and running, reducing downtime and providing reliable access to necessary information.",
+    },
+    Usage: {
+      section: "Utilization",
+      description: "Usage",
+      type: "select",
+      options: [
+        {
+          group: "Category 1",
+          options: ["business", "devops"],
+        },
+      ],
+      defaultValue: "business",
+      tooltip: "Select the main usage category of this resource.",
+    },
+
+    Used_as_client_by_human: {
+      defaultValue: "false",
+      description: "Used as client by human",
+      type: "checkbox",
+      section: "Utilization",
+      tooltip: "Check this if the resource is directly used by a human client.",
+    },
+    Multi_tenant: {
+      defaultValue: "false",
+      description: "Multi tenant",
+      type: "checkbox",
+      section: "Utilization",
+      tooltip:
+        "Check this if the resource is designed to serve multiple users in a multi-tenant environment.",
+    },
+    Redudant: {
+      defaultValue: "false",
+      description: "Redudant",
+      type: "checkbox",
+      section: "Utilization",
+      tooltip:
+        "Check this if the resource has redundancy features to prevent failure or data loss.",
+    },
+    Custom_developed_parts: {
+      defaultValue: "false",
+      description: "Custom Developed parts",
+      type: "checkbox",
+      section: "Utilization",
+      tooltip:
+        "Check this if the resource includes parts that were custom developed.",
+    },
+    Out_of_Scope: {
+      defaultValue: "false",
+      description: "Out of Scope",
+      type: "checkbox",
+      section: "Utilization",
+      tooltip:
+        "Check this if the resource is out of the scope of your threat model analysis.",
+    },
+    Justification_out_of_Scope: {
+      description: "Justification out of Scope",
+      type: "button",
+      section: "Utilization",
+      defaultValue:
+        "The 'XYZ' component is considered out of scope for the current threat model analysis due to its limited interaction with critical system functions. Additionally, it has recently undergone a comprehensive security audit and vulnerabilities identified have been addressed, reducing its overall risk level.",
+      tooltip:
+        "Provide justification if the resource is marked as out of scope.",
+    },
   };
-  var customListener = {
+  let customListener = {
     install: function (apply) {
       this.listener = function () {};
     },
     destroy: function () {},
   };
 
-  var sections = {};
+  let sections = {};
   for (let property in typeProperties) {
     let sectionName = typeProperties[property].section;
     if (!sections[sectionName]) {
       sections[sectionName] = createSection(sectionName);
     }
-    console.log(sections["Properties"].childElementCount);
-    var typeItem = document.createElement("li");
+    let typeItem = document.createElement("li");
     typeItem.style.display = "flex";
     typeItem.style.alignItems = "baseline";
     typeItem.style.marginBottom = "8px";
 
-    var propertyName = document.createElement("span");
+    let propertyName = document.createElement("span");
     propertyName.innerHTML = property;
     propertyName.style.width = "100px";
     propertyName.style.marginRight = "10px";
 
-    var propertyType = typeProperties[property].type;
+    let propertyType = typeProperties[property].type;
 
     if (propertyType === "select") {
       const propertySelect = property;
       typeItem.appendChild(propertyName);
-      var selectContainer = document.createElement("div");
+      let selectContainer = document.createElement("div");
       selectContainer.style.display = "flex";
       selectContainer.style.alignItems = "center";
       selectContainer.style.marginLeft = "auto";
-      var selectDropdown = document.createElement("select");
+      let selectDropdown = document.createElement("select");
       selectDropdown.style.width = "100px";
       selectDropdown.title = typeProperties[property].tooltip;
       selectContainer.appendChild(selectDropdown);
 
-      var optionGroups = typeProperties[property].options;
+      let optionGroups = typeProperties[property].options;
       for (var i = 0; i < optionGroups.length; i++) {
-        var optgroup = document.createElement("optgroup");
+        let optgroup = document.createElement("optgroup");
         optgroup.label = optionGroups[i].group;
-        var options = optionGroups[i].options;
-        for (var j = 0; j < options.length; j++) {
-          var option = document.createElement("option");
+        let options = optionGroups[i].options;
+        for (let j = 0; j < options.length; j++) {
+          let option = document.createElement("option");
           option.value = options[j];
           option.text = options[j];
           optgroup.appendChild(option);
         }
         selectDropdown.appendChild(optgroup);
       }
-      var cell = self.editorUi.editor.graph.getSelectionCell();
+      let cell = self.editorUi.editor.graph.getSelectionCell();
       if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
         selectDropdown.value = cell.technicalAsset[propertySelect];
       }
-      var createChangeListener = function (selectDropdown, propertySelect) {
+      let createChangeListener = function (selectDropdown, propertySelect) {
         return function (evt) {
           var vals = selectDropdown.value;
 
@@ -10254,14 +10375,6 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       typeItem.appendChild(selectContainer);
       sections[sectionName].appendChild(typeItem);
     } else if (propertyType === "checkbox") {
-      container.appendChild(
-        this.createOption(
-          property,
-          createCustomOption(self, property),
-          setCustomOption(self, property),
-          customListener
-        )
-      );
       let optionElement = this.createOption(
         property,
         createCustomOption(self, property),
@@ -10276,9 +10389,9 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       let button = mxUtils.button(
         property,
         mxUtils.bind(this, function (evt) {
-          var cells = self.editorUi.editor.graph.getSelectionCells();
-          var cell = cells && cells.length > 0 ? cells[0] : null;
-          var dataValue =
+          let cells = self.editorUi.editor.graph.getSelectionCells();
+          let cell = cells && cells.length > 0 ? cells[0] : null;
+          let dataValue =
             cell && cell.technicalAsset && cell.technicalAsset[property]
               ? cell.technicalAsset[property]
               : typeProperties[property].defaultValue;
@@ -10290,20 +10403,28 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
             function (newValue) {
               if (newValue != null) {
                 if (cell) {
+                  if (property === "Id") {
+                    var adjustedValue = newValue
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;");
+                    let model = self.editorUi.editor.graph.model;
+                    model.beginUpdate();
+                    try {
+                      model.setValue(cell, adjustedValue);
+
+                      self.editorUi.editor.graph.refresh(cell);
+
+                      self.editorUi.editor.graph.refresh();
+                    } finally {
+                      model.endUpdate();
+                    }
+                  }
                   if (!cell.technicalAsset) {
                     cell.technicalAsset = {
                       [property]: newValue,
                     };
                   } else {
                     cell.technicalAsset[property] = newValue;
-                  }
-                }
-              } else {
-                if (cell) {
-                  if (!cell.technicalAsset) {
-                    cell.technicalAsset = {
-                      [property]: typeProperties[property].defaultValue,
-                    };
                   }
                 }
               }
@@ -10314,7 +10435,6 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
             220
           );
           this.editorUi.showDialog(dlg.container, 420, 300, true, true);
-
           dlg.init();
         })
       );
@@ -10327,240 +10447,83 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
   for (let sectionName in sections) {
     container.appendChild(sections[sectionName]);
   }
+  // Add Listener for Out of Scope gray
 
-  ciaProperties = {
-    Confidentiality: {
-      description: "Confidentility",
-      type: "select",
-      options: [
-        "public",
-        "internal",
-        "restricted",
-        "confidential",
-        "strictly-confidential",
-      ],
-    },
-    Integrity: {
-      description: "Integritity",
-      type: "select",
-      options: [
-        "archive",
-        "operational",
-        "important",
-        "critical",
-        "mission-critical",
-      ],
-    },
-    Availability: {
-      description: "Availiablity",
-      type: "select",
-      options: [
-        "archive",
-        "operational",
-        "important",
-        "critical",
-        "mission-critical",
-      ],
-    },
-  };
-  // Add CIA section
-  var ciaSection = createSection("CIA");
-  ciaSection.style.marginLeft = "0"; // Set left margin to 0
-  container.appendChild(ciaSection);
-  for (var property in ciaProperties) {
-    var typeItem = document.createElement("li");
-    typeItem.style.display = "flex";
-    typeItem.style.alignItems = "baseline";
-    typeItem.style.marginBottom = "8px";
+  /* Feat Gray Stuff out
+  // Missing       let originalStyle = JSON.parse(model.getValue(cell, "originalStyle"));
+  // If that value is not set, set it
+  {
+    function applyOutOfScopeStyle() {
+      let cells = self.editorUi.editor.graph.getSelectionCells();
+      let cell = cells && cells.length > 0 ? cells[0] : null;
 
-    var propertyName = document.createElement("span");
-    propertyName.innerHTML = property;
-    propertyName.style.width = "100px";
-    propertyName.style.marginRight = "10px";
+      let model = self.editorUi.editor.graph.model;
+      let style = graph.getCellStyle(cell);
 
-    var propertyType = ciaProperties[property].type;
+      model.setValue(cell, "originalStyle", JSON.stringify(style));
 
-    if (propertyType === "select") {
-      const propertySelect = property;
-      typeItem.appendChild(propertyName);
-      var selectContainer = document.createElement("div");
-      selectContainer.style.display = "flex";
-      selectContainer.style.alignItems = "center";
-      selectContainer.style.marginLeft = "auto";
+      style["opacity"] = 50;
+      style["strokeColor"] = "#808080";
+      style["fillColor"] = "#C0C0C0";
 
-      var selectDropdown = document.createElement("select");
-      selectDropdown.style.width = "100px";
-      selectContainer.appendChild(selectDropdown);
+      graph.setCellStyle(style, [cell]);
+    }
 
-      var options = ciaProperties[property].options;
-      for (var i = 0; i < options.length; i++) {
-        var option = document.createElement("option");
-        option.value = options[i];
-        option.text = options[i];
-        selectDropdown.appendChild(option);
+    function restoreOriginalStyle() {
+      let cells = self.editorUi.editor.graph.getSelectionCells();
+      let cell = cells && cells.length > 0 ? cells[0] : null;
+
+      let model = self.editorUi.editor.graph.model;
+      let originalStyle = JSON.parse(model.getValue(cell, "originalStyle"));
+
+      if (originalStyle) {
+        graph.setCellStyle(originalStyle, [cell]);
+
+        model.setValue(cell, "originalStyle", null);
       }
-      var cell = self.editorUi.editor.graph.getSelectionCell();
-      if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
-        selectDropdown.value = cell.technicalAsset[propertySelect];
+    }
+    let outOfScopeLabel = sections["Utilization"].querySelector(
+      `input[title="${typeProperties["Out_of_Scope"].tooltip}"]`
+    );
+    function handleOutOfScope() {
+      if (outOfScopeLabel.checked) {
+        applyOutOfScopeStyle();
+      } else {
+        restoreOriginalStyle();
       }
-      var createChangeListener = function (selectDropdown, propertySelect) {
-        return function (evt) {
-          var vals = selectDropdown.value;
+    }
 
-          if (vals != null) {
-            var cells = self.editorUi.editor.graph.getSelectionCells();
-            if (cells != null && cells.length > 0) {
-              var cell = self.editorUi.editor.graph.getSelectionCell();
-              if (!cell.technicalAsset) {
-                cell.technicalAsset = {
-                  [propertySelect]: selectDropdown.value,
-                };
-              } else {
-                cell.technicalAsset[propertySelect] = selectDropdown.value;
-              }
-            }
-          }
-          mxEvent.consume(evt);
-        };
-      };
+    if (outOfScopeLabel) {
+      mxEvent.addListener(outOfScopeLabel, "click", handleOutOfScope);
       mxEvent.addListener(
-        selectDropdown,
-        "change",
-        createChangeListener(selectDropdown, propertySelect)
+        outOfScopeLabel.nextSibling,
+        "click",
+        handleOutOfScope
       );
-      typeItem.appendChild(selectContainer);
     }
-    ciaSection.appendChild(typeItem);
   }
-  var justificationCIA = mxUtils.button(
-    "Justification of the rating",
-    mxUtils.bind(this, function (evt) {
-      this.editorUi.actions.get("editAssetJustificationOftheRating").funct();
-    })
-  );
-
-  justificationCIA.innerHTML = "Justification of the rating";
-  justificationCIA.style.width = "200px";
-
-  ciaSection.appendChild(justificationCIA);
-  // ...
-  //
-  var usageSection = createSection("Usage:");
-
-  usageSection.appendChild(document.createElement("br"));
-  container.appendChild(usageSection);
-
-  /*
-    Usage[X]
-    Used as client by human[X]
-    Justification of out of scope[X]
-    Multi tenant
-    Redundant
-    Custom developed parts
-    Out of scope
   */
-  var usageLabel = document.createElement("span");
-  usageLabel.style.width = "100px";
-  usageLabel.style.marginRight = "10px";
-  usageLabel.innerHTML = "Usage:";
-
-  usageSection.appendChild(usageLabel);
-  var usageSelect = document.createElement("select");
-  usageSection.appendChild(usageSelect);
-
-  var usageOptions = ["business", "devops"];
-  for (var i = 0; i < usageOptions.length; i++) {
-    var option = document.createElement("option");
-    option.value = usageOptions[i];
-    option.text = usageOptions[i];
-    usageSelect.appendChild(option);
-  }
-  var cell = self.editorUi.editor.graph.getSelectionCell();
-  if (cell && cell.technicalAsset && cell.technicalAsset.usage) {
-    usageSelect.value = cell.technicalAsset.usage;
-  }
-  mxEvent.addListener(usageSelect, "change", function (evt) {
-    var vals = usageSelect.value;
-
-    if (vals != null) {
-      var cells = self.editorUi.editor.graph.getSelectionCells();
-      if (cells != null && cells.length > 0) {
-        var cell = self.editorUi.editor.graph.getSelectionCell();
-        if (!cell.technicalAsset) {
-          cell.technicalAsset = {
-            usage: usageSelect.value,
-          };
-        } else {
-          cell.technicalAsset.usage = usageSelect.value;
-        }
+  // Add Cell Value
+  {
+    let cells = self.editorUi.editor.graph.getSelectionCells();
+    let cell = cells && cells.length > 0 ? cells[0] : null;
+    if (!cell.getValue()) {
+      let model = self.editorUi.editor.graph.model;
+      model.beginUpdate();
+      try {
+        let newStyle = cell.getStyle() + "verticalAlign=top";
+        cell.setStyle(newStyle);
+        model.setValue(cell, typeProperties["Id"].defaultValue);
+        self.editorUi.editor.graph.refresh(cell);
+        self.editorUi.editor.graph.refresh();
+      } finally {
+        model.endUpdate();
       }
     }
-    mxEvent.consume(evt);
-  });
-  usageSection.appendChild(
-    this.createOption(
-      "Used as client by human",
-      createCustomOption(self, "Usedasclientbyhuman"),
-      setCustomOption(self, "Usedasclientbyhuman"),
-      customListener
-    )
-  );
-  //Justification of out of scope
-  var justificationOutOfScope = mxUtils.button(
-    "Justification ouf of Scope",
-    mxUtils.bind(this, function (evt) {
-      this.editorUi.actions.get("editAssetJustificationOutOfScope").funct();
-    })
-  );
-
-  justificationOutOfScope.innerHTML = "Justification out of Scope";
-  justificationOutOfScope.style.width = "199px";
-
-  // Multi tenant
-  usageSection.appendChild(
-    this.createOption(
-      "Multi tenant",
-      createCustomOption(self, "Multitenant"),
-      setCustomOption(self, "Multitenant"),
-      customListener
-    )
-  );
-  // Redundant
-  usageSection.appendChild(
-    this.createOption(
-      "Redudant",
-      createCustomOption(self, "Redudant"),
-      setCustomOption(self, "Redudant"),
-      customListener
-    )
-  );
-
-  // Custom developed parts
-  usageSection.appendChild(
-    this.createOption(
-      "Custom developed parts",
-      createCustomOption(self, "customdevelopedparts"),
-      setCustomOption(self, "customdevelopedparts"),
-      customListener
-    )
-  );
-
-  let optionElement = this.createOption(
-    "Out of Scope",
-    createCustomOption(self, "Outofscope"),
-    setCustomOption(self, "Outofscope"),
-    customListener
-  );
-
-  optionElement.querySelector('input[type="checkbox"]').title =
-    "Ihr Tooltip Text";
-
-  usageSection.appendChild(optionElement);
-
-  usageSection.appendChild(justificationOutOfScope);
+  }
   // <--------------Data Section -------------->
-  var dataSection = createSection("Data Stored:");
-  var selectedDataSection = createSection("Selected Data:");
+  var dataSection = createSection("Data:");
+  var selectedDataSection = createSection("Stored:");
 
   // Create table
   var table = document.createElement("table");

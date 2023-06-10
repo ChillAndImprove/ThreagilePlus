@@ -3,19 +3,16 @@ TODOs:
 - ~~General wird zu Technologies~~ Das ist nicht Done, sondenr falsch, General wird nicht zu technologies
 - Die anderen müssen invisible gemacht werden, also Misc usw. in dem Menü oder Sidebar, was auch immer das ist.
 - "Format Panel" wird unbennant
-- Es muss ein neues Tab geben, wie nenne ich das?
-  - Sowie User Object" wäre am besten, also als xml speichern
-- Die ganzen technologies, als XML oder Image auswählbar machen:
-- Falls man auf Pfeil klingt, dann zeigt er einige Formen, dass sollten am besten andere werden, die!
+  -~~ Es muss ein neues Tab geben, wie nenne ich das? - Sowie User Object" wäre am besten, also als xml speichern~~
+- ~~Die ganzen technologies, als XML oder Image auswählbar machen:- Falls man auf Pfeil klingt, dann zeigt er einige Formen, dass sollten am besten andere werden, die!~~
 - Import Funktion programmieren, also dass man eine threagile.yaml angeben kann
 - Export Funktion programmieren
 - Es gibt nicht nur Technologies sondern auch Verbindungen
   - Verbindungen dürfen nicht hängen, als müssen immer ausgeführt werden
   - Wenn man eine verbindung erstellt muss man in Rechts aussuchen können, was das für eine Verbindung ist
-- Es muss Trust Boundaries geben
-- Es muss auch in den Technologies ein Tab mit den Data Assets geben, also zwei Tabs
-- Trusted Boundaries wird etwas komplizierter, weil man nachschauen muss ob die nested sind,
-  dass ist schon etwas schwieriger. Siehe CodeBeispiel unten:
+- ~~Es muss Trust Boundaries geben~~
+- ~~Es muss auch in den Technologies ein Tab mit den Data Assets geben, also zwei Tabs~~
+- ~~Trusted Boundaries wird etwas komplizierter, weil man nachschauen muss ob die nested sind, dass ist schon etwas schwieriger. Siehe CodeBeispiel unten: ~~
   Technologies:
 
 - "unknown-technology",
@@ -289,8 +286,11 @@ Assets:
 ~~- Bau animation ein, also Fluß~~
 ~~- Mach die TrustBoundaries dicker,die Linien~~
 
-- Schreibe README mit schönen KI generierten Bild
-- Verändere Ordnerstruktur
+~~- Schreibe README mit schönen KI generierten Bild~~
+~~- Verändere Ordnerstruktur~~
+
+- Boundary Tab muss man einstellen können was für eine Art von Trust Boundary das ist
+- ID soll im Objekt stehen, also listener hinzufügen, wenn id sich ändert, dann setze es im Objekt
 - Mach Git Projekt public
 - Die jetzigen TODOS, lagere sie als Issues aus
 - Lösche deutsche Kommentare im Code

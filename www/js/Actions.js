@@ -2059,6 +2059,7 @@ Actions.prototype.init = function () {
   this.addAction(
     "loadDiagramData",
     mxUtils.bind(this, function (list, menu) {
+      console.log("this");
       var diagramData = graph.model.diagramData;
       if (typeof diagramData !== "undefined") {
         diagramData.forEach(
@@ -2134,7 +2135,12 @@ Actions.prototype.init = function () {
             function toggleContent() {
               // Überprüfe, ob die enthaltenen Elemente bereits versteckt sind
               var isHidden = listItem.style.backgroundColor === "lightgray";
-              if (isHidden) {
+              let current = diagramData.get(menu.id)["isHidden"];
+              if (!current["isHidden"]) {
+                current["isHidden"] = false;
+              }
+              let state = current["isHidden"];
+              if (state) {
                 listItem.style.backgroundColor = "";
                 arrowIcon.style.transform = "rotate(270deg)";
                 xButton.style.display = "inline-block";
@@ -2145,6 +2151,7 @@ Actions.prototype.init = function () {
                 xButton.style.display = "none";
                 menu.style.display = "none";
               }
+              current["isHidden"] = !current["isHidden"];
             }
             arrowIcon.addEventListener("click", toggleContent);
             dataText.addEventListener("click", toggleContent);
