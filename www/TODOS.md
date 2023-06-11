@@ -1,5 +1,64 @@
 TODOs:
 
+- Import Funktion schreiben, also in der this.addAction("import...", function () {
+  DataDiagram importieren anschließend Assets importieren und edges
+- Threat Analysis Tab erstellen in den Technology Assets und dort RAA, sowie Threats berechnen
+  wenn darauf geklickt wird und erlauben das man dort Sachen mitigiert und so weiter
+- Export Funktion schreiben, also über die ganzen Daten iterieren, anschließend über die Cellen und Edges, sowie wie die Threats die mitigiert wurden
+
+- Boundary Tab muss man einstellen können was für eine Art von Trust Boundary das ist
+- ID soll im Objekt stehen, also listener hinzufügen, wenn id sich ändert, dann setze es im Objekt
+- Mach Git Projekt public
+- Die jetzigen TODOS, lagere sie als Issues aus
+- Lösche deutsche Kommentare im Code
+
+~~- Bevor man importieren mit dem program testen ob der Graph korrekt ist~~
+
+- Fehlerhandling, fehler zeigen beim import
+
+- exportieren... umschreiben für threagile oder yaml
+
+Anschließend Table mit den Initalwerten und einen haken daneben den man mit doppelklick hinzufügen der löschen kann - Ein Initalwert für die Id wird der derzeitige Zeitpunkt sein.
+
+- Noch eine Table mit den ausgwählten Daten und nicht allen
+
+- Erst Initialisierung, erstelle Default werte für ID etc.
+  ~~- Data einbauen mit einer Liste und + und mit und einem WIndow wo die Eingabefelder sind~~
+  ~~- In den Assets die Datas angebbar machen~~
+- --Die Verbindung nicht mehr erlauben das die frei schweben können mit mxgrpah--
+  Verbindugen:
+- Wenn man auf den Pfeil klingt, steht da nicht Asset sondern die Verbindung, also z.B. html usw.
+  - Da steht tatsächlich eine ganze Menge siehe Communication Link und da muss man dann die Daten referenzieren
+- In den Assets die Verbindung sehen können
+- Alle Assets auf Kategorien sortieren und die restlichen einfügen
+- Rechteck um die Assets, sieht besser aus
+- New rausnehmen bei den Assets
+  Trust Boundaries:
+- Trust Boundaries Kategorie erstellen mit den 4 verschiedenen Kategorien
+- Die TrustBoundaries hat auch eine Custom Tab mit Beschreibung, technicals Assets inside und trustboundaries nested, sowie Type und ID
+- Jetzt geht es los mit rekursion und überprüfen ob es Assets in den TrustBoundaries gibt oder nicht
+  Import:
+- Zeit sich den GoCode und Webassembly anzutun. Und zwar muss bei dem Import das ganze geparsed werden, dafür webassembly mit go, anschließend
+  muss man mit vis.js gucken wie das ganze aussehen würde und dann die verschiedenen Assets mit Model etc. erstellen.
+  Export:
+  - Einmal über die ganzen Elemente iterieren
+    ExtraInfos:
+- Bei dem Diagramm noch Autor etc als Feld hinzufügen.
+- Bug, man kann kante ziehen und dann hat sie keine Verbindung mehr.
+- Export Funktion einbauen die alle Dateien generiert
+- Einbauen das man bei den Threats schreiben können ob man Threats mtigiert hat wie in der Excel
+- Slack auf einen anderne Computer setzen https://slack.com/help/articles/207262907-Change-your-email-address
+- Vor der Veröffentlichungen eine Woche testen.
+- Merke dir den hide zustand in den DataAssets
+- Baue noch tags ein in allen Sachen wo das fehlt
+- ToolTIps
+  Das in die JSON einbauen und dann geht das super einfacher
+  descriptionButton.title = "Dies ist ein Tooltip für den X-Button";
+- Code Refactoren
+- Bug error
+- Es gibt ein Model, da sollten wir Sachen speichern, damit man exportieren kann.
+- Shared Runtimes fehlen noch
+
 - ~~General wird zu Technologies~~ Das ist nicht Done, sondenr falsch, General wird nicht zu technologies
 - Die anderen müssen invisible gemacht werden, also Misc usw. in dem Menü oder Sidebar, was auch immer das ist.
 - "Format Panel" wird unbennant
@@ -288,59 +347,6 @@ Assets:
 
 ~~- Schreibe README mit schönen KI generierten Bild~~
 ~~- Verändere Ordnerstruktur~~
-
-- Boundary Tab muss man einstellen können was für eine Art von Trust Boundary das ist
-- ID soll im Objekt stehen, also listener hinzufügen, wenn id sich ändert, dann setze es im Objekt
-- Mach Git Projekt public
-- Die jetzigen TODOS, lagere sie als Issues aus
-- Lösche deutsche Kommentare im Code
-
-~~- Bevor man importieren mit dem program testen ob der Graph korrekt ist~~
-
-- Fehlerhandling, fehler zeigen beim import
-
-- exportieren... umschreiben für threagile oder yaml
-
-Anschließend Table mit den Initalwerten und einen haken daneben den man mit doppelklick hinzufügen der löschen kann - Ein Initalwert für die Id wird der derzeitige Zeitpunkt sein.
-
-- Noch eine Table mit den ausgwählten Daten und nicht allen
-
-- Erst Initialisierung, erstelle Default werte für ID etc.
-  ~~- Data einbauen mit einer Liste und + und mit und einem WIndow wo die Eingabefelder sind~~
-  ~~- In den Assets die Datas angebbar machen~~
-- --Die Verbindung nicht mehr erlauben das die frei schweben können mit mxgrpah--
-  Verbindugen:
-- Wenn man auf den Pfeil klingt, steht da nicht Asset sondern die Verbindung, also z.B. html usw.
-  - Da steht tatsächlich eine ganze Menge siehe Communication Link und da muss man dann die Daten referenzieren
-- In den Assets die Verbindung sehen können
-- Alle Assets auf Kategorien sortieren und die restlichen einfügen
-- Rechteck um die Assets, sieht besser aus
-- New rausnehmen bei den Assets
-  Trust Boundaries:
-- Trust Boundaries Kategorie erstellen mit den 4 verschiedenen Kategorien
-- Die TrustBoundaries hat auch eine Custom Tab mit Beschreibung, technicals Assets inside und trustboundaries nested, sowie Type und ID
-- Jetzt geht es los mit rekursion und überprüfen ob es Assets in den TrustBoundaries gibt oder nicht
-  Import:
-- Zeit sich den GoCode und Webassembly anzutun. Und zwar muss bei dem Import das ganze geparsed werden, dafür webassembly mit go, anschließend
-  muss man mit vis.js gucken wie das ganze aussehen würde und dann die verschiedenen Assets mit Model etc. erstellen.
-  Export:
-  - Einmal über die ganzen Elemente iterieren
-    ExtraInfos:
-- Bei dem Diagramm noch Autor etc als Feld hinzufügen.
-- Bug, man kann kante ziehen und dann hat sie keine Verbindung mehr.
-- Export Funktion einbauen die alle Dateien generiert
-- Einbauen das man bei den Threats schreiben können ob man Threats mtigiert hat wie in der Excel
-- Slack auf einen anderne Computer setzen https://slack.com/help/articles/207262907-Change-your-email-address
-- Vor der Veröffentlichungen eine Woche testen.
-- Merke dir den hide zustand in den DataAssets
-- Baue noch tags ein in allen Sachen wo das fehlt
-- ToolTIps
-  Das in die JSON einbauen und dann geht das super einfacher
-  descriptionButton.title = "Dies ist ein Tooltip für den X-Button";
-- Code Refactoren
-- Bug error
-- Es gibt ein Model, da sollten wir Sachen speichern, damit man exportieren kann.
-- Shared Runtimes fehlen noch
 
 Info:
 

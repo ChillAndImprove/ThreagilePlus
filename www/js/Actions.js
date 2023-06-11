@@ -61,6 +61,9 @@ Actions.prototype.init = function () {
               dot = printDataFlowDiagramGraphvizDOT();
               //let jsonObj = dotParser.parse(dot);
               let dotJson = dotParser.parse(dot)[0];
+              //First data import
+              console.log(jsonObj);
+              //Technology Asset Import
 
               let cells = [];
               let nodeIdMap = {};

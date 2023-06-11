@@ -8842,91 +8842,153 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
 ) {
   let self = this;
 
-  // Add line break
-  // Add Properties section
-  var propertiesSection = createSection("Properties");
-  container.appendChild(propertiesSection);
-
   // Add Type properties
   var typeProperties = {
+    /*
+    // Das müsste man auch noch ändern
     Target: {
       description: "Target",
       type: "button",
+      section: "Properties",
     },
+    */
     Description: {
       description: "Description",
       type: "button",
+      tooltip: "Provide a brief description of the component.",
+      defaultValue: "<Your Description>",
+      section: "Properties",
     },
     Protocol: {
       description: "Protocol",
       type: "select",
       options: [
-        "unknown-protocol",
-        "http",
-        "https",
-        "ws",
-        "wss",
-        "reverse-proxy-web-protocol",
-        "reverse-proxy-web-protocol-encrypted",
-        "mqtt",
-        "jdbc",
-        "jdbc-encrypted",
-        "odbc",
-        "odbc-encrypted",
-        "sql-access-protocol",
-        "sql-access-protocol-encrypted",
-        "nosql-access-protocol",
-        "nosql-access-protocol-encrypted",
-        "binary",
-        "binary-encrypted",
-        "text",
-        "text-encrypted",
-        "ssh",
-        "ssh-tunnel",
-        "smtp",
-        "smtp-encrypted",
-        "pop3",
-        "pop3-encrypted",
-        "imap",
-        "imap-encrypted",
-        "ftp",
-        "ftps",
-        "sftp",
-        "scp",
-        "ldap",
-        "ldaps",
-        "jms",
-        "nfs",
-        "smb",
-        "smb-encrypted",
-        "local-file-access",
-        "nrpe",
-        "xmpp",
-        "iiop",
-        "iiop-encrypted",
-        "jrmp",
-        "jrmp-encrypted",
-        "in-process-library-call",
-        "container-spawning",
+        {
+          group: "Web Protocols",
+          options: [
+            "http",
+            "https",
+            "ws",
+            "wss",
+            "reverse-proxy-web-protocol",
+            "reverse-proxy-web-protocol-encrypted",
+          ],
+        },
+        {
+          group: "Database Protocols",
+          options: [
+            "jdbc",
+            "jdbc-encrypted",
+            "odbc",
+            "odbc-encrypted",
+            "sql-access-protocol",
+            "sql-access-protocol-encrypted",
+            "nosql-access-protocol",
+            "nosql-access-protocol-encrypted",
+          ],
+        },
+        {
+          group: "General Protocols",
+          options: [
+            "unknown-protocol",
+            "mqtt",
+            "binary",
+            "binary-encrypted",
+            "text",
+            "text-encrypted",
+            "ssh",
+            "ssh-tunnel",
+          ],
+        },
+        {
+          group: "Mail Protocols",
+          options: [
+            "smtp",
+            "smtp-encrypted",
+            "pop3",
+            "pop3-encrypted",
+            "imap",
+            "imap-encrypted",
+          ],
+        },
+        {
+          group: "File Transfer Protocols",
+          options: [
+            "ftp",
+            "ftps",
+            "sftp",
+            "scp",
+            "nfs",
+            "smb",
+            "smb-encrypted",
+            "local-file-access",
+          ],
+        },
+        {
+          group: "Various Protocols",
+          options: [
+            "ldap",
+            "ldaps",
+            "jms",
+            "nrpe",
+            "xmpp",
+            "iiop",
+            "iiop-encrypted",
+            "jrmp",
+            "jrmp-encrypted",
+            "in-process-library-call",
+            "container-spawning",
+          ],
+        },
       ],
+      section: "Properties",
     },
     Authentication: {
       description: "Authentication",
       type: "select",
       options: [
-        "none",
-        "credentials",
-        "session-id",
-        "token",
-        "client-certificate",
-        "two-factor",
-        "externalized",
+        {
+          group: "Authentication Types",
+          options: [
+            "none",
+            "credentials",
+            "session-id",
+            "token",
+            "client-certificate",
+            "two-factor",
+            "externalized",
+          ],
+          defaultValue: "none",
+        },
       ],
+      tooltip: "Select the authentication method for the component.",
+      section: "Properties",
     },
     Authorization: {
       description: "Authorization",
       type: "select",
-      options: ["none", "technical-user", "enduser-identity-propagation"],
+      options: [
+        {
+          group: "Authorization Types",
+          options: ["none", "technical-user", "enduser-identity-propagation"],
+          defaultValue: "none",
+        },
+      ],
+      tooltip: "Select the authorization level for the component.",
+      section: "Properties",
+    },
+    Usage: {
+      description: "Usage",
+      type: "select",
+      options: [
+        {
+          group: "Usage Type",
+          options: ["business", "devops"],
+          defaultValue: "business",
+        },
+      ],
+      tooltip: "Select the usage type of the component.",
+      section: "Properties",
     },
     Tags: {
       description: "Tags",
@@ -8935,49 +8997,33 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       items: {
         type: "button",
       },
+      tooltip: "Add any tags associated with the component.",
+      defaultValue: [],
+      section: "Properties",
     },
     VPN: {
       description: "VPN",
       type: "checkbox",
+      tooltip: "Check if the component is accessed over VPN.",
+      defaultValue: false,
+      section: "Properties",
     },
     IP_filtered: {
       description: "IP filtered",
       type: "checkbox",
+      tooltip: "Check if the component is IP filtered.",
+      defaultValue: false,
+      section: "Properties",
     },
     Readonly: {
       description: "Readonly",
       type: "checkbox",
-    },
-    Usage: {
-      description: "Usage",
-      type: "select",
-      options: ["business", "devops"],
-    },
-    data_assets_sent: {
-      description: "Data assets sent",
-      type: "array",
-      uniqueItems: true,
-      items: {
-        type: "button",
-      },
-    },
-    data_assets_received: {
-      description: "Data assets received",
-      type: "array",
-      uniqueItems: true,
-      items: {
-        type: "button",
-      },
-    },
-    Diagram_tweak_weight: {
-      description: "Diagram tweak weight",
-      type: "integer",
-    },
-    Diagram_tweak_constraint: {
-      description: "Diagram tweak constraint",
-      type: "checkbox",
+      tooltip: "Check if the component is readonly.",
+      defaultValue: false,
+      section: "Properties",
     },
   };
+
   var customListener = {
     install: function (apply) {
       this.listener = function () {};
@@ -8985,44 +9031,54 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
     destroy: function () {},
   };
 
-  var typePropertiesMap = {};
+  let sections = {};
   for (let property in typeProperties) {
-    var typeItem = document.createElement("li");
+    let sectionName = typeProperties[property].section;
+    if (!sections[sectionName]) {
+      sections[sectionName] = createSection(sectionName);
+    }
+    let typeItem = document.createElement("li");
     typeItem.style.display = "flex";
     typeItem.style.alignItems = "baseline";
     typeItem.style.marginBottom = "8px";
 
-    var propertyName = document.createElement("span");
+    let propertyName = document.createElement("span");
     propertyName.innerHTML = property;
     propertyName.style.width = "100px";
     propertyName.style.marginRight = "10px";
 
-    var propertyType = typeProperties[property].type;
+    let propertyType = typeProperties[property].type;
 
     if (propertyType === "select") {
       const propertySelect = property;
       typeItem.appendChild(propertyName);
-      var selectContainer = document.createElement("div");
+      let selectContainer = document.createElement("div");
       selectContainer.style.display = "flex";
       selectContainer.style.alignItems = "center";
       selectContainer.style.marginLeft = "auto";
-
-      var selectDropdown = document.createElement("select");
+      let selectDropdown = document.createElement("select");
       selectDropdown.style.width = "100px";
+      selectDropdown.title = typeProperties[property].tooltip;
       selectContainer.appendChild(selectDropdown);
 
-      var options = typeProperties[property].options;
-      for (var i = 0; i < options.length; i++) {
-        var option = document.createElement("option");
-        option.value = options[i];
-        option.text = options[i];
-        selectDropdown.appendChild(option);
+      let optionGroups = typeProperties[property].options;
+      for (var i = 0; i < optionGroups.length; i++) {
+        let optgroup = document.createElement("optgroup");
+        optgroup.label = optionGroups[i].group;
+        let options = optionGroups[i].options;
+        for (let j = 0; j < options.length; j++) {
+          let option = document.createElement("option");
+          option.value = options[j];
+          option.text = options[j];
+          optgroup.appendChild(option);
+        }
+        selectDropdown.appendChild(optgroup);
       }
-      var cell = self.editorUi.editor.graph.getSelectionCell();
+      let cell = self.editorUi.editor.graph.getSelectionCell();
       if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
         selectDropdown.value = cell.technicalAsset[propertySelect];
       }
-      var createChangeListener = function (selectDropdown, propertySelect) {
+      let createChangeListener = function (selectDropdown, propertySelect) {
         return function (evt) {
           var vals = selectDropdown.value;
 
@@ -9048,23 +9104,28 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
         createChangeListener(selectDropdown, propertySelect)
       );
       typeItem.appendChild(selectContainer);
+      sections[sectionName].appendChild(typeItem);
     } else if (propertyType === "checkbox") {
-      container.appendChild(
-        this.createOption(
-          property,
-          createCustomOption(self, property),
-          setCustomOption(self, property),
-          customListener
-        )
+      let optionElement = this.createOption(
+        property,
+        createCustomOption(self, property),
+        setCustomOption(self, property),
+        customListener
       );
+      optionElement.querySelector('input[type="checkbox"]').title =
+        typeProperties[property].tooltip;
+
+      sections[sectionName].appendChild(optionElement);
     } else if (propertyType === "button") {
       let button = mxUtils.button(
         property,
         mxUtils.bind(this, function (evt) {
-          var cells = self.editorUi.editor.graph.getSelectionCells();
-          var cell = cells && cells.length > 0 ? cells[0] : null;
-          var dataValue =
-            cell && cell.technicalAsset ? cell.technicalAsset[property] : "";
+          let cells = self.editorUi.editor.graph.getSelectionCells();
+          let cell = cells && cells.length > 0 ? cells[0] : null;
+          let dataValue =
+            cell && cell.technicalAsset && cell.technicalAsset[property]
+              ? cell.technicalAsset[property]
+              : typeProperties[property].defaultValue;
 
           var dlg = new TextareaDialog(
             this.editorUi,
@@ -9073,6 +9134,22 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
             function (newValue) {
               if (newValue != null) {
                 if (cell) {
+                  if (property === "Id") {
+                    var adjustedValue = newValue
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;");
+                    let model = self.editorUi.editor.graph.model;
+                    model.beginUpdate();
+                    try {
+                      model.setValue(cell, adjustedValue);
+
+                      self.editorUi.editor.graph.refresh(cell);
+
+                      self.editorUi.editor.graph.refresh();
+                    } finally {
+                      model.endUpdate();
+                    }
+                  }
                   if (!cell.technicalAsset) {
                     cell.technicalAsset = {
                       [property]: newValue,
@@ -9089,14 +9166,17 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
             220
           );
           this.editorUi.showDialog(dlg.container, 420, 300, true, true);
-
           dlg.init();
         })
       );
+      button.title = typeProperties[property].tooltip;
       button.style.width = "200px";
       typeItem.appendChild(button);
+      sections[sectionName].appendChild(typeItem);
     }
-    propertiesSection.appendChild(typeItem);
+  }
+  for (let sectionName in sections) {
+    container.appendChild(sections[sectionName]);
   }
   var diagramData = this.editorUi.editor.graph.model.diagramData;
   var dataSection = createSection("Data Sent:");
@@ -9244,10 +9324,9 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   container.appendChild(selectedDataSection);
   return container;
 };
-/**
- * Adds the label menu items to the given menu and parent.
+/*
  */
-CommunicationFormatPanel.prototype.addCommunicationeMenu = function (
+CommunicationFormatPanel.prototype.addCommunicationeMenu2 = function (
   container
 ) {
   let self = this;
@@ -9286,35 +9365,73 @@ CommunicationFormatPanel.prototype.addCommunicationeMenu = function (
     Type: {
       description: "Type",
       type: "select",
-      options: ["external-entity", "process", "datastore"],
+      options: [
+        {
+          group: "Categories",
+          options: ["external-entity", "process", "datastore"],
+          defaultValue: "external-entity",
+        },
+      ],
+      section: "Properties",
+      tooltip: "Choose the type of the component.",
     },
     Size: {
       description: "Size",
       type: "select",
-      options: ["system", "service", "application", "component"],
+      options: [
+        {
+          group: "Sizes",
+          options: ["system", "service", "application", "component"],
+          defaultValue: "system",
+        },
+      ],
+      section: "Properties",
+      tooltip: "Choose the size of the component.",
     },
     Machine: {
       description: "Machine",
       type: "select",
-      options: ["physical", "virtual", "container", "serverless"],
+      options: [
+        {
+          group: "Machine Types",
+          options: ["physical", "virtual", "container", "serverless"],
+          defaultValue: "physical",
+        },
+      ],
+      section: "Properties",
+      tooltip: "Choose the type of machine.",
     },
     Encryption: {
       description: "Encryption",
       type: "select",
       options: [
-        "none",
-        "data-with-symmetric-shared-key",
-        "data-with-asymmetric-shared-key",
-        "data-with-enduser-individual-key",
+        {
+          group: "Encryption Types",
+          options: [
+            "none",
+            "data-with-symmetric-shared-key",
+            "data-with-asymmetric-shared-key",
+            "data-with-enduser-individual-key",
+          ],
+          defaultValue: "none",
+        },
       ],
+      section: "Properties",
+      tooltip: "Choose the type of encryption.",
     },
     Owner: {
       description: "Owner",
       type: "button",
+      section: "General",
+      tooltip: "Specify the owner of the component.",
+      defaultValue: "<Your Name>",
     },
     Internet: {
       description: "Internet",
       type: "checkbox",
+      section: "General",
+      tooltip: "Check if the component is connected to the internet.",
+      defaultValue: false,
     },
   };
   var customListener = {
@@ -9324,43 +9441,54 @@ CommunicationFormatPanel.prototype.addCommunicationeMenu = function (
     destroy: function () {},
   };
 
-  for (var property in typeProperties) {
-    var typeItem = document.createElement("li");
+  let sections = {};
+  for (let property in typeProperties) {
+    let sectionName = typeProperties[property].section;
+    if (!sections[sectionName]) {
+      sections[sectionName] = createSection(sectionName);
+    }
+    let typeItem = document.createElement("li");
     typeItem.style.display = "flex";
     typeItem.style.alignItems = "baseline";
     typeItem.style.marginBottom = "8px";
 
-    var propertyName = document.createElement("span");
+    let propertyName = document.createElement("span");
     propertyName.innerHTML = property;
     propertyName.style.width = "100px";
     propertyName.style.marginRight = "10px";
 
-    var propertyType = typeProperties[property].type;
+    let propertyType = typeProperties[property].type;
 
     if (propertyType === "select") {
       const propertySelect = property;
       typeItem.appendChild(propertyName);
-      var selectContainer = document.createElement("div");
+      let selectContainer = document.createElement("div");
       selectContainer.style.display = "flex";
       selectContainer.style.alignItems = "center";
       selectContainer.style.marginLeft = "auto";
-
-      var selectDropdown = document.createElement("select");
+      let selectDropdown = document.createElement("select");
       selectDropdown.style.width = "100px";
+      selectDropdown.title = typeProperties[property].tooltip;
       selectContainer.appendChild(selectDropdown);
 
-      var options = typeProperties[property].options;
-      for (var i = 0; i < options.length; i++) {
-        var option = document.createElement("option");
-        option.value = options[i];
-        option.text = options[i];
-        selectDropdown.appendChild(option);
+      let optionGroups = typeProperties[property].options;
+      for (var i = 0; i < optionGroups.length; i++) {
+        let optgroup = document.createElement("optgroup");
+        optgroup.label = optionGroups[i].group;
+        let options = optionGroups[i].options;
+        for (let j = 0; j < options.length; j++) {
+          let option = document.createElement("option");
+          option.value = options[j];
+          option.text = options[j];
+          optgroup.appendChild(option);
+        }
+        selectDropdown.appendChild(optgroup);
       }
-      var cell = self.editorUi.editor.graph.getSelectionCell();
+      let cell = self.editorUi.editor.graph.getSelectionCell();
       if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
         selectDropdown.value = cell.technicalAsset[propertySelect];
       }
-      var createChangeListener = function (selectDropdown, propertySelect) {
+      let createChangeListener = function (selectDropdown, propertySelect) {
         return function (evt) {
           var vals = selectDropdown.value;
 
@@ -9386,27 +9514,79 @@ CommunicationFormatPanel.prototype.addCommunicationeMenu = function (
         createChangeListener(selectDropdown, propertySelect)
       );
       typeItem.appendChild(selectContainer);
+      sections[sectionName].appendChild(typeItem);
     } else if (propertyType === "checkbox") {
-      container.appendChild(
-        this.createOption(
-          property,
-          createCustomOption(self, property),
-          setCustomOption(self, property),
-          customListener
-        )
+      let optionElement = this.createOption(
+        property,
+        createCustomOption(self, property),
+        setCustomOption(self, property),
+        customListener
       );
+      optionElement.querySelector('input[type="checkbox"]').title =
+        typeProperties[property].tooltip;
+
+      sections[sectionName].appendChild(optionElement);
     } else if (propertyType === "button") {
       let button = mxUtils.button(
         property,
         mxUtils.bind(this, function (evt) {
-          // This is madness! THIS IS SPARTAAAA!
-          this.editorUi.actions.get("editAssetOwner").funct();
+          let cells = self.editorUi.editor.graph.getSelectionCells();
+          let cell = cells && cells.length > 0 ? cells[0] : null;
+          let dataValue =
+            cell && cell.technicalAsset && cell.technicalAsset[property]
+              ? cell.technicalAsset[property]
+              : typeProperties[property].defaultValue;
+
+          var dlg = new TextareaDialog(
+            this.editorUi,
+            property + ":",
+            dataValue,
+            function (newValue) {
+              if (newValue != null) {
+                if (cell) {
+                  if (property === "Id") {
+                    var adjustedValue = newValue
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;");
+                    let model = self.editorUi.editor.graph.model;
+                    model.beginUpdate();
+                    try {
+                      model.setValue(cell, adjustedValue);
+
+                      self.editorUi.editor.graph.refresh(cell);
+
+                      self.editorUi.editor.graph.refresh();
+                    } finally {
+                      model.endUpdate();
+                    }
+                  }
+                  if (!cell.technicalAsset) {
+                    cell.technicalAsset = {
+                      [property]: newValue,
+                    };
+                  } else {
+                    cell.technicalAsset[property] = newValue;
+                  }
+                }
+              }
+            },
+            null,
+            null,
+            400,
+            220
+          );
+          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
+          dlg.init();
         })
       );
+      button.title = typeProperties[property].tooltip;
       button.style.width = "200px";
       typeItem.appendChild(button);
+      sections[sectionName].appendChild(typeItem);
     }
-    propertiesSection.appendChild(typeItem);
+  }
+  for (let sectionName in sections) {
+    container.appendChild(sections[sectionName]);
   }
 
   var ciaProperties = {
