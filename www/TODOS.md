@@ -7,7 +7,7 @@ TODOs:
 - Export Funktion schreiben, also über die ganzen Daten iterieren, anschließend über die Cellen und Edges, sowie wie die Threats die mitigiert wurden
 
 - Boundary Tab muss man einstellen können was für eine Art von Trust Boundary das ist
-- ID soll im Objekt stehen, also listener hinzufügen, wenn id sich ändert, dann setze es im Objekt
+  ~~- ID soll im Objekt stehen, also listener hinzufügen, wenn id sich ändert, dann setze es im Objekt~~
 - Mach Git Projekt public
 - Die jetzigen TODOS, lagere sie als Issues aus
 - Lösche deutsche Kommentare im Code

@@ -63,6 +63,9 @@ Actions.prototype.init = function () {
               let dotJson = dotParser.parse(dot)[0];
               //First data import
               console.log(jsonObj);
+              for (let entry in jsonObj.DataAssets) {
+                console.log(jsonObj.DataAssets[entry]);
+              }
               //Technology Asset Import
 
               let cells = [];

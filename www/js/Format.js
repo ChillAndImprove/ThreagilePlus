@@ -525,7 +525,7 @@ Format.prototype.refresh = function () {
     label.style.borderLeftWidth = "0px";
 
     div.appendChild(label);
-    var diagramPanel = div.cloneNode(false);
+    let diagramPanel = div.cloneNode(false);
     this.panels.push(new DiagramFormatPanel(this, ui, diagramPanel));
     this.container.appendChild(diagramPanel);
 
@@ -542,7 +542,7 @@ Format.prototype.refresh = function () {
 
       addClickHandler(label, diagramPanel, idx++);
 
-      var stylePanel = div.cloneNode(false);
+      let stylePanel = div.cloneNode(false);
       stylePanel.style.display = "none";
       mxUtils.write(label2, mxResources.get("style"));
       div.appendChild(label2);
@@ -625,7 +625,7 @@ Format.prototype.refresh = function () {
     mxUtils.write(label2, mxResources.get("text"));
     div.appendChild(label2);
 
-    var textPanel = div.cloneNode(false);
+    let textPanel = div.cloneNode(false);
     textPanel.style.display = "none";
     this.panels.push(new TextFormatPanel(this, ui, textPanel));
     this.container.appendChild(textPanel);
@@ -634,7 +634,7 @@ Format.prototype.refresh = function () {
     mxUtils.write(label3, mxResources.get("arrange"));
     div.appendChild(label3);
 
-    var arrangePanel = div.cloneNode(false);
+    let arrangePanel = div.cloneNode(false);
     arrangePanel.style.display = "none";
     this.panels.push(new ArrangePanel(this, ui, arrangePanel));
     //Style
@@ -651,8 +651,8 @@ Format.prototype.refresh = function () {
     label.style.borderLeftWidth = "1px";
     label.style.cursor = "pointer";
     label.style.width = containsLabel ? "50%" : "33.3%";
-    var label2 = label.cloneNode(false);
-    var label3 = label2.cloneNode(false);
+    let label2 = label.cloneNode(false);
+    let label3 = label2.cloneNode(false);
 
     // Workaround for ignored background in IE
     label2.style.backgroundColor = this.inactiveTabBackgroundColor;
@@ -708,27 +708,28 @@ Format.prototype.refresh = function () {
     label.style.borderLeftWidth = "1px";
     label.style.cursor = "pointer";
     label.style.width = containsLabel ? "50%" : "33.3%";
-    var label2 = label.cloneNode(false);
-    var label3 = label2.cloneNode(false);
-
+    let label2 = label.cloneNode(false);
+    let label3 = label2.cloneNode(false);
+    let label4 = label.cloneNode(false);
     // Workaround for ignored background in IE
     label2.style.backgroundColor = this.inactiveTabBackgroundColor;
     label3.style.backgroundColor = this.inactiveTabBackgroundColor;
+    label4.style.backgroundColor = this.inactiveTabBackgroundColor;
 
     // Style
     if (containsLabel) {
-      label2.style.borderLeftWidth = "0px";
+      label4.style.borderLeftWidth = "0px";
     } else {
-      label.style.borderLeftWidth = "0px";
-      mxUtils.write(label, "Asset");
-      div.appendChild(label);
+      label4.style.borderLeftWidth = "0px";
+      mxUtils.write(label4, "Asset");
+      div.appendChild(label4);
 
-      var stylePanel = div.cloneNode(false);
+      let stylePanel = div.cloneNode(false);
       stylePanel.style.display = "none";
       this.panels.push(new AssetFormatPanel(this, ui, stylePanel));
       this.container.appendChild(stylePanel);
 
-      addClickHandler(label, stylePanel, idx++);
+      addClickHandler(label4, stylePanel, idx++);
     }
 
     // Text
@@ -9840,8 +9841,6 @@ AssetFormatPanel.prototype.init = function () {
   var ss = this.format.getSelectionState();
 
   this.container.appendChild(this.addThreagileMenu(this.createPanel()));
-
-  //this.container.appendChild(this.addStyleOps(opsPanel));
 };
 
 function createSection(title) {
