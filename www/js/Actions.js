@@ -55,7 +55,7 @@ Actions.prototype.init = function () {
               go.importObject
             ).then((result) => {
               go.run(result.instance);
-
+              const startTime = performance.now();
               let jsonObj = JSON.parse(parseModelViaString(xml));
               applyRAAJS();
               dot = printDataFlowDiagramGraphvizDOT();
@@ -63,9 +63,32 @@ Actions.prototype.init = function () {
               let dotJson = dotParser.parse(dot)[0];
               //First data import
               console.log(jsonObj);
-              for (let entry in jsonObj.DataAssets) {
-                console.log(jsonObj.DataAssets[entry]);
+              endWASM();
+
+              let cnt = 0;
+              if (graph.model.diagramData === undefined) {
+                graph.getModel().diagramData = new Map();
               }
+
+              for (let entries in jsonObj.DataAssets) {
+                let entry = jsonObj.DataAssets[entries];
+                console.log(entry);
+                graph.getModel().diagramData.set("" + cnt++, {
+                  Id: jsonObj.DataAssets[entries].id,
+                  Title: jsonObj.DataAssets[entries].title,
+                  Description: jsonObj.DataAssets[entries].Description,
+                  Availability: jsonObj.DataAssets[entries].Availability,
+                  Confidentiality: jsonObj.DataAssets[entries].Confidentiality,
+                  Integrity: jsonObj.DataAssets[entries].Integrity,
+                  JustificationCiaRating:
+                    jsonObj.DataAssets[entries].JustificationCiaRating,
+                  Origin: jsonObj.DataAssets[entries].Origin,
+                  Owner: jsonObj.DataAssets[entries].Owner,
+                  Quantity: jsonObj.DataAssets[entries].Quantity,
+                  visible: false,
+                });
+              }
+
               //Technology Asset Import
 
               let cells = [];
@@ -2062,6 +2085,7 @@ Actions.prototype.init = function () {
     null,
     Editor.ctrlKey + "+E"
   );
+  /*
   this.addAction(
     "loadDiagramData",
     mxUtils.bind(this, function (list, menu) {
@@ -2108,8 +2132,8 @@ Actions.prototype.init = function () {
             var arrowIcon = document.createElement("img");
             arrowIcon.src =
               " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
-            arrowIcon.style.width = "10px";
-            arrowIcon.style.height = "10px";
+            arrowIcon.style.width = "15px";
+            arrowIcon.style.height = "15px";
             arrowIcon.style.marginRight = "5px";
 
             arrowIcon.style.transform = "rotate(270deg)";
@@ -2168,6 +2192,7 @@ Actions.prototype.init = function () {
       }
     })
   );
+  */
   this.addAction(
     "addDataAssets",
     mxUtils.bind(this, function (list, menu) {
@@ -2196,8 +2221,8 @@ Actions.prototype.init = function () {
       var arrowIcon = document.createElement("img");
       arrowIcon.src =
         " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
-      arrowIcon.style.width = "10px";
-      arrowIcon.style.height = "10px";
+      arrowIcon.style.width = "15px";
+      arrowIcon.style.height = "15px";
       arrowIcon.style.marginRight = "5px";
 
       arrowIcon.style.transform = "rotate(270deg)";
@@ -2205,6 +2230,7 @@ Actions.prototype.init = function () {
 
       var dataText = document.createElement("div");
       dataText.textContent = "Data " + list.childElementCount + ":";
+      //dataText.textContent = graph.model.diagramData.get(menu.id).id;
 
       var xButton = document.createElement("button");
       xButton.innerHTML =

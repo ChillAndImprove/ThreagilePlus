@@ -5,11 +5,27 @@
     <title>Threagile+</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
+	<link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
+	<link rel="stylesheet" type="text/css" href="styles/tagify.css">
+	<style type="text/css">
+	.pipeFlowAnimation {
+	  stroke-dasharray: 8;
+	  animation: pipeFlowKeyframes 0.5s linear;
+	  animation-iteration-count: infinite;
+	}
+	@keyframes pipeFlowKeyframes {
+	  to {
+	    stroke-dashoffset: -16;
+	  }
+	}
+	</style>
+
 	<script src="wasm_exec.js"></script>
 	<script src="dotparser.js"></script>
 	<script src="js-yaml.min.js"></script>
 	<script src="viz.js"></script>
+	<script src="tagify.min.js"></script>
+	<script src="tagify.polyfills.min.js"></script>
 	<script src="full.render.js"></script>
 	<script type="text/javascript">
 		// Parses URL parameters. Supported parameters are:

@@ -733,12 +733,11 @@ Format.prototype.refresh = function () {
     }
 
     // Text
-    mxUtils.write(label2, mxResources.get("text"));
+    mxUtils.write(label2, "Inspection");
     div.appendChild(label2);
 
     var textPanel = div.cloneNode(false);
     textPanel.style.display = "none";
-    this.panels.push(new TextFormatPanel(this, ui, textPanel));
     this.container.appendChild(textPanel);
 
     // Arrange
@@ -752,7 +751,7 @@ Format.prototype.refresh = function () {
     var stylePanel = div.cloneNode(false);
     stylePanel.style.display = "none";
     this.panels.push(new StyleFormatPanel(this, ui, arrangePanel));
-
+    this.panels.push(new TextFormatPanel(this, ui, arrangePanel));
     this.container.appendChild(arrangePanel);
 
     addClickHandler(label2, textPanel, idx++);
@@ -7985,12 +7984,12 @@ DiagramFormatPanel.prototype.init = function () {
               ) {
                 if (
                   currentChildNode.children.length > 1 &&
-                  currentChildNode.childNode.children.length > 0
+                  currentChildNode.childNodes.length > 0
                 ) {
-                  var nextChildNode = currentChildNode.children[1].children[0];
+                  let nextChildNode = currentChildNode.children[1].children[0];
 
                   if (nextChildNode.nodeName === "SELECT") {
-                    nextChildNode.value = childNode;
+                    nextChildNode.selectedIndex = childNode;
                   }
                 }
               }
@@ -8001,18 +8000,18 @@ DiagramFormatPanel.prototype.init = function () {
         textContainer.style.display = "flex";
         textContainer.style.alignItems = "center";
         textContainer.style.marginBottom = "8px";
-        var arrowIcon = document.createElement("img");
+        let arrowIcon = document.createElement("img");
         arrowIcon.src =
           " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
-        arrowIcon.style.width = "10px";
-        arrowIcon.style.height = "10px";
+        arrowIcon.style.width = "15px";
+        arrowIcon.style.height = "15px";
         arrowIcon.style.marginRight = "5px";
 
         arrowIcon.style.transform = "rotate(270deg)";
         textContainer.insertBefore(arrowIcon, dataText);
 
         var dataText = document.createElement("div");
-        dataText.textContent = value.descriptionMenu;
+        dataText.textContent = value.Id;
 
         var xButton = document.createElement("button");
         xButton.innerHTML =
@@ -8123,14 +8122,66 @@ DiagramFormatPanel.prototype.init = function () {
   styleHeader.style.width = "200px";
   styleHeader.style.fontWeight = "bold";
   this.container.appendChild(styleHeader);
-
   if (graph.isEnabled()) {
     this.container.appendChild(this.addOptions(this.createPanel()));
     this.container.appendChild(this.addPaperSize(this.createPanel()));
     this.container.appendChild(this.addStyleOps(this.createPanel()));
   }
+  let self = this;
+  this.graph = graph;
+  let optionFlow = this.createOption(
+    "FlowPipe Animation",
+    function () {
+      return graph.floweffect;
+    },
+    function (checked) {
+      graph.floweffect = !graph.floweffect;
+      if (graph.floweffect) {
+        cells = graph.getVerticesAndEdges(false, true);
+        cells.forEach((cell) => {
+          if (cell.isEdge() && cell.source != null && cell.target != null) {
+            // Add a delay to allow the edge state to be updated
+            let state = graph.view.getState(cell);
+            if (state) {
+              setTimeout(() => {
+                let pathNodes = state.shape.node.getElementsByTagName("path");
+                if (pathNodes.length >= 2) {
+                  pathNodes[0].removeAttribute("visibility");
+                  pathNodes[0].setAttribute("stroke-width", "6");
+                  pathNodes[0].setAttribute("stroke", "lightGray");
+                  pathNodes[1].setAttribute("class", "pipeFlowAnimation");
+                }
+              }, 0);
+            }
+          }
+        });
+      } else {
+        var cells = graph.getVerticesAndEdges(false, true);
+        cells.forEach((cell) => {
+          if (cell.isEdge() && cell.source != null && cell.target != null) {
+            let state = graph.view.getState(cell);
+            if (state) {
+              let pathNodes = state.shape.node.getElementsByTagName("path");
+              if (pathNodes.length >= 2) {
+                pathNodes[0].setAttribute("visibility", "hidden");
+                pathNodes[0].removeAttribute("stroke-width");
+                pathNodes[0].removeAttribute("stroke");
+                pathNodes[1].removeAttribute("class");
+              }
+            }
+          }
+        });
+      }
+    },
+    {
+      install: function (apply) {
+        console.log("Applied");
+      },
+      destroy: function () {},
+    }
+  );
+  this.container.appendChild(optionFlow);
 };
-
 /**
  * Adds the label menu items to the given menu and parent.
  */
@@ -9180,8 +9231,8 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
     container.appendChild(sections[sectionName]);
   }
   var diagramData = this.editorUi.editor.graph.model.diagramData;
-  var dataSection = createSection("Data Sent:");
-  var selectedDataSection = createSection("Selected Data:");
+  var selectedDataSection = createSection("Data Sent:");
+  var dataSection = createSection("Data:");
 
   // Create table
   var table = document.createElement("table");
@@ -9319,10 +9370,10 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
     });
   }
 
+  container.appendChild(selectedDataSection);
   dataSection.appendChild(table);
   selectedDataSection.appendChild(selectedTable);
   container.appendChild(dataSection);
-  container.appendChild(selectedDataSection);
   return container;
 };
 /*
@@ -9940,20 +9991,26 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
   var propertiesSection = createSection("Properties");
   container.appendChild(propertiesSection);
 
-  // Add Type properties
   var typeProperties = {
     Id: {
       description: "ID",
       type: "button",
+      tooltip: "The unique identifier for the element",
+      defaultValue: "E.g. Element1",
     },
     Description: {
       description: "Description",
       type: "button",
+      tooltip: "Provide a brief description of the element",
+      defaultValue: "E.g. This element is responsible for...",
     },
     Usage: {
       description: "Usage",
       type: "select",
       options: ["business", "devops"],
+      tooltip:
+        "Indicates whether the element is used for business or devops purposes",
+      defaultValue: "business",
     },
     Tags: {
       description: "Tags",
@@ -9962,19 +10019,27 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
       items: {
         type: "button",
       },
+      tooltip: "Provide tags to help categorize the element",
+      defaultValue: "E.g. Tag1",
     },
     Origin: {
       description: "Origin",
       type: "button",
+      tooltip: "Specifies the origin of the element",
+      defaultValue: "E.g. Internal Development",
     },
     Owner: {
       description: "Owner",
       type: "button",
+      tooltip: "Specifies the owner of the element",
+      defaultValue: "E.g. Marketing Team",
     },
     Quantity: {
       description: "Quantity",
       type: "select",
       options: ["very-few", "few", "many", "very-many"],
+      tooltip: "Specifies the quantity of the element",
+      defaultValue: "few",
     },
     Confidentiality: {
       description: "Confidentiality",
@@ -9986,6 +10051,8 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
         "confidential",
         "strictly-confidential",
       ],
+      tooltip: "Specifies the level of confidentiality of the element",
+      defaultValue: "internal",
     },
     Integrity: {
       description: "Integrity",
@@ -9997,6 +10064,8 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
         "critical",
         "mission-critical",
       ],
+      tooltip: "Specifies the level of integrity of the element",
+      defaultValue: "operational",
     },
     Availability: {
       description: "Availability",
@@ -10008,10 +10077,15 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
         "critical",
         "mission-critical",
       ],
+      tooltip: "Specifies the level of availability of the element",
+      defaultValue: "operational",
     },
     Justification_CIA_Rating: {
       description: "Justification of the rating",
       type: "button",
+      tooltip:
+        "Justify the confidentiality, integrity, and availability rating",
+      defaultValue: "E.g. This rating is due to...",
     },
   };
   var customListener = {
@@ -10047,6 +10121,7 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
 
       var selectDropdown = document.createElement("select");
       selectDropdown.style.width = "100px";
+      selectDropdown.title = typeProperties[property].tooltip;
       selectContainer.appendChild(selectDropdown);
 
       var options = typeProperties[property].options;
@@ -10083,14 +10158,15 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
 
       typeItem.appendChild(selectContainer);
     } else if (propertyType === "checkbox") {
-      container.appendChild(
-        this.createOption(
-          property,
-          createCustomOption(self, property),
-          setCustomOption(self, property),
-          customListener
-        )
+      let optionElement = this.createOption(
+        property,
+        createCustomOption(self, property),
+        setCustomOption(self, property),
+        customListener
       );
+      optionElement.querySelector('input[type="checkbox"]').title =
+        typeProperties[property].tooltip;
+      container.appendChild(optionElement);
     } else if (propertyType === "button") {
       let functionName =
         "editData" + property.charAt(0).toUpperCase() + property.slice(1);
@@ -10101,7 +10177,7 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
           current = this.editorUi.editor.graph.model.diagramData.get(menuId);
 
           if (!current[property]) {
-            current[property] = "";
+            current[property] = typeProperties[property].defaultValue;
           }
 
           var dataValue = current[property];
@@ -10125,11 +10201,20 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
           dlg.init();
         })
       );
+      button.title = typeProperties[property].tooltip;
       button.style.width = "200px";
       typeItem.appendChild(button);
     }
     propertiesSection.appendChild(typeItem);
   }
+  // Create a new input element
+  let inputElement = document.createElement("input");
+  inputElement.placeholder = "Enter your tags and press Enter";
+  // Append it to body (or any other container)
+  propertiesSection.appendChild(inputElement);
+  var tagify = new Tagify(inputElement);
+  //
+
   return container;
 };
 AssetFormatPanel.prototype.addThreagileMenu = function (container) {
@@ -10840,10 +10925,10 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
     });
   }
 
-  dataSection.appendChild(table);
   selectedDataSection.appendChild(selectedTable);
-  container.appendChild(dataSection);
   container.appendChild(selectedDataSection);
+  dataSection.appendChild(table);
+  container.appendChild(dataSection);
 
   return container;
 };

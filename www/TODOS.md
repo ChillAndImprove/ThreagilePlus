@@ -1,5 +1,7 @@
 TODOs:
 
+- Menü für Trust Boundaries erstellen
+- Die Celle muss wissen was sie ist, dass sollte man über arrange einstellen können.
 - Import Funktion schreiben, also in der this.addAction("import...", function () {
   DataDiagram importieren anschließend Assets importieren und edges
 - Threat Analysis Tab erstellen in den Technology Assets und dort RAA, sowie Threats berechnen
@@ -23,8 +25,10 @@ Anschließend Table mit den Initalwerten und einen haken daneben den man mit dop
 - Noch eine Table mit den ausgwählten Daten und nicht allen
 
 - Erst Initialisierung, erstelle Default werte für ID etc.
+
   ~~- Data einbauen mit einer Liste und + und mit und einem WIndow wo die Eingabefelder sind~~
   ~~- In den Assets die Datas angebbar machen~~
+
 - --Die Verbindung nicht mehr erlauben das die frei schweben können mit mxgrpah--
   Verbindugen:
 - Wenn man auf den Pfeil klingt, steht da nicht Asset sondern die Verbindung, also z.B. html usw.

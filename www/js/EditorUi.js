@@ -3569,7 +3569,6 @@ EditorUi.prototype.addUndoListener = function () {
   var redo = this.actions.get("redo");
 
   var undoMgr = this.editor.undoManager;
-
   var undoListener = mxUtils.bind(this, function () {
     undo.setEnabled(this.canUndo());
     redo.setEnabled(this.canRedo());

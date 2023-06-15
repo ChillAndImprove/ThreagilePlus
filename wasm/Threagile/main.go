@@ -666,21 +666,30 @@ func checkErr(err error) {
 		panic(err)
 	}
 }
+func endWASM(this js.Value, inputs []js.Value) interface{} {
+	done <- true
+	return ""
+}
+
+var done chan bool
 
 func main() {
 	js.Global().Set("parseModelViaString", js.FuncOf(parseModelViaString))
 	js.Global().Set("printGraphvizDOT", js.FuncOf(printGraphvizDOT))
 	js.Global().Set("printDataFlowDiagramGraphvizDOT", js.FuncOf(printDataFlowDiagramGraphvizDOT))
 	js.Global().Set("applyRAAJS", js.FuncOf(applyRAAJS))
+	js.Global().Set("endWASM", js.FuncOf(endWASM))
 
-	c := make(chan int)
-	<-c
-	parseCommandlineArgs()
-	if *serverPort > 0 {
-		startServer()
-	} else {
-		//doIt(*modelFilename, *outputDir)
-	}
+	done = make(chan bool)
+	<-done
+	/*
+		parseCommandlineArgs()
+		if *serverPort > 0 {
+			startServer()
+		} else {
+			//doIt(*modelFilename, *outputDir)
+		}
+	*/
 }
 
 // Unzip will decompress a zip archive, moving all files and folders
@@ -4972,7 +4981,6 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 			checkTechnicalAssetExists(commLink.TargetId, "communication link '"+commLink.Title+"' of technical asset '"+technicalAsset.Title+"'", false)
 		}
 	}
-	fmt.Print("Bis hier?")
 	jsonBytes, err := json.Marshal(model.ParsedModelRoot)
 	if err != nil {
 		return err

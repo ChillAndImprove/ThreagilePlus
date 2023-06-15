@@ -17,6 +17,108 @@ Editor = function (chromeless, themes, model, graph, editable) {
       this.filename || mxResources.get("drawing", [Editor.pageCounter]) + ".xml"
     );
   };
+  this.graph.floweffect = false;
+  this.graph.view.addListener(mxEvent.SCALE_AND_TRANSLATE, (sender, evt) => {
+    let scale = this.graph.view.scale;
+    let translate = this.graph.view.translate;
+
+    // Anpassen der Overlay-Schicht an den Zoom und Pan des Diagramms
+    overlayLayer.setAttribute(
+      "transform",
+      "scale(" + scale + ") translate(" + translate.x + " " + translate.y + ")"
+    );
+  });
+
+  this.graph.addListener(mxEvent.CELLS_MOVED, (sender, evt) => {
+    if (this.graph.floweffect) {
+      var cells = this.graph.getVerticesAndEdges(false, true);
+      cells.forEach((cell) => {
+        if (cell.isEdge() && cell.source != null && cell.target != null) {
+          // Add a delay to allow the edge state to be updated
+          setTimeout(() => {
+            let state = this.graph.view.getState(cell);
+            if (state) {
+              let pathNodes = state.shape.node.getElementsByTagName("path");
+              if (pathNodes.length >= 2) {
+                pathNodes[0].removeAttribute("visibility");
+                pathNodes[0].setAttribute("stroke-width", "6");
+                pathNodes[0].setAttribute("stroke", "lightGray");
+                pathNodes[1].setAttribute("class", "pipeFlowAnimation");
+              }
+            }
+          }, 0);
+        }
+      });
+    }
+  });
+  this.graph.addListener(mxEvent.GEOMETRY_CHANGE, (sender, evt) => {
+    if (this.graph.floweffect) {
+      var cells = this.graph.getVerticesAndEdges(false, true);
+      console.log("H");
+      cells.forEach((cell) => {
+        if (cell.isEdge() && cell.source != null && cell.target != null) {
+          // Add a delay to allow the edge state to be updated
+          setTimeout(() => {
+            let state = this.graph.view.getState(cell);
+            if (state) {
+              let pathNodes = state.shape.node.getElementsByTagName("path");
+              if (pathNodes.length >= 2) {
+                pathNodes[0].removeAttribute("visibility");
+                pathNodes[0].setAttribute("stroke-width", "6");
+                pathNodes[0].setAttribute("stroke", "lightGray");
+                pathNodes[1].setAttribute("class", "pipeFlowAnimation");
+              }
+            }
+          }, 0);
+        }
+      });
+    }
+  });
+  this.graph.view.addListener(mxEvent.SCALE, (sender, evt) => {
+    if (this.graph.floweffect) {
+      var cells = this.graph.getVerticesAndEdges(false, true);
+      console.log("H");
+      cells.forEach((cell) => {
+        if (cell.isEdge() && cell.source != null && cell.target != null) {
+          // Add a delay to allow the edge state to be updated
+          setTimeout(() => {
+            let state = this.graph.view.getState(cell);
+            if (state) {
+              let pathNodes = state.shape.node.getElementsByTagName("path");
+              if (pathNodes.length >= 2) {
+                pathNodes[0].removeAttribute("visibility");
+                pathNodes[0].setAttribute("stroke-width", "6");
+                pathNodes[0].setAttribute("stroke", "lightGray");
+                pathNodes[1].setAttribute("class", "pipeFlowAnimation");
+              }
+            }
+          }, 0);
+        }
+      });
+    }
+  });
+  this.graph.addListener(mxEvent.ADD_CELLS, (sender, evt) => {
+    if (this.graph.floweffect) {
+      let cells = evt.getProperty("cells");
+      cells.forEach((cell) => {
+        if (cell.isEdge() && cell.source != null && cell.target != null) {
+          // Add a delay to allow the edge state to be updated
+          setTimeout(() => {
+            let state = this.graph.view.getState(cell);
+            if (state) {
+              let pathNodes = state.shape.node.getElementsByTagName("path");
+              if (pathNodes.length >= 2) {
+                pathNodes[0].removeAttribute("visibility");
+                pathNodes[0].setAttribute("stroke-width", "6");
+                pathNodes[0].setAttribute("stroke", "lightGray");
+                pathNodes[1].setAttribute("class", "pipeFlowAnimation");
+              }
+            }
+          }, 0);
+        }
+      });
+    }
+  });
 
   this.getFilename = function () {
     return this.filename;
@@ -2112,7 +2214,6 @@ var FilenameDialog = function (
               dropElt.style.backgroundColor = "";
               dropElt = null;
             }
-
             if (mxUtils.indexOf(evt.dataTransfer.types, "text/uri-list") >= 0) {
               nameInput.value = decodeURIComponent(
                 evt.dataTransfer.getData("text/uri-list")
