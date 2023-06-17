@@ -56,24 +56,38 @@ Actions.prototype.init = function () {
             ).then((result) => {
               go.run(result.instance);
               const startTime = performance.now();
-              let jsonObj = JSON.parse(parseModelViaString(xml));
+              var jsonObj = JSON.parse(parseModelViaString(xml));
               applyRAAJS();
               dot = printDataFlowDiagramGraphvizDOT();
               //let jsonObj = dotParser.parse(dot);
               let dotJson = dotParser.parse(dot)[0];
               //First data import
               console.log(jsonObj);
+
               endWASM();
-
               let cnt = 0;
-              if (graph.model.diagramData === undefined) {
-                graph.getModel().diagramData = new Map();
-              }
+              /*
+               -  Okay, also wir holen uns die id von source und target über ThreatAssets
+               -  Anschließend inserten wir in CommunicationAsset die Infos  
+               -    
+              */
 
+              var destinationObj = new Map();
+              for (let entry in jsonObj) {
+                if (
+                  entry !== "TrustBoundaries" &&
+                  entry !== "DataAssets" &&
+                  entry !== "TechnicalAssets"
+                ) {
+                  destinationObj.set(entry, jsonObj[entry]);
+                }
+              }
+              graph.getModel().diagramData = destinationObj;
+              graph.getModel().diagramData.DataAssets = new Map();
               for (let entries in jsonObj.DataAssets) {
                 let entry = jsonObj.DataAssets[entries];
                 console.log(entry);
-                graph.getModel().diagramData.set("" + cnt++, {
+                graph.getModel().diagramData.DataAssets.set("" + cnt++, {
                   Id: jsonObj.DataAssets[entries].id,
                   Title: jsonObj.DataAssets[entries].title,
                   Description: jsonObj.DataAssets[entries].Description,
@@ -167,6 +181,23 @@ Actions.prototype.init = function () {
                         clusterStyle
                       );
                       clusterVertex.setConnectable(false);
+                      let trust = jsonObj.TrustBoundaries;
+
+                      let titleMap = new Map();
+
+                      for (let key in trust) {
+                        if (trust.hasOwnProperty(key)) {
+                          let asset = trust[key];
+                          let title = asset.Title;
+
+                          titleMap.set(title, asset);
+                        }
+                      }
+
+                      if (titleMap.has(titleCluster.textContent)) {
+                        let asset = titleMap.get(titleCluster.textContent);
+                        clusterVertex.TrustBoundaries = asset;
+                      }
                     }
                   }
                   for (var i = 0; i < nodes.length; i++) {
@@ -393,6 +424,23 @@ Actions.prototype.init = function () {
                           style
                         );
                       }
+                      let technicalAssets = jsonObj.TechnicalAssets;
+
+                      let titleMap = new Map();
+
+                      for (let key in technicalAssets) {
+                        if (technicalAssets.hasOwnProperty(key)) {
+                          let asset = technicalAssets[key];
+                          let title = asset.Title;
+
+                          titleMap.set(title, asset);
+                        }
+                      }
+
+                      if (titleMap.has(text)) {
+                        let asset = titleMap.get(text);
+                        vertex.technicalAsset = asset;
+                      }
 
                       vertex.setVertex(true);
                       nodeIdMap[nodeCoords.nodeTitle] = vertex;
@@ -477,7 +525,6 @@ Actions.prototype.init = function () {
                       // Get source and target vertices
                       let sourceVertex = nodeIdMap[sourceTitle];
                       let targetVertex = nodeIdMap[targetTitle];
-
                       // Insert edge
                       let edge = graph.insertEdge(
                         parent,
@@ -494,6 +541,28 @@ Actions.prototype.init = function () {
                         edgeGeometry.points = pathPoints;
                         graph.getModel().setGeometry(edge, edgeGeometry);
                       }
+                      if (
+                        sourceVertex.technicalAsset !== undefined &&
+                        targetVertex.technicalAsset !== undefined
+                      ) {
+                        for (links in sourceVertex.technicalAsset
+                          .CommunicationLinks) {
+                          if (
+                            targetVertex.technicalAsset.Id ===
+                            sourceVertex.technicalAsset.CommunicationLinks[
+                              links
+                            ].TargetId
+                          ) {
+                            edge.communicationAsset =
+                              sourceVertex.technicalAsset.CommunicationLinks[
+                                links
+                              ];
+                            break;
+                          }
+                        }
+                      }
+                      // sourceVertex.technicalAsset.CommunicationLinks[0].TargetId
+                      // edge.communicationAsset
                     });
                   } catch (error) {
                     console.error(error);
@@ -2198,10 +2267,11 @@ Actions.prototype.init = function () {
     mxUtils.bind(this, function (list, menu) {
       if (typeof graph.model.diagramData === "undefined") {
         graph.model.diagramData = new Map();
+        graph.model.diagramData.DataAssets = new Map();
       }
-      if (graph.model.diagramData instanceof Map) {
+      if (graph.model.diagramData.DataAssets instanceof Map) {
         var menuId = "menu_" + list.childElementCount;
-        graph.model.diagramData.set(menuId, {
+        graph.model.diagramData.DataAssets.set(menuId, {
           descriptionMenu: "Data" + list.childElementCount + ":",
         });
         menu.id = menuId;
@@ -2245,7 +2315,7 @@ Actions.prototype.init = function () {
         var parentList = parentListItem.parentNode;
         parentList.removeChild(parentListItem);
 
-        var menuId = graph.model.diagramData.delete(menuId);
+        var menuId = graph.model.diagramData.DataAssets.delete(menuId);
       });
 
       textContainer.appendChild(dataText);
@@ -2410,7 +2480,7 @@ Actions.prototype.init = function () {
     "editDataDescription...",
     mxUtils.bind(this, function (evt) {
       var menuId = evt.target.parentNode.id;
-      var current = graph.model.diagramData.get(menuId);
+      var current = graph.model.diagramData.DataAssets.get(menuId);
 
       if (!current.description) {
         current.description = "";

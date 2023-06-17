@@ -1,9 +1,15 @@
 TODOs:
 
-- Menü für Trust Boundaries erstellen
-- Die Celle muss wissen was sie ist, dass sollte man über arrange einstellen können.
+-~~ Menü für Trust Boundaries erstellen~~
+
 - Import Funktion schreiben, also in der this.addAction("import...", function () {
-  DataDiagram importieren anschließend Assets importieren und edges
+  ~~ DataDiagram importieren anschließend Assets importieren und edges~~
+- Defaultwerte setzen bei ersten erstellen
+- Tagify listener programmmieren, damit die Werte gesetzt werden.
+- Christian Schneider Styles vielleicht einbauen
+  - z.B. Birectional
+  - Legende einbauen
+-
 - Threat Analysis Tab erstellen in den Technology Assets und dort RAA, sowie Threats berechnen
   wenn darauf geklickt wird und erlauben das man dort Sachen mitigiert und so weiter
 - Export Funktion schreiben, also über die ganzen Daten iterieren, anschließend über die Cellen und Edges, sowie wie die Threats die mitigiert wurden

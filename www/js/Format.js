@@ -7959,8 +7959,12 @@ DiagramFormatPanel.prototype.init = function () {
     list.appendChild(listItem);
   }
 
-  if (typeof graph.model.diagramData !== "undefined") {
-    graph.model.diagramData.forEach(
+  if (
+    typeof graph.model.diagramData !== "undefined" &&
+    typeof this.editorUi.editor.graph.model.diagramData.DataAssets !==
+      "undefined"
+  ) {
+    graph.model.diagramData.DataAssets.forEach(
       function (value, property) {
         var clonedMenu = this.addDataMenu(this.createPanel());
         clonedMenu.id = property;
@@ -8031,7 +8035,7 @@ DiagramFormatPanel.prototype.init = function () {
 
         textContainer.appendChild(dataText);
         textContainer.appendChild(xButton);
-        let current = graph.model.diagramData.get(clonedMenu.id);
+        let current = graph.model.diagramData.DataAssets.get(clonedMenu.id);
         if (current["visible"] === undefined) {
           current["visible"] = true;
         }
@@ -8051,7 +8055,6 @@ DiagramFormatPanel.prototype.init = function () {
         listItem.appendChild(textContainer);
         listItem.appendChild(clonedMenu);
         function toggleContent() {
-          // Überprüfe, ob die enthaltenen Elemente bereits versteckt sind
           let state = current["visible"];
           current["visible"] = !current["visible"];
           if (!state) {
@@ -8129,58 +8132,6 @@ DiagramFormatPanel.prototype.init = function () {
   }
   let self = this;
   this.graph = graph;
-  let optionFlow = this.createOption(
-    "FlowPipe Animation",
-    function () {
-      return graph.floweffect;
-    },
-    function (checked) {
-      graph.floweffect = !graph.floweffect;
-      if (graph.floweffect) {
-        cells = graph.getVerticesAndEdges(false, true);
-        cells.forEach((cell) => {
-          if (cell.isEdge() && cell.source != null && cell.target != null) {
-            // Add a delay to allow the edge state to be updated
-            let state = graph.view.getState(cell);
-            if (state) {
-              setTimeout(() => {
-                let pathNodes = state.shape.node.getElementsByTagName("path");
-                if (pathNodes.length >= 2) {
-                  pathNodes[0].removeAttribute("visibility");
-                  pathNodes[0].setAttribute("stroke-width", "6");
-                  pathNodes[0].setAttribute("stroke", "lightGray");
-                  pathNodes[1].setAttribute("class", "pipeFlowAnimation");
-                }
-              }, 0);
-            }
-          }
-        });
-      } else {
-        var cells = graph.getVerticesAndEdges(false, true);
-        cells.forEach((cell) => {
-          if (cell.isEdge() && cell.source != null && cell.target != null) {
-            let state = graph.view.getState(cell);
-            if (state) {
-              let pathNodes = state.shape.node.getElementsByTagName("path");
-              if (pathNodes.length >= 2) {
-                pathNodes[0].setAttribute("visibility", "hidden");
-                pathNodes[0].removeAttribute("stroke-width");
-                pathNodes[0].removeAttribute("stroke");
-                pathNodes[1].removeAttribute("class");
-              }
-            }
-          }
-        });
-      }
-    },
-    {
-      install: function (apply) {
-        console.log("Applied");
-      },
-      destroy: function () {},
-    }
-  );
-  this.container.appendChild(optionFlow);
 };
 /**
  * Adds the label menu items to the given menu and parent.
@@ -8360,7 +8311,56 @@ DiagramFormatPanel.prototype.addOptions = function (div) {
       )
     );
   }
-
+  let optionFlow = this.createOption(
+    "FlowPipe Animation",
+    function () {
+      return graph.floweffect;
+    },
+    function (checked) {
+      graph.floweffect = !graph.floweffect;
+      if (graph.floweffect) {
+        cells = graph.getVerticesAndEdges(false, true);
+        cells.forEach((cell) => {
+          if (cell.isEdge() && cell.source != null && cell.target != null) {
+            // Add a delay to allow the edge state to be updated
+            let state = graph.view.getState(cell);
+            if (state) {
+              setTimeout(() => {
+                let pathNodes = state.shape.node.getElementsByTagName("path");
+                if (pathNodes.length >= 2) {
+                  pathNodes[0].removeAttribute("visibility");
+                  pathNodes[0].setAttribute("stroke-width", "6");
+                  pathNodes[0].setAttribute("stroke", "lightGray");
+                  pathNodes[1].setAttribute("class", "pipeFlowAnimation");
+                }
+              }, 0);
+            }
+          }
+        });
+      } else {
+        var cells = graph.getVerticesAndEdges(false, true);
+        cells.forEach((cell) => {
+          if (cell.isEdge() && cell.source != null && cell.target != null) {
+            let state = graph.view.getState(cell);
+            if (state) {
+              let pathNodes = state.shape.node.getElementsByTagName("path");
+              if (pathNodes.length >= 2) {
+                pathNodes[0].setAttribute("visibility", "hidden");
+                pathNodes[0].removeAttribute("stroke-width");
+                pathNodes[0].removeAttribute("stroke");
+                pathNodes[1].removeAttribute("class");
+              }
+            }
+          }
+        });
+      }
+    },
+    {
+      install: function (apply) {},
+      destroy: function () {},
+    }
+  );
+  div.appendChild(optionFlow);
   return div;
 };
 
@@ -8677,8 +8677,203 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
   container,
   graph
 ) {
-  var cell = graph.getSelectionCell();
+  var self = this;
+  var typeProperties = {
+    Id: {
+      description: "Id",
+      type: "button",
+      section: "General",
+      tooltip: "All id attribute values must be unique ",
+      defaultValue: "<Your ID>",
+    },
+    Description: {
+      description: "Description",
+      type: "button",
+      section: "General",
+      tooltip: "Provide a brief description of the trust boundary. ",
+      defaultValue: "",
+    },
+    Title: {
+      description: "Type",
+      type: "button",
+      section: "Properties",
+      tooltip: "Your Title",
+      defaultValue: "<Your Title>",
+    },
+    Type: {
+      description: "Type",
+      type: "select",
+      options: [
+        {
+          group: "Category 1",
+          options: [
+            "network-dedicated-hoster",
+            "network-virtual-lan",
+            "network-cloud-provider",
+            "network-cloud-security-group",
+            "network-policy-namespace-isolation",
+            "execution-environment",
+          ],
+          defaultValue: "external-entity",
+        },
+      ],
+      section: "Properties",
+      tooltip: "",
+    },
+  };
+  let sections = {};
+  for (let property in typeProperties) {
+    let sectionName = typeProperties[property].section;
+    if (!sections[sectionName]) {
+      sections[sectionName] = createSection(sectionName);
+    }
+    let typeItem = document.createElement("li");
+    typeItem.style.display = "flex";
+    typeItem.style.alignItems = "baseline";
+    typeItem.style.marginBottom = "8px";
 
+    let propertyName = document.createElement("span");
+    propertyName.innerHTML = property;
+    propertyName.style.width = "100px";
+    propertyName.style.marginRight = "10px";
+
+    let propertyType = typeProperties[property].type;
+
+    if (propertyType === "select") {
+      const propertySelect = property;
+      typeItem.appendChild(propertyName);
+      let selectContainer = document.createElement("div");
+      selectContainer.style.display = "flex";
+      selectContainer.style.alignItems = "center";
+      selectContainer.style.marginLeft = "auto";
+      let selectDropdown = document.createElement("select");
+      selectDropdown.style.width = "100px";
+      selectDropdown.title = typeProperties[property].tooltip;
+      selectContainer.appendChild(selectDropdown);
+
+      let optionGroups = typeProperties[property].options;
+      for (var i = 0; i < optionGroups.length; i++) {
+        let optgroup = document.createElement("optgroup");
+        optgroup.label = optionGroups[i].group;
+        let options = optionGroups[i].options;
+        for (let j = 0; j < options.length; j++) {
+          let option = document.createElement("option");
+          option.value = options[j];
+          option.text = options[j];
+          optgroup.appendChild(option);
+        }
+        selectDropdown.appendChild(optgroup);
+      }
+      let cell = self.editorUi.editor.graph.getSelectionCell();
+      if (
+        cell &&
+        cell.TrustBoundaries &&
+        cell.TrustBoundaries[propertySelect]
+      ) {
+        selectDropdown.selectedIndex = cell.TrustBoundaries[propertySelect];
+      }
+      let createChangeListener = function (selectDropdown, propertySelect) {
+        return function (evt) {
+          var vals = selectDropdown.value;
+
+          if (vals != null) {
+            var cells = self.editorUi.editor.graph.getSelectionCells();
+            if (cells != null && cells.length > 0) {
+              var cell = self.editorUi.editor.graph.getSelectionCell();
+              if (!cell.TrustBoundaries) {
+                cell.TrustBoundaries = {
+                  [propertySelect]: selectDropdown.selectedIndex,
+                };
+              } else {
+                cell.TrustBoundaries[propertySelect] =
+                  selectDropdown.selectedIndex;
+              }
+            }
+          }
+          mxEvent.consume(evt);
+        };
+      };
+      mxEvent.addListener(
+        selectDropdown,
+        "change",
+        createChangeListener(selectDropdown, propertySelect)
+      );
+      typeItem.appendChild(selectContainer);
+      sections[sectionName].appendChild(typeItem);
+    } else if (propertyType === "checkbox") {
+      let optionElement = this.createOption(
+        property,
+        createCustomOption(self, property),
+        setCustomOption(self, property),
+        customListener
+      );
+      optionElement.querySelector('input[type="checkbox"]').title =
+        typeProperties[property].tooltip;
+
+      sections[sectionName].appendChild(optionElement);
+    } else if (propertyType === "button") {
+      let button = mxUtils.button(
+        property,
+        mxUtils.bind(this, function (evt) {
+          let cells = self.editorUi.editor.graph.getSelectionCells();
+          let cell = cells && cells.length > 0 ? cells[0] : null;
+          let dataValue =
+            cell && cell.TrustBoundaries && cell.TrustBoundaries[property]
+              ? cell.TrustBoundaries[property]
+              : typeProperties[property].defaultValue;
+
+          var dlg = new TextareaDialog(
+            this.editorUi,
+            property + ":",
+            dataValue,
+            function (newValue) {
+              if (newValue != null) {
+                if (cell) {
+                  if (property === "Id") {
+                    var adjustedValue = newValue
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;");
+                    let model = self.editorUi.editor.graph.model;
+                    model.beginUpdate();
+                    try {
+                      model.setValue(cell, adjustedValue);
+
+                      self.editorUi.editor.graph.refresh(cell);
+
+                      self.editorUi.editor.graph.refresh();
+                    } finally {
+                      model.endUpdate();
+                    }
+                  }
+                  if (!cell.TrustBoundaries) {
+                    cell.TrustBoundaries = {
+                      [property]: newValue,
+                    };
+                  } else {
+                    cell.TrustBoundaries[property] = newValue;
+                  }
+                }
+              }
+            },
+            null,
+            null,
+            400,
+            220
+          );
+          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
+          dlg.init();
+        })
+      );
+      button.title = typeProperties[property].tooltip;
+      button.style.width = "200px";
+      typeItem.appendChild(button);
+      sections[sectionName].appendChild(typeItem);
+    }
+  }
+  for (let sectionName in sections) {
+    container.appendChild(sections[sectionName]);
+  }
+  var cell = graph.getSelectionCell();
   if (cell.isVertex()) {
     var cellGeometry = cell.getGeometry();
 
@@ -8688,33 +8883,29 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
       var cellWidth = cellGeometry.width;
       var cellHeight = cellGeometry.height;
 
-      // Container-Element für die Tabelle erstellen
       var tableContainer = document.createElement("div");
-      tableContainer.style.maxWidth = "300px"; // Maximale Breite des Containers
+      tableContainer.style.maxWidth = "300px";
 
-      // Tabelle erstellen
       var table = document.createElement("table");
       table.style.borderCollapse = "collapse";
       table.style.width = "90%";
-      table.style.tableLayout = "fixed"; // Festgelegte Breite für Tabellenspalten
+      table.style.tableLayout = "fixed";
 
-      // Header-Zeile erstellen
       var headerRow = document.createElement("tr");
       var headerCell = document.createElement("th");
-      headerCell.textContent = "Technical Assets Inside";
+      headerCell.textContent = "Technical Assets Inside:";
       headerCell.style.border = "1px solid #ccc";
       headerCell.style.padding = "8px";
       headerCell.style.backgroundColor = "#f0f0f0";
       headerCell.style.textAlign = "left";
-      headerCell.colSpan = 2; // Spaltenübergreifende Zelle
+      headerCell.colSpan = 2;
       headerRow.appendChild(headerCell);
       table.appendChild(headerRow);
 
-      // Schleife über alle Vertices im Graph
       var vertices = graph.getChildVertices(graph.getDefaultParent());
 
       function isVertexInsideAnyRectangle(vertex, rectangles) {
-        var vertexGeometry = vertex.getGeometry(); // define vertexGeometry
+        var vertexGeometry = vertex.getGeometry();
         for (let i = 0; i < rectangles.length; i++) {
           let rectangle = rectangles[i];
           let rectangleGeometry = rectangle.getGeometry();
@@ -8733,14 +8924,15 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
         return false;
       }
 
-      // Sammeln Sie alle inneren Rechtecke
       var innerRectangles = vertices.filter(function (vertex) {
         var vertexGeometry = vertex.getGeometry();
         var style = graph.getModel().getStyle(vertex);
         return (
           vertexGeometry != null &&
           vertex !== cell &&
-          (style.includes("rounded=1") || style.includes("rounded=0")) &&
+          (style.includes("rounded=1") ||
+            style.includes("rounded=0") ||
+            style.includes("shape=rectangle")) &&
           vertexGeometry.x >= cellX &&
           vertexGeometry.y >= cellY &&
           vertexGeometry.x + vertexGeometry.width <= cellX + cellWidth &&
@@ -8748,7 +8940,6 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
         );
       });
 
-      // Berücksichtigen Sie die Vertices, die im ausgewählten Rechteck, aber nicht in irgendeinem inneren Rechteck liegen.
       vertices.forEach(function (vertex) {
         var vertexGeometry = vertex.getGeometry();
         var style = graph.getModel().getStyle(vertex);
@@ -8756,7 +8947,11 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
         if (
           vertexGeometry != null &&
           vertex !== cell &&
-          !(style.includes("rounded=1") || style.includes("rounded=0")) &&
+          !(
+            style.includes("rounded=1") ||
+            style.includes("rounded=0") ||
+            style.includes("shape=rectangle")
+          ) &&
           vertexGeometry.x >= cellX &&
           vertexGeometry.y >= cellY &&
           vertexGeometry.x + vertexGeometry.width <= cellX + cellWidth &&
@@ -8768,41 +8963,30 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
       });
 
       function addVertexToTable(vertex) {
-        // Neue Tabellenzeile erstellen
         var row = document.createElement("tr");
 
-        // Elementwert in der Zelle anzeigen
         var cellValue = document.createElement("td");
         cellValue.textContent = vertex.getValue();
-        cellValue.style.border = "1px solid #ccc";
         cellValue.style.padding = "8px";
-        cellValue.style.wordWrap = "break-word"; // Zeilenumbruch für lange Wörter
-
-        // Tabellenzelle zur Zeile hinzufügen
+        cellValue.style.width = "200px";
         row.appendChild(cellValue);
 
-        // Zeile zur Tabelle hinzufügen
         table.appendChild(row);
       }
 
-      // Tabelle zum Container hinzufügen
       tableContainer.appendChild(table);
 
-      // Container-Element an den gewünschten Ort in deiner Anwendung anhängen
-      // Zum Beispiel an den Body-Element:
       container.appendChild(tableContainer);
     }
   }
-  // Tabelle für geschachtelte Rechtecke erstellen
   var nestedTableContainer = document.createElement("div");
-  nestedTableContainer.style.maxWidth = "300px"; // Maximale Breite des Containers
+  nestedTableContainer.style.maxWidth = "300px";
 
   var nestedTable = document.createElement("table");
   nestedTable.style.borderCollapse = "collapse";
   nestedTable.style.width = "90%";
-  nestedTable.style.tableLayout = "fixed"; // Festgelegte Breite für Tabellenspalten
+  nestedTable.style.tableLayout = "fixed";
 
-  // Header-Zeile erstellen
   var nestedHeaderRow = document.createElement("tr");
   var nestedHeaderCell = document.createElement("th");
   nestedHeaderCell.textContent = "Trust boundaries nested:";
@@ -8810,31 +8994,25 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
   nestedHeaderCell.style.padding = "8px";
   nestedHeaderCell.style.backgroundColor = "#f0f0f0";
   nestedHeaderCell.style.textAlign = "left";
-  nestedHeaderCell.colSpan = 2; // Spaltenübergreifende Zelle
+  nestedHeaderCell.colSpan = 2;
   nestedHeaderRow.appendChild(nestedHeaderCell);
   nestedTable.appendChild(nestedHeaderRow);
 
-  // Rechtecke zur Tabelle hinzufügen
   innerRectangles.forEach(function (rectangle) {
     var row = document.createElement("tr");
 
     var cellValue = document.createElement("td");
     cellValue.textContent = rectangle.getValue();
-    cellValue.style.border = "1px solid #ccc";
     cellValue.style.padding = "8px";
-    cellValue.style.wordWrap = "break-word"; // Zeilenumbruch für lange Wörter
-
-    // Tabellenzelle zur Zeile hinzufügen
+    cellValue.style.width = "200px";
+    cellValue.style.boxSizing = "border-box";
     row.appendChild(cellValue);
 
-    // Zeile zur Tabelle hinzufügen
     nestedTable.appendChild(row);
   });
 
-  // Tabelle zum Container hinzufügen
   nestedTableContainer.appendChild(nestedTable);
 
-  // Container-Element an den gewünschten Ort in deiner Anwendung anhängen
   // Zum Beispiel an den Body-Element:
   container.appendChild(nestedTableContainer);
   return container;
@@ -8904,12 +9082,20 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       section: "Properties",
     },
     */
+    Id: {
+      description: "Id",
+      type: "button",
+      section: "General",
+      tooltip: "All id attribute values must be unique ",
+      defaultValue: "<Your ID>",
+    },
+
     Description: {
       description: "Description",
       type: "button",
       tooltip: "Provide a brief description of the component.",
       defaultValue: "<Your Description>",
-      section: "Properties",
+      section: "General",
     },
     Protocol: {
       description: "Protocol",
@@ -9060,7 +9246,7 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       defaultValue: false,
       section: "Properties",
     },
-    IP_filtered: {
+    IpFiltered: {
       description: "IP filtered",
       type: "checkbox",
       tooltip: "Check if the component is IP filtered.",
@@ -9127,23 +9313,28 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
         selectDropdown.appendChild(optgroup);
       }
       let cell = self.editorUi.editor.graph.getSelectionCell();
-      if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
-        selectDropdown.value = cell.technicalAsset[propertySelect];
+      if (
+        cell &&
+        cell.communicationAsset &&
+        cell.communicationAsset[propertySelect]
+      ) {
+        selectDropdown.selectedIndex = cell.communicationAsset[propertySelect];
       }
       let createChangeListener = function (selectDropdown, propertySelect) {
         return function (evt) {
-          var vals = selectDropdown.value;
+          var vals = selectDropdown.selectedIndex;
 
           if (vals != null) {
             var cells = self.editorUi.editor.graph.getSelectionCells();
             if (cells != null && cells.length > 0) {
               var cell = self.editorUi.editor.graph.getSelectionCell();
-              if (!cell.technicalAsset) {
-                cell.technicalAsset = {
-                  [propertySelect]: selectDropdown.value,
+              if (!cell.communicationAsset) {
+                cell.communicationAsset = {
+                  [propertySelect]: selectDropdown.selectedIndex,
                 };
               } else {
-                cell.technicalAsset[propertySelect] = selectDropdown.value;
+                cell.communicationAsset[propertySelect] =
+                  selectDropdown.selectedIndex;
               }
             }
           }
@@ -9175,8 +9366,8 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
           let cells = self.editorUi.editor.graph.getSelectionCells();
           let cell = cells && cells.length > 0 ? cells[0] : null;
           let dataValue =
-            cell && cell.technicalAsset && cell.technicalAsset[property]
-              ? cell.technicalAsset[property]
+            cell && cell.communicationAsset && cell.communicationAsset[property]
+              ? cell.communicationAsset[property]
               : typeProperties[property].defaultValue;
 
           var dlg = new TextareaDialog(
@@ -9202,12 +9393,12 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
                       model.endUpdate();
                     }
                   }
-                  if (!cell.technicalAsset) {
-                    cell.technicalAsset = {
+                  if (!cell.communcationAsset) {
+                    cell.communicationAsset = {
                       [property]: newValue,
                     };
                   } else {
-                    cell.technicalAsset[property] = newValue;
+                    cell.communicationAsset[property] = newValue;
                   }
                 }
               }
@@ -9230,150 +9421,62 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   for (let sectionName in sections) {
     container.appendChild(sections[sectionName]);
   }
-  var diagramData = this.editorUi.editor.graph.model.diagramData;
-  var selectedDataSection = createSection("Data Sent:");
-  var dataSection = createSection("Data:");
-
-  // Create table
-  var table = document.createElement("table");
-  table.style.borderCollapse = "collapse";
-
-  // Create table header
-  var thead = document.createElement("thead");
-  var trHead = document.createElement("tr");
-  trHead.style.borderBottom = "2px solid black";
-  var thID = document.createElement("th");
-  thID.textContent = "ID";
-  thID.style.padding = "8px";
-  var thDescription = document.createElement("th");
-  thDescription.textContent = "Description";
-  thDescription.style.padding = "8px";
-  var thSelected = document.createElement("th");
-  thSelected.textContent = "Selected";
-  thSelected.style.padding = "8px";
-  trHead.appendChild(thID);
-  trHead.appendChild(thDescription);
-  trHead.appendChild(thSelected);
-  thead.appendChild(trHead);
-  table.appendChild(thead);
-
-  // Create table body
-  var tbody = document.createElement("tbody");
-  table.appendChild(tbody);
-
-  // Create selected table
-  var selectedTable = document.createElement("table");
-  selectedTable.style.borderCollapse = "collapse";
-
-  // Create selected table header
-  var selectedTableHeader = document.createElement("thead");
-  var selectedTableHeaderRow = document.createElement("tr");
-  var selectedTableIDHeader = document.createElement("th");
-  selectedTableIDHeader.textContent = "ID";
-  selectedTableIDHeader.style.borderBottom = "1px solid #ccc";
-  selectedTableIDHeader.style.padding = "8px";
-  selectedTableHeaderRow.appendChild(selectedTableIDHeader);
-  var selectedTableDescriptionHeader = document.createElement("th");
-  selectedTableDescriptionHeader.textContent = "Description";
-  selectedTableDescriptionHeader.style.borderBottom = "1px solid #ccc";
-  selectedTableDescriptionHeader.style.padding = "8px";
-  selectedTableHeaderRow.appendChild(selectedTableDescriptionHeader);
-  selectedTableHeader.appendChild(selectedTableHeaderRow);
-  selectedTable.appendChild(selectedTableHeader);
-
-  // Create selected table body
-  var selectedTableBody = document.createElement("tbody");
-  selectedTable.appendChild(selectedTableBody);
-
-  // Check if diagramData is defined
-  if (typeof this.editorUi.editor.graph.model.diagramData !== "undefined") {
-    // Reference to the Map
-    var diagramData = this.editorUi.editor.graph.model.diagramData;
-
-    // Iterate over the Map and create table rows
-    diagramData.forEach(function (value, property) {
-      var tr = document.createElement("tr");
-
-      // Create ID cell
-      var tdID = document.createElement("td");
-      var idText = value.Id || "";
-      if (idText.length > 6) {
-        var truncatedId = idText.substring(0, 6) + "...";
-        tdID.textContent = truncatedId;
-        tdID.title = idText;
-      } else {
-        tdID.textContent = idText;
-      }
-      tdID.style.borderBottom = "1px solid #ccc";
-      tdID.style.padding = "8px";
-      tr.appendChild(tdID);
-
-      // Create Description cell
-      var tdDescription = document.createElement("td");
-      var descriptionText = value.Description || "";
-      if (descriptionText.length > 6) {
-        var truncatedText = descriptionText.substring(0, 6) + "...";
-        tdDescription.textContent = truncatedText;
-        tdDescription.title = descriptionText;
-      } else {
-        tdDescription.textContent = descriptionText;
-      }
-      tdDescription.style.borderBottom = "1px solid #ccc";
-      tdDescription.style.padding = "8px";
-      tr.appendChild(tdDescription);
-
-      // Create Selected cell
-      var tdSelected = document.createElement("td");
-      tdSelected.style.borderBottom = "1px solid #ccc";
-      tdSelected.style.padding = "8px";
-      var checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-
-      checkbox.addEventListener("change", function () {
-        var selected = checkbox.checked;
-        value.Selected = selected; // Set the "Selected" property in the data object
-
-        // Update selected table
-        if (selected) {
-          var trSelected = document.createElement("tr");
-          var tdSelectedID = document.createElement("td");
-          tdSelectedID.textContent = idText || "";
-          tdSelectedID.style.borderBottom = "1px solid #ccc";
-          tdSelectedID.style.padding = "8px";
-          trSelected.appendChild(tdSelectedID);
-          var tdSelectedDescription = document.createElement("td");
-          tdSelectedDescription.textContent = descriptionText || "";
-          tdSelectedDescription.style.borderBottom = "1px solid #ccc";
-          tdSelectedDescription.style.padding = "8px";
-          trSelected.appendChild(tdSelectedDescription);
-          selectedTableBody.appendChild(trSelected);
-        } else {
-          // Remove from selected table
-          var rows = selectedTableBody.getElementsByTagName("tr");
-          for (var i = 0; i < rows.length; i++) {
-            var row = rows[i];
-            if (
-              row.cells[0].textContent === idText &&
-              row.cells[1].textContent === descriptionText
-            ) {
-              row.parentNode.removeChild(row);
-              break;
-            }
-          }
-        }
-      });
-
-      tdSelected.appendChild(checkbox);
-      tr.appendChild(tdSelected);
-
-      tbody.appendChild(tr);
-    });
+  if (typeof this.editorUi.editor.graph.model.diagramData === "undefined") {
+    this.editorUi.editor.graph.model.diagramData = new Map();
   }
+  var diagramData = this.editorUi.editor.graph.model.diagramData.DataAssets;
 
-  container.appendChild(selectedDataSection);
-  dataSection.appendChild(table);
-  selectedDataSection.appendChild(selectedTable);
-  container.appendChild(dataSection);
+  idsData = [];
+  // Iterate over the Map and create table rows
+  diagramData.forEach(function (value, property) {
+    idsData.push(value.Id);
+  });
+
+  let inputElement = document.createElement("input");
+  inputElement.placeholder = "Data sent";
+  let cells = self.editorUi.editor.graph.getSelectionCells();
+  let cell = cells && cells.length > 0 ? cells[0] : null;
+
+  let sentSection = createSection("Data Sent:");
+
+  sentSection.appendChild(document.createElement("br"));
+  if (cell) {
+    inputElement.value = cell.communicationAsset.DataAssetsSent;
+  } // Append it to body (or any other container)
+  sentSection.appendChild(inputElement);
+  let tinput = document.querySelector('input[name="input-custom-dropdown"]'),
+    // init Tagify script on the above inputs
+    tagify = new Tagify(inputElement, {
+      whitelist: idsData,
+      dropdown: {
+        maxItems: 20, // <- mixumum allowed rendered suggestions
+        classname: "tags-look", // <- custom classname for this dropdown, so it could be targeted
+        enabled: 0, // <- show suggestions on focus
+        closeOnSelect: false, // <- do not hide the suggestions dropdown once an item has been selected
+      },
+    });
+  container.appendChild(sentSection);
+  let inputElement2 = document.createElement("input");
+
+  let receivedSecion = createSection("Data Received:");
+
+  receivedSecion.appendChild(document.createElement("br"));
+  if (cell) {
+    inputElement2.value = cell.communicationAsset.DataAssetsReceived;
+  } // Append it to body (or any other container)
+  receivedSecion.appendChild(inputElement2);
+  let tinput2 = document.querySelector('input[name="input-custom-dropdown"]'),
+    // init Tagify script on the above inputs
+    tagify2 = new Tagify(inputElement2, {
+      whitelist: idsData,
+      dropdown: {
+        maxItems: 20, // <- mixumum allowed rendered suggestions
+        classname: "tags-look", // <- custom classname for this dropdown, so it could be targeted
+        enabled: 0, // <- show suggestions on focus
+        closeOnSelect: false, // <- do not hide the suggestions dropdown once an item has been selected
+      },
+    });
+  container.appendChild(receivedSecion);
   return container;
 };
 /*
@@ -10174,7 +10277,8 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
         property,
         mxUtils.bind(this, function (evt) {
           var menuId = evt.target.parentNode.parentNode.parentNode.id;
-          current = this.editorUi.editor.graph.model.diagramData.get(menuId);
+          current =
+            this.editorUi.editor.graph.model.diagramData.DataAssets.get(menuId);
 
           if (!current[property]) {
             current[property] = typeProperties[property].defaultValue;
@@ -10249,7 +10353,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "Select the 'Type' for your threat model component. 'external-entity' represents an outside actor or system, 'process' indicates an operational component, and 'datastore' refers to data storage within the system.",
     },
-    Technologies: {
+    Technology: {
       description: "Technologies",
       type: "select",
       defaultValue: "unknown-technology",
@@ -10508,14 +10612,14 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip: "Select the main usage category of this resource.",
     },
 
-    Used_as_client_by_human: {
+    UsedAsClientByHuman: {
       defaultValue: "false",
       description: "Used as client by human",
       type: "checkbox",
       section: "Utilization",
       tooltip: "Check this if the resource is directly used by a human client.",
     },
-    Multi_tenant: {
+    MultiTenant: {
       defaultValue: "false",
       description: "Multi tenant",
       type: "checkbox",
@@ -10531,7 +10635,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "Check this if the resource has redundancy features to prevent failure or data loss.",
     },
-    Custom_developed_parts: {
+    CustomDevelopedParts: {
       defaultValue: "false",
       description: "Custom Developed parts",
       type: "checkbox",
@@ -10539,7 +10643,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "Check this if the resource includes parts that were custom developed.",
     },
-    Out_of_Scope: {
+    OutOfScope: {
       defaultValue: "false",
       description: "Out of Scope",
       type: "checkbox",
@@ -10547,7 +10651,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "Check this if the resource is out of the scope of your threat model analysis.",
     },
-    Justification_out_of_Scope: {
+    JustificationOutOfScope: {
       description: "Justification out of Scope",
       type: "button",
       section: "Utilization",
@@ -10609,7 +10713,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       }
       let cell = self.editorUi.editor.graph.getSelectionCell();
       if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
-        selectDropdown.value = cell.technicalAsset[propertySelect];
+        selectDropdown.selectedIndex = cell.technicalAsset[propertySelect];
       }
       let createChangeListener = function (selectDropdown, propertySelect) {
         return function (evt) {
@@ -10621,10 +10725,11 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
               var cell = self.editorUi.editor.graph.getSelectionCell();
               if (!cell.technicalAsset) {
                 cell.technicalAsset = {
-                  [propertySelect]: selectDropdown.value,
+                  [propertySelect]: selectDropdown.selectedIndex,
                 };
               } else {
-                cell.technicalAsset[propertySelect] = selectDropdown.value;
+                cell.technicalAsset[propertySelect] =
+                  selectDropdown.selectedIndex;
               }
             }
           }
@@ -10785,150 +10890,61 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       }
     }
   }
-  // <--------------Data Section -------------->
-  var dataSection = createSection("Data:");
-  var selectedDataSection = createSection("Stored:");
 
-  // Create table
-  var table = document.createElement("table");
-  table.style.borderCollapse = "collapse";
+  idsData = [];
+  // Iterate over the Map and create table rows
+  this.editorUi.editor.graph.model.diagramData.DataAssets.forEach(function (
+    value,
+    property
+  ) {
+    idsData.push(value.Id);
+  });
 
-  // Create table header
-  var thead = document.createElement("thead");
-  var trHead = document.createElement("tr");
-  trHead.style.borderBottom = "2px solid black";
-  var thID = document.createElement("th");
-  thID.textContent = "ID";
-  thID.style.padding = "8px";
-  var thDescription = document.createElement("th");
-  thDescription.textContent = "Description";
-  thDescription.style.padding = "8px";
-  var thSelected = document.createElement("th");
-  thSelected.textContent = "Selected";
-  thSelected.style.padding = "8px";
-  trHead.appendChild(thID);
-  trHead.appendChild(thDescription);
-  trHead.appendChild(thSelected);
-  thead.appendChild(trHead);
-  table.appendChild(thead);
+  let inputElement = document.createElement("input");
+  inputElement.placeholder = "Data Processed";
+  let cells = self.editorUi.editor.graph.getSelectionCells();
+  let cell = cells && cells.length > 0 ? cells[0] : null;
 
-  // Create table body
-  var tbody = document.createElement("tbody");
-  table.appendChild(tbody);
+  let sentSection = createSection("Data Processed:");
 
-  // Create selected table
-  var selectedTable = document.createElement("table");
-  selectedTable.style.borderCollapse = "collapse";
-
-  // Create selected table header
-  var selectedTableHeader = document.createElement("thead");
-  var selectedTableHeaderRow = document.createElement("tr");
-  var selectedTableIDHeader = document.createElement("th");
-  selectedTableIDHeader.textContent = "ID";
-  selectedTableIDHeader.style.borderBottom = "1px solid #ccc";
-  selectedTableIDHeader.style.padding = "8px";
-  selectedTableHeaderRow.appendChild(selectedTableIDHeader);
-  var selectedTableDescriptionHeader = document.createElement("th");
-  selectedTableDescriptionHeader.textContent = "Description";
-  selectedTableDescriptionHeader.style.borderBottom = "1px solid #ccc";
-  selectedTableDescriptionHeader.style.padding = "8px";
-  selectedTableHeaderRow.appendChild(selectedTableDescriptionHeader);
-  selectedTableHeader.appendChild(selectedTableHeaderRow);
-  selectedTable.appendChild(selectedTableHeader);
-
-  // Create selected table body
-  var selectedTableBody = document.createElement("tbody");
-  selectedTable.appendChild(selectedTableBody);
-
-  // Check if diagramData is defined
-  if (typeof this.editorUi.editor.graph.model.diagramData !== "undefined") {
-    // Reference to the Map
-    var diagramData = this.editorUi.editor.graph.model.diagramData;
-
-    // Iterate over the Map and create table rows
-    diagramData.forEach(function (value, property) {
-      var tr = document.createElement("tr");
-
-      // Create ID cell
-      var tdID = document.createElement("td");
-      var idText = value.Id || "";
-      if (idText.length > 6) {
-        var truncatedId = idText.substring(0, 6) + "...";
-        tdID.textContent = truncatedId;
-        tdID.title = idText;
-      } else {
-        tdID.textContent = idText;
-      }
-      tdID.style.borderBottom = "1px solid #ccc";
-      tdID.style.padding = "8px";
-      tr.appendChild(tdID);
-
-      // Create Description cell
-      var tdDescription = document.createElement("td");
-      var descriptionText = value.Description || "";
-      if (descriptionText.length > 6) {
-        var truncatedText = descriptionText.substring(0, 6) + "...";
-        tdDescription.textContent = truncatedText;
-        tdDescription.title = descriptionText;
-      } else {
-        tdDescription.textContent = descriptionText;
-      }
-      tdDescription.style.borderBottom = "1px solid #ccc";
-      tdDescription.style.padding = "8px";
-      tr.appendChild(tdDescription);
-
-      // Create Selected cell
-      var tdSelected = document.createElement("td");
-      tdSelected.style.borderBottom = "1px solid #ccc";
-      tdSelected.style.padding = "8px";
-      var checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-
-      checkbox.addEventListener("change", function () {
-        var selected = checkbox.checked;
-        value.Selected = selected; // Set the "Selected" property in the data object
-
-        // Update selected table
-        if (selected) {
-          var trSelected = document.createElement("tr");
-          var tdSelectedID = document.createElement("td");
-          tdSelectedID.textContent = idText || "";
-          tdSelectedID.style.borderBottom = "1px solid #ccc";
-          tdSelectedID.style.padding = "8px";
-          trSelected.appendChild(tdSelectedID);
-          var tdSelectedDescription = document.createElement("td");
-          tdSelectedDescription.textContent = descriptionText || "";
-          tdSelectedDescription.style.borderBottom = "1px solid #ccc";
-          tdSelectedDescription.style.padding = "8px";
-          trSelected.appendChild(tdSelectedDescription);
-          selectedTableBody.appendChild(trSelected);
-        } else {
-          // Remove from selected table
-          var rows = selectedTableBody.getElementsByTagName("tr");
-          for (var i = 0; i < rows.length; i++) {
-            var row = rows[i];
-            if (
-              row.cells[0].textContent === idText &&
-              row.cells[1].textContent === descriptionText
-            ) {
-              row.parentNode.removeChild(row);
-              break;
-            }
-          }
-        }
-      });
-
-      tdSelected.appendChild(checkbox);
-      tr.appendChild(tdSelected);
-
-      tbody.appendChild(tr);
+  sentSection.appendChild(document.createElement("br"));
+  if (cell && cell.technicalAsset) {
+    inputElement.value = cell.technicalAsset.DataAssetsStored;
+  } // Append it to body (or any other container)
+  sentSection.appendChild(inputElement);
+  let tinput = document.querySelector('input[name="input-custom-dropdown"]'),
+    // init Tagify script on the above inputs
+    tagify = new Tagify(inputElement, {
+      whitelist: idsData,
+      dropdown: {
+        maxItems: 20, // <- mixumum allowed rendered suggestions
+        classname: "tags-look", // <- custom classname for this dropdown, so it could be targeted
+        enabled: 0, // <- show suggestions on focus
+        closeOnSelect: false, // <- do not hide the suggestions dropdown once an item has been selected
+      },
     });
-  }
+  container.appendChild(sentSection);
+  let inputElement2 = document.createElement("input");
 
-  selectedDataSection.appendChild(selectedTable);
-  container.appendChild(selectedDataSection);
-  dataSection.appendChild(table);
-  container.appendChild(dataSection);
+  let receivedSecion = createSection("Data Stored:");
+
+  receivedSecion.appendChild(document.createElement("br"));
+  if (cell && cell.technicalAsset) {
+    inputElement2.value = cell.technicalAsset.DataAssetsProcessed;
+  } // Append it to body (or any other container)
+  receivedSecion.appendChild(inputElement2);
+  let tinput2 = document.querySelector('input[name="input-custom-dropdown"]'),
+    // init Tagify script on the above inputs
+    tagify2 = new Tagify(inputElement2, {
+      whitelist: idsData,
+      dropdown: {
+        maxItems: 20, // <- mixumum allowed rendered suggestions
+        classname: "tags-look", // <- custom classname for this dropdown, so it could be targeted
+        enabled: 0, // <- show suggestions on focus
+        closeOnSelect: false, // <- do not hide the suggestions dropdown once an item has been selected
+      },
+    });
+  container.appendChild(receivedSecion);
 
   return container;
 };

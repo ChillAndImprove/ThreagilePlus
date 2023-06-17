@@ -7,6 +7,16 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<link rel="stylesheet" type="text/css" href="styles/grapheditor.css">
 	<link rel="stylesheet" type="text/css" href="styles/tagify.css">
+	<script type="text/javascript">
+	    window.addEventListener('load', function() {
+		var logo = document.getElementById('logo');
+	//	logo.classList.remove('image-fade-out-transition');
+	    });
+	</script>
+
+	<style type="text/css">
+	</style>
+
 	<style type="text/css">
 	.pipeFlowAnimation {
 	  stroke-dasharray: 8;
@@ -19,6 +29,36 @@
 	  }
 	}
 	</style>
+	<style type="text/css">
+    .image-fade-out-transition {
+        opacity: 1;
+        transition: opacity 2s ease-out;
+    }
+</style>
+<script type="text/javascript">
+    window.addEventListener('load', function() {
+        var logo = document.getElementById('logo_tiger');
+        setTimeout(function() {
+            logo.style.transition = 'opacity 2s ease-out';
+            logo.style.opacity = '0'; 
+            
+            setTimeout(function() {
+                logo.style.display = 'none';
+            }, 2000);  
+        }, 1000);  
+    });
+</script>
+<style type="text/css">
+    #logo_tiger {
+        position: relative; 
+	justify-content: center;
+	margin: 0 auto;
+	height: auto;
+        z-index: 999;
+        width: 600px; 
+	 display: flex;
+    }
+</style>
 
 	<script src="wasm_exec.js"></script>
 	<script src="dotparser.js"></script>
@@ -77,6 +117,7 @@
 	<script type="text/javascript" src="js/Dialogs.js"></script>
 </head>
 <body class="geEditor">
+	<img src="images/logo.png" id="logo_tiger" class="image-fade-out-transition">
 	<script type="text/javascript">
 		// Extends EditorUi to update I/O action states based on availability of backend
 		(function()

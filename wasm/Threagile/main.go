@@ -115,9 +115,6 @@ var diagramDPI, serverPort *int
 var deferredRiskTrackingDueToWildcardMatching = make(map[string]model.RiskTracking)
 
 func applyRiskGeneration() {
-	if *verbose {
-		fmt.Println("Applying risk generation")
-	}
 	skippedRules := make(map[string]interface{})
 	if len(*skipRiskRules) > 0 {
 		for _, id := range strings.Split(*skipRiskRules, ",") {
@@ -628,11 +625,9 @@ func applyRiskGeneration() {
 	}
 }
 
-func checkRiskTracking() {
-	if *verbose {
-		fmt.Println("Checking risk tracking")
-	}
+func checkRiskTracking(this js.Value, inputs []js.Value) interface{} {
 	for _, tracking := range model.ParsedModelRoot.RiskTracking {
+		fmt.Println(tracking);
 		if _, ok := model.GeneratedRisksBySyntheticId[tracking.SyntheticRiskId]; !ok {
 			if *ignoreOrphanedRiskTracking {
 				fmt.Println("Risk tracking references unknown risk (risk id not found): " + tracking.SyntheticRiskId)
@@ -657,6 +652,7 @@ func checkRiskTracking() {
 			model.GeneratedRisksByCategory[category][i].RiskStatus = model.GeneratedRisksByCategory[category][i].GetRiskTrackingStatusDefaultingUnchecked()
 		}
 	}
+	return nil;
 }
 
 // === Error handling stuff ========================================
@@ -679,6 +675,7 @@ func main() {
 	js.Global().Set("printDataFlowDiagramGraphvizDOT", js.FuncOf(printDataFlowDiagramGraphvizDOT))
 	js.Global().Set("applyRAAJS", js.FuncOf(applyRAAJS))
 	js.Global().Set("endWASM", js.FuncOf(endWASM))
+	js.Global().Set("checkRiskTracking", js.FuncOf(checkRiskTracking))
 
 	done = make(chan bool)
 	<-done
@@ -6047,9 +6044,6 @@ func removePathElementsFromImageFiles(overview model.Overview) model.Overview {
 }
 
 func applyWildcardRiskTrackingEvaluation() {
-	if *verbose {
-		fmt.Println("Executing risk tracking evaluation")
-	}
 	for syntheticRiskIdPattern, riskTracking := range deferredRiskTrackingDueToWildcardMatching {
 		foundSome := false
 		var matchingRiskIdExpression = regexp.MustCompile(strings.ReplaceAll(regexp.QuoteMeta(syntheticRiskIdPattern), `\*`, `[^@]+`))
