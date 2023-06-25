@@ -1,3 +1,20 @@
+#uniqueToggleButton {
+  padding: 10px 20px;
+  background-color: lightgray;
+  color: black;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  outline: none;
+}
+
+#uniqueToggleButton.toggleOnState {
+  background-color: lightgreen;
+}
+
+#uniqueToggleButton.toggleOffState {
+  background-color: lightcoral;
+}
 .geEditor {
 	font-family:Helvetica,Arial,sans-serif;
 	font-size:14px;

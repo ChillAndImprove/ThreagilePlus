@@ -101,6 +101,7 @@ var globalLock sync.Mutex
 var successCount, errorCount = 0, 0
 
 var modelInput model.ModelInput
+var modelInputJS model.ModelInputJS
 
 var drawSpaceLinesForLayoutUnfortunatelyFurtherSeparatesAllRanks = true
 
@@ -113,6 +114,518 @@ var customRiskRules map[string]model.CustomRiskRule
 var diagramDPI, serverPort *int
 
 var deferredRiskTrackingDueToWildcardMatching = make(map[string]model.RiskTracking)
+
+func applyRiskGenerationJS(this js.Value, inputs []js.Value) interface{} {
+	skippedRules := make(map[string]interface{})
+	if _, ok := skippedRules[unencrypted_asset.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", unencrypted_asset.Category().Id)
+		delete(skippedRules, unencrypted_asset.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(unencrypted_asset.SupportedTags())
+		risks := unencrypted_asset.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[unencrypted_asset.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[unencrypted_communication.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", unencrypted_communication.Category().Id)
+		delete(skippedRules, unencrypted_communication.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(unencrypted_communication.SupportedTags())
+		risks := unencrypted_communication.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[unencrypted_communication.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[unguarded_direct_datastore_access.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", unguarded_direct_datastore_access.Category().Id)
+		delete(skippedRules, unguarded_direct_datastore_access.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(unguarded_direct_datastore_access.SupportedTags())
+		risks := unguarded_direct_datastore_access.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[unguarded_direct_datastore_access.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[unguarded_access_from_internet.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", unguarded_access_from_internet.Category().Id)
+		delete(skippedRules, unguarded_access_from_internet.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(unguarded_access_from_internet.SupportedTags())
+		risks := unguarded_access_from_internet.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[unguarded_access_from_internet.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[dos_risky_access_across_trust_boundary.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", dos_risky_access_across_trust_boundary.Category().Id)
+		delete(skippedRules, dos_risky_access_across_trust_boundary.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(dos_risky_access_across_trust_boundary.SupportedTags())
+		risks := dos_risky_access_across_trust_boundary.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[dos_risky_access_across_trust_boundary.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_network_segmentation.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_network_segmentation.Category().Id)
+		delete(skippedRules, missing_network_segmentation.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_network_segmentation.SupportedTags())
+		risks := missing_network_segmentation.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_network_segmentation.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[mixed_targets_on_shared_runtime.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", mixed_targets_on_shared_runtime.Category().Id)
+		delete(skippedRules, mixed_targets_on_shared_runtime.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(mixed_targets_on_shared_runtime.SupportedTags())
+		risks := mixed_targets_on_shared_runtime.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[mixed_targets_on_shared_runtime.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_identity_propagation.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_identity_propagation.Category().Id)
+		delete(skippedRules, missing_identity_propagation.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_identity_propagation.SupportedTags())
+		risks := missing_identity_propagation.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_identity_propagation.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_identity_store.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_identity_store.Category().Id)
+		delete(skippedRules, missing_identity_store.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_identity_store.SupportedTags())
+		risks := missing_identity_store.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_identity_store.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_authentication.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_authentication.Category().Id)
+		delete(skippedRules, missing_authentication.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_authentication.SupportedTags())
+		risks := missing_authentication.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_authentication.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_authentication_second_factor.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_authentication_second_factor.Category().Id)
+		delete(skippedRules, missing_authentication_second_factor.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_authentication_second_factor.SupportedTags())
+		risks := missing_authentication_second_factor.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_authentication_second_factor.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[unnecessary_data_transfer.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", unnecessary_data_transfer.Category().Id)
+		delete(skippedRules, unnecessary_data_transfer.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(unnecessary_data_transfer.SupportedTags())
+		risks := unnecessary_data_transfer.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[unnecessary_data_transfer.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[unnecessary_communication_link.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", unnecessary_communication_link.Category().Id)
+		delete(skippedRules, unnecessary_communication_link.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(unnecessary_communication_link.SupportedTags())
+		risks := unnecessary_communication_link.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[unnecessary_communication_link.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[unnecessary_technical_asset.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", unnecessary_technical_asset.Category().Id)
+		delete(skippedRules, unnecessary_technical_asset.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(unnecessary_technical_asset.SupportedTags())
+		risks := unnecessary_technical_asset.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[unnecessary_technical_asset.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[unnecessary_data_asset.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", unnecessary_data_asset.Category().Id)
+		delete(skippedRules, unnecessary_data_asset.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(unnecessary_data_asset.SupportedTags())
+		risks := unnecessary_data_asset.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[unnecessary_data_asset.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[sql_nosql_injection.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", sql_nosql_injection.Category().Id)
+		delete(skippedRules, sql_nosql_injection.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(sql_nosql_injection.SupportedTags())
+		risks := sql_nosql_injection.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[sql_nosql_injection.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[ldap_injection.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", ldap_injection.Category().Id)
+		delete(skippedRules, ldap_injection.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(ldap_injection.SupportedTags())
+		risks := ldap_injection.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[ldap_injection.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[cross_site_scripting.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", cross_site_scripting.Category().Id)
+		delete(skippedRules, cross_site_scripting.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(cross_site_scripting.SupportedTags())
+		risks := cross_site_scripting.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[cross_site_scripting.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[cross_site_request_forgery.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", cross_site_request_forgery.Category().Id)
+		delete(skippedRules, cross_site_request_forgery.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(cross_site_request_forgery.SupportedTags())
+		risks := cross_site_request_forgery.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[cross_site_request_forgery.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[server_side_request_forgery.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", server_side_request_forgery.Category().Id)
+		delete(skippedRules, server_side_request_forgery.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(server_side_request_forgery.SupportedTags())
+		risks := server_side_request_forgery.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[server_side_request_forgery.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[path_traversal.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", path_traversal.Category().Id)
+		delete(skippedRules, path_traversal.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(path_traversal.SupportedTags())
+		risks := path_traversal.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[path_traversal.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[push_instead_of_pull_deployment.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", push_instead_of_pull_deployment.Category().Id)
+		delete(skippedRules, push_instead_of_pull_deployment.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(push_instead_of_pull_deployment.SupportedTags())
+		risks := push_instead_of_pull_deployment.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[push_instead_of_pull_deployment.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[search_query_injection.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", search_query_injection.Category().Id)
+		delete(skippedRules, search_query_injection.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(search_query_injection.SupportedTags())
+		risks := search_query_injection.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[search_query_injection.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[service_registry_poisoning.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", service_registry_poisoning.Category().Id)
+		delete(skippedRules, service_registry_poisoning.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(service_registry_poisoning.SupportedTags())
+		risks := service_registry_poisoning.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[service_registry_poisoning.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[untrusted_deserialization.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", untrusted_deserialization.Category().Id)
+		delete(skippedRules, untrusted_deserialization.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(untrusted_deserialization.SupportedTags())
+		risks := untrusted_deserialization.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[untrusted_deserialization.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[xml_external_entity.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", xml_external_entity.Category().Id)
+		delete(skippedRules, xml_external_entity.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(xml_external_entity.SupportedTags())
+		risks := xml_external_entity.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[xml_external_entity.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_cloud_hardening.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_cloud_hardening.Category().Id)
+		delete(skippedRules, missing_cloud_hardening.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_cloud_hardening.SupportedTags())
+		risks := missing_cloud_hardening.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_cloud_hardening.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_file_validation.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_file_validation.Category().Id)
+		delete(skippedRules, missing_file_validation.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_file_validation.SupportedTags())
+		risks := missing_file_validation.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_file_validation.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_hardening.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_hardening.Category().Id)
+		delete(skippedRules, missing_hardening.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_hardening.SupportedTags())
+		risks := missing_hardening.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_hardening.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[accidental_secret_leak.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", accidental_secret_leak.Category().Id)
+		delete(skippedRules, accidental_secret_leak.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(accidental_secret_leak.SupportedTags())
+		risks := accidental_secret_leak.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[accidental_secret_leak.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[code_backdooring.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", code_backdooring.Category().Id)
+		delete(skippedRules, code_backdooring.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(code_backdooring.SupportedTags())
+		risks := code_backdooring.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[code_backdooring.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[container_baseimage_backdooring.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", container_baseimage_backdooring.Category().Id)
+		delete(skippedRules, container_baseimage_backdooring.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(container_baseimage_backdooring.SupportedTags())
+		risks := container_baseimage_backdooring.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[container_baseimage_backdooring.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[container_platform_escape.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", container_platform_escape.Category().Id)
+		delete(skippedRules, container_platform_escape.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(container_platform_escape.SupportedTags())
+		risks := container_platform_escape.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[container_platform_escape.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[incomplete_model.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", incomplete_model.Category().Id)
+		delete(skippedRules, incomplete_model.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(incomplete_model.SupportedTags())
+		risks := incomplete_model.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[incomplete_model.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[unchecked_deployment.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", unchecked_deployment.Category().Id)
+		delete(skippedRules, unchecked_deployment.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(unchecked_deployment.SupportedTags())
+		risks := unchecked_deployment.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[unchecked_deployment.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_build_infrastructure.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_build_infrastructure.Category().Id)
+		delete(skippedRules, missing_build_infrastructure.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_build_infrastructure.SupportedTags())
+		risks := missing_build_infrastructure.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_build_infrastructure.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_identity_provider_isolation.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_identity_provider_isolation.Category().Id)
+		delete(skippedRules, missing_identity_provider_isolation.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_identity_provider_isolation.SupportedTags())
+		risks := missing_identity_provider_isolation.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_identity_provider_isolation.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_vault.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_vault.Category().Id)
+		delete(skippedRules, missing_vault.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_vault.SupportedTags())
+		risks := missing_vault.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_vault.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_vault_isolation.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_vault_isolation.Category().Id)
+		delete(skippedRules, missing_vault_isolation.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_vault_isolation.SupportedTags())
+		risks := missing_vault_isolation.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_vault_isolation.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[missing_waf.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", missing_waf.Category().Id)
+		delete(skippedRules, missing_waf.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(missing_waf.SupportedTags())
+		risks := missing_waf.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[missing_waf.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[wrong_communication_link_content.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", wrong_communication_link_content.Category().Id)
+		delete(skippedRules, wrong_communication_link_content.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(wrong_communication_link_content.SupportedTags())
+		risks := wrong_communication_link_content.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[wrong_communication_link_content.Category()] = risks
+		}
+	}
+
+	if _, ok := skippedRules[wrong_trust_boundary_content.Category().Id]; ok {
+		fmt.Println("Skipping risk rule:", wrong_trust_boundary_content.Category().Id)
+		delete(skippedRules, wrong_trust_boundary_content.Category().Id)
+	} else {
+		model.AddToListOfSupportedTags(wrong_trust_boundary_content.SupportedTags())
+		risks := wrong_trust_boundary_content.GenerateRisks()
+		if len(risks) > 0 {
+			model.GeneratedRisksByCategory[wrong_trust_boundary_content.Category()] = risks
+		}
+	}
+
+	// NOW THE CUSTOM RISK RULES (if any)
+	for id, customRule := range customRiskRules {
+		if _, ok := skippedRules[customRule.Category().Id]; ok {
+			if *verbose {
+				fmt.Println("Skipping custom risk rule:", id)
+			}
+			delete(skippedRules, id)
+		} else {
+			if *verbose {
+				fmt.Println("Executing custom risk rule:", id)
+			}
+			model.AddToListOfSupportedTags(customRule.SupportedTags())
+			risks := customRule.GenerateRisks()
+			if len(risks) > 0 {
+				model.GeneratedRisksByCategory[customRule.Category()] = risks
+			}
+			if *verbose {
+				fmt.Println("Added custom risks:", len(risks))
+			}
+		}
+	}
+
+	if len(skippedRules) > 0 {
+		keys := make([]string, 0)
+		for k := range skippedRules {
+			keys = append(keys, k)
+		}
+		if len(keys) > 0 {
+			log.Println("Unknown risk rules to skip:", keys)
+		}
+	}
+
+	// save also in map keyed by synthetic risk-id
+	for _, category := range model.SortedRiskCategories() {
+		risks := model.SortedRisksOfCategory(category)
+		for _, risk := range risks {
+			model.GeneratedRisksBySyntheticId[strings.ToLower(risk.SyntheticId)] = risk
+		}
+	}
+	jsonBytes, err := json.Marshal(model.AllRisks())
+	if err != nil {
+		return err
+	}
+	jsonString := string(jsonBytes)
+
+	return jsonString
+}
 
 func applyRiskGeneration() {
 	skippedRules := make(map[string]interface{})
@@ -627,7 +1140,7 @@ func applyRiskGeneration() {
 
 func checkRiskTracking(this js.Value, inputs []js.Value) interface{} {
 	for _, tracking := range model.ParsedModelRoot.RiskTracking {
-		fmt.Println(tracking);
+		fmt.Println(tracking)
 		if _, ok := model.GeneratedRisksBySyntheticId[tracking.SyntheticRiskId]; !ok {
 			if *ignoreOrphanedRiskTracking {
 				fmt.Println("Risk tracking references unknown risk (risk id not found): " + tracking.SyntheticRiskId)
@@ -652,7 +1165,7 @@ func checkRiskTracking(this js.Value, inputs []js.Value) interface{} {
 			model.GeneratedRisksByCategory[category][i].RiskStatus = model.GeneratedRisksByCategory[category][i].GetRiskTrackingStatusDefaultingUnchecked()
 		}
 	}
-	return nil;
+	return nil
 }
 
 // === Error handling stuff ========================================
@@ -670,12 +1183,14 @@ func endWASM(this js.Value, inputs []js.Value) interface{} {
 var done chan bool
 
 func main() {
+	model.Init()
 	js.Global().Set("parseModelViaString", js.FuncOf(parseModelViaString))
 	js.Global().Set("printGraphvizDOT", js.FuncOf(printGraphvizDOT))
 	js.Global().Set("printDataFlowDiagramGraphvizDOT", js.FuncOf(printDataFlowDiagramGraphvizDOT))
 	js.Global().Set("applyRAAJS", js.FuncOf(applyRAAJS))
 	js.Global().Set("endWASM", js.FuncOf(endWASM))
 	js.Global().Set("checkRiskTracking", js.FuncOf(checkRiskTracking))
+	js.Global().Set("applyRiskGenerationJS", js.FuncOf(applyRiskGenerationJS))
 
 	done = make(chan bool)
 	<-done
@@ -1215,6 +1730,7 @@ func printBorder(length int, bold bool) {
 	}
 	fmt.Println()
 }
+
 func applyRAAJS(this js.Value, inputs []js.Value) interface{} {
 	// determine plugin to load
 	// load plugin: open the ".so" file to load the symbols
@@ -4978,6 +5494,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 			checkTechnicalAssetExists(commLink.TargetId, "communication link '"+commLink.Title+"' of technical asset '"+technicalAsset.Title+"'", false)
 		}
 	}
+	CalculateRAA()
 	jsonBytes, err := json.Marshal(model.ParsedModelRoot)
 	if err != nil {
 		return err

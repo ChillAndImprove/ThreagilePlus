@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/threagile/threagile/colors"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/threagile/threagile/colors"
 )
 
 const ThreagileVersion = "1.0.0" // Also update into example and stub model files and openapi.yaml
@@ -70,6 +71,32 @@ func MakeID(val string) string {
 }
 
 // === Model Type Stuff ======================================
+type ModelInputJS struct { // TODO: Eventually remove this and directly use ParsedModelRoot? But then the error messages for model errors are not quite as good anymore...
+	Threagile_version                                  string
+	Title                                              string
+	Author                                             Author
+	Date                                               string
+	Business_overview                                  Overview
+	Technical_overview                                 Overview
+	Business_criticality                               int
+	Management_summary_comment                         string
+	Questions                                          map[string]string
+	Abuse_cases                                        map[string]string
+	Security_requirements                              map[string]string
+	Tags_available                                     []string
+	Data_assets                                        map[string]InputDataAssetJS
+	Technical_assets                                   map[string]InputTechnicalAssetJS
+	Trust_boundaries                                   map[string]InputTrustBoundaryJS
+	Shared_runtimes                                    map[string]InputSharedRuntime
+	Individual_risk_categories                         map[string]InputIndividualRiskCategory
+	Risk_tracking                                      map[string]InputRiskTracking
+	Diagram_tweak_nodesep, Diagram_tweak_ranksep       int
+	Diagram_tweak_edge_layout                          string
+	Diagram_tweak_suppress_edge_labels                 bool
+	Diagram_tweak_layout_left_to_right                 bool
+	Diagram_tweak_invisible_connections_between_assets []string
+	Diagram_tweak_same_rank_assets                     []string
+}
 
 type ModelInput struct { // TODO: Eventually remove this and directly use ParsedModelRoot? But then the error messages for model errors are not quite as good anymore...
 	Threagile_version                                  string
@@ -97,6 +124,19 @@ type ModelInput struct { // TODO: Eventually remove this and directly use Parsed
 	Diagram_tweak_invisible_connections_between_assets []string
 	Diagram_tweak_same_rank_assets                     []string
 }
+type InputDataAssetJS struct {
+	ID                       string   `json:"id"`
+	Description              string   `json:"description"`
+	Usage                    int      `json:"usage"`
+	Tags                     []string `json:"tags"`
+	Origin                   string   `json:"origin"`
+	Owner                    string   `json:"owner"`
+	Quantity                 int      `json:"quantity"`
+	Confidentiality          int      `json:"confidentiality"`
+	Integrity                int      `json:"integrity"`
+	Availability             int      `json:"availability"`
+	Justification_cia_rating string   `json:"justification_cia_rating"`
+}
 
 type InputDataAsset struct {
 	ID                       string   `json:"id"`
@@ -110,6 +150,35 @@ type InputDataAsset struct {
 	Integrity                string   `json:"integrity"`
 	Availability             string   `json:"availability"`
 	Justification_cia_rating string   `json:"justification_cia_rating"`
+}
+
+type InputTechnicalAssetJS struct {
+	ID                         string                            `json:"id"`
+	Description                string                            `json:"description"`
+	Type                       int                               `json:"type"`
+	Usage                      int                               `json:"usage"`
+	Used_as_client_by_human    bool                              `json:"used_as_client_by_human"`
+	Out_of_scope               bool                              `json:"out_of_scope"`
+	Justification_out_of_scope string                            `json:"justification_out_of_scope"`
+	Size                       string                            `json:"size"`
+	Technology                 int                               `json:"technology"`
+	Tags                       []string                          `json:"tags"`
+	Internet                   bool                              `json:"internet"`
+	Machine                    int                               `json:"machine"`
+	Encryption                 string                            `json:"encryption"`
+	Owner                      string                            `json:"owner"`
+	Confidentiality            int                               `json:"confidentiality"`
+	Integrity                  int                               `json:"integrity"`
+	Availability               int                               `json:"availability"`
+	Justification_cia_rating   string                            `json:"justification_cia_rating"`
+	Multi_tenant               bool                              `json:"multi_tenant"`
+	Redundant                  bool                              `json:"redundant"`
+	Custom_developed_parts     bool                              `json:"custom_developed_parts"`
+	Data_assets_processed      []string                          `json:"data_assets_processed"`
+	Data_assets_stored         []string                          `json:"data_assets_stored"`
+	Data_formats_accepted      []string                          `json:"data_formats_accepted"`
+	Diagram_tweak_order        int                               `json:"diagram_tweak_order"`
+	Communication_links        map[string]InputCommunicationLink `json:"communication_links"`
 }
 
 type InputTechnicalAsset struct {
@@ -163,6 +232,14 @@ type InputSharedRuntime struct {
 	Description              string   `json:"description"`
 	Tags                     []string `json:"tags"`
 	Technical_assets_running []string `json:"technical_assets_running"`
+}
+type InputTrustBoundaryJS struct {
+	ID                      string   `json:"id"`
+	Description             string   `json:"description"`
+	Type                    int      `json:"type"`
+	Tags                    []string `json:"tags"`
+	Technical_assets_inside []string `json:"technical_assets_inside"`
+	Trust_boundaries_nested []string `json:"trust_boundaries_nested"`
 }
 
 type InputTrustBoundary struct {

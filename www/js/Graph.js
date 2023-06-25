@@ -1815,7 +1815,6 @@ Graph.prototype.init = function (container) {
   // Intercepts links with no target attribute and opens in new window
   this.cellRenderer.initializeLabel = function (state, shape) {
     mxCellRenderer.prototype.initializeLabel.apply(this, arguments);
-
     // Checks tolerance for clicks on links
     var tol = state.view.graph.tolerance;
     var handleClick = true;

@@ -46,7 +46,7 @@
 			
 			return false;
 		}
-		else
+       else
 		{
 			if (/(\.xml)$/i.test(form.upfile.value) || /(\.txt)$/i.test(form.upfile.value) ||
 				/(\.mxe)$/i.test(form.upfile.value))
@@ -197,11 +197,11 @@
 </script>
 <body onload="main();">
 <form method="POST" enctype="multipart/form-data" action="" name="openForm"
-	id="openForm" onsubmit="return handleSubmit();" accept-charset="UTF-8">
+	id="openForm" onsubmit="return handleSubmit();" accept-charset="UTF-8"  >
 <table style="width:100%;">
 <tr>
 <td style="height:40px;vertical-align:top;" colspan="2">
-<input type="file" name="upfile" onchange="fileChanged()">
+<input type="file" name="upfile" onchange="fileChanged()" accept=".xml, .yaml, .svg">
 </td>
 </tr>
 <tr>
@@ -213,7 +213,7 @@
 </td>
 <td style="vertical-align:middle;text-align:right;white-space:nowrap;">
 <input type="button" id="cancelButton" class="geBtn" value="Cancel" onclick="hideWindow(true);">
-<input type="submit" id="openButton" class="geBtn gePrimaryBtn" value="Open" disabled="disabled">
+<input type="submit" id="openButton" class="geBtn gePrimaryBtn" value="Open" disabled="disabled" >
 </td>
 </tr>
 </table>

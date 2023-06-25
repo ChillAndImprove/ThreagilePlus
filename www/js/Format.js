@@ -4,6 +4,127 @@
 Format = function (editorUi, container) {
   this.editorUi = editorUi;
   this.container = container;
+  let data = `threagile_version: 1.0.0
+# NOTE:
+#
+# For a perfect editing experience within your IDE of choice you can easily
+# get model syntax validation and autocompletion (very handy for enum values)
+# as well as live templates: Just import the schema.json into your IDE and assign
+# it as "schema" to each Threagile YAML file. Also try to import individual parts
+# from the live-templates.txt file into your IDE as live editing templates.
+#
+# You might also want to try the REST API when running in server mode...
+
+
+
+title: Some Example Application
+
+date: 2020-07-01
+
+author:
+  name: John Doe
+  homepage: www.example.com
+
+
+
+
+management_summary_comment: >
+  Just some <b>more</b> custom summary possible here...
+
+business_criticality: important # values: archive, operational, important, critical, mission-critical
+
+
+
+
+business_overview:
+  description: Some more <i>demo text</i> here and even images...
+  images:
+#    - custom-image-1.png: Some dummy image 1
+#    - custom-image-2.png: Some dummy image 2
+
+
+technical_overview:
+  description: Some more <i>demo text</i> here and even images...
+  images:
+#    - custom-image-1.png: Some dummy image 1
+#    - custom-image-2.png: Some dummy image 2
+
+
+
+questions: # simply use "" as answer to signal "unanswered"
+  How are the admin clients managed/protected against compromise?: ""
+  How are the development clients managed/protected against compromise?: >
+    Managed by XYZ
+  How are the build pipeline components managed/protected against compromise?: >
+    Managed by XYZ
+
+
+
+abuse_cases:
+  Denial-of-Service: >
+    As a hacker I want to disturb the functionality of the backend system in order to cause indirect
+    financial damage via unusable features.
+  CPU-Cycle Theft: >
+    As a hacker I want to steal CPU cycles in order to transform them into money via installed crypto currency miners.
+  Ransomware: >
+    As a hacker I want to encrypt the storage and file systems in order to demand ransom.
+  Identity Theft: >
+    As a hacker I want to steal identity data in order to reuse credentials and/or keys on other targets of the same company or outside.
+  PII Theft: >
+    As a hacker I want to steal PII (Personally Identifiable Information) data in order to blackmail the company and/or damage
+    their repudiation by publishing them.
+
+  ERP-System Compromise: >
+    As a hacker I want to access the ERP-System in order to steal/modify sensitive business data.
+  Database Compromise: >
+    As a hacker I want to access the database backend of the ERP-System in order to steal/modify sensitive
+    business data.
+  Contract Filesystem Compromise: >
+    As a hacker I want to access the filesystem storing the contract PDFs in order to steal/modify contract data.
+  Cross-Site Scripting Attacks: >
+    As a hacker I want to execute Cross-Site Scripting (XSS) and similar attacks in order to takeover victim sessions and
+    cause reputational damage.
+  Denial-of-Service of Enduser Functionality: >
+    As a hacker I want to disturb the functionality of the enduser parts of the application in order to cause direct financial
+    damage (lower sales).
+  Denial-of-Service of ERP/DB Functionality: >
+    As a hacker I want to disturb the functionality of the ERP system and/or it's database in order to cause indirect
+    financial damage via unusable internal ERP features (not related to customer portal).
+
+
+security_requirements:
+  Input Validation: Strict input validation is required to reduce the overall attack surface.
+  Securing Administrative Access: Administrative access must be secured with strong encryption and multi-factor authentication.
+  EU-DSGVO: Mandatory EU-Datenschutzgrundverordnung
+
+
+# Tags can be used for anything, it's just a tag. Also risk rules can act based on tags if you like.
+# Tags can be used for example to name the products used (which is more concrete than the technology types that only specify the type)
+tags_available:
+
+data_assets:
+
+technical_assets:
+
+trust_boundaries:
+
+
+#diagram_tweak_edge_layout: spline # values: spline, polyline, false, ortho (this suppresses edge labels), curved (this suppresses edge labels and can cause problems with edges)
+
+#diagram_tweak_suppress_edge_labels: true
+#diagram_tweak_layout_left_to_right: true
+#diagram_tweak_nodesep: 2
+#diagram_tweak_ranksep: 2
+#diagram_tweak_invisible_connections_between_assets:
+#  - tech-asset-source-id-A:tech-asset-target-id-B
+#  - tech-asset-source-id-C:tech-asset-target-id-D
+#diagram_tweak_same_rank_assets:
+#  - tech-asset-source-id-E:tech-asset-target-id-F:tech-asset-source-id-G:tech-asset-target-id-H
+#  - tech-asset-source-id-M:tech-asset-target-id-N:tech-asset-source-id-O
+`;
+  let jsonObj2 = new YAWN(data);
+  editorUi.editor.graph.model.threagile = jsonObj2;
+  console.log("How often?");
 };
 
 /**
@@ -412,7 +533,13 @@ Format.prototype.clear = function () {
 
   this.panels = [];
 };
-
+function isTrustBoundaries(cell) {
+  return (
+    cell.style.includes("rounded=0") ||
+    cell.style.includes("rounded=1") ||
+    cell.style.includes("shape=rectangle")
+  );
+}
 /**
  * Adds the label menu items to the given menu and parent.
  */
@@ -590,9 +717,7 @@ Format.prototype.refresh = function () {
   } else if (
     cell != null &&
     graph.getSelectionCell().isVertex() &&
-    (graph.getSelectionCell().style.includes("rounded=0") ||
-      graph.getSelectionCell().style.includes("rounded=1") ||
-      graph.getSelectionCell().style.includes("shape=rectangle"))
+    isTrustBoundaries(graph.getSelectionCell())
   ) {
     label.style.backgroundColor = this.inactiveTabBackgroundColor;
     label.style.borderLeftWidth = "1px";
@@ -735,11 +860,12 @@ Format.prototype.refresh = function () {
     // Text
     mxUtils.write(label2, "Inspection");
     div.appendChild(label2);
+    //
 
     var textPanel = div.cloneNode(false);
     textPanel.style.display = "none";
     this.container.appendChild(textPanel);
-
+    this.panels.push(new InspectionFormatPanel(this, ui, textPanel));
     // Arrange
     mxUtils.write(label3, mxResources.get("arrange"));
     div.appendChild(label3);
@@ -7854,51 +7980,7 @@ DiagramStylePanel.prototype.addView = function (div) {
 
   return div;
 };
-/*
-function addDataItemToList(container, list) {
-  //container.appendChild(items);
-  var listItem = document.createElement("li");
-  listItem.textContent = ["Data1:"];
-  listItem.style.display = "flex";
-  listItem.style.alignItems = "center";
-  listItem.style.padding = "8px";
-  listItem.style.borderBottom = "1px solid #ccc";
 
-  // "X" Button erstellen
-  var xButton = document.createElement("button");
-  xButton.innerHTML =
-    '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEV7mr3///+wksspAAAAAnRSTlP/AOW3MEoAAAAdSURBVAgdY9jXwCDDwNDRwHCwgeExmASygSL7GgB12QiqNHZZIwAAAABJRU5ErkJggg==" alt="X">';
-
-  xButton.style.marginLeft = "auto";
-  xButton.style.padding = "5px";
-  xButton.style.backgroundColor = "transparent";
-  xButton.style.border = "none";
-  xButton.style.cursor = "pointer";
-
-  // Listenelement zum "X" Button hinzufügen
-  listItem.appendChild(xButton);
-
-  // Listenelement zur Liste hinzufügen
-  listItem.appendChild(xButton);
-  list.appendChild(listItem);
-
-  // Hinzufügen des Event Listeners für das Klicken auf das Listenelement
-  listItem.addEventListener("click", function () {
-    // Überprüfe, ob die enthaltenen Elemente bereits versteckt sind
-    var isHidden = listItem.style.backgroundColor === "lightgray";
-    console.log("hier");
-    if (isHidden) {
-      // Wenn die enthaltenen Elemente bereits versteckt sind, zeige sie an
-      listItem.style.backgroundColor = "";
-      xButton.style.display = "inline-block";
-    } else {
-      // Wenn die enthaltenen Elemente nicht versteckt sind, verstecke sie
-      listItem.style.backgroundColor = "lightgray";
-      xButton.style.display = "none";
-    }
-  });
-}
-*/
 /**
  * Adds the label menu items to the given menu and parent.
  */
@@ -7960,11 +8042,11 @@ DiagramFormatPanel.prototype.init = function () {
   }
 
   if (
-    typeof graph.model.diagramData !== "undefined" &&
-    typeof this.editorUi.editor.graph.model.diagramData.DataAssets !==
+    typeof graph.model.threagile !== null &&
+    typeof this.editorUi.editor.graph.model.threagile.data_assets !==
       "undefined"
   ) {
-    graph.model.diagramData.DataAssets.forEach(
+    graph.model.threagile.data_assets.forEach(
       function (value, property) {
         var clonedMenu = this.addDataMenu(this.createPanel());
         clonedMenu.id = property;
@@ -8015,7 +8097,7 @@ DiagramFormatPanel.prototype.init = function () {
         textContainer.insertBefore(arrowIcon, dataText);
 
         var dataText = document.createElement("div");
-        dataText.textContent = value.Id;
+        dataText.textContent = value.id;
 
         var xButton = document.createElement("button");
         xButton.innerHTML =
@@ -8030,12 +8112,12 @@ DiagramFormatPanel.prototype.init = function () {
           var parentList = parentListItem.parentNode;
           parentList.removeChild(parentListItem);
 
-          var menuId = graph.model.diagramData.delete(clonedMenu.id);
+          var menuId = graph.model.threagile.delete(clonedMenu.id);
         });
 
         textContainer.appendChild(dataText);
         textContainer.appendChild(xButton);
-        let current = graph.model.diagramData.DataAssets.get(clonedMenu.id);
+        let current = graph.model.threagile.data_assets.get(clonedMenu.id);
         if (current["visible"] === undefined) {
           current["visible"] = true;
         }
@@ -8215,7 +8297,6 @@ DiagramFormatPanel.prototype.addView = function (div) {
       btn.style.height = "22px";
       btn.style.right = mxClient.IS_QUIRKS ? "52px" : "72px";
       btn.style.width = "56px";
-
       bg.appendChild(btn);
     }
 
@@ -8660,9 +8741,1013 @@ BoundaryFormatPanel = function (format, editorUi, container) {
   BaseFormatPanel.call(this, format, editorUi, container);
   this.init();
 };
+InspectionFormatPanel = function (format, editorUi, container) {
+  BaseFormatPanel.call(this, format, editorUi, container);
+  this.init();
+};
+mxUtils.extend(InspectionFormatPanel, BaseFormatPanel);
 
+InspectionFormatPanel.prototype.init = function () {
+  var ui = this.editorUi;
+  let self = this;
+  var editor = ui.editor;
+  var graph = editor.graph;
+  var ss = this.format.getSelectionState();
+  const go = new Go();
+  let yaml = "";
+  let cellsBegin =
+    self.editorUi && self.editorUi.editor && self.editorUi.editor.graph
+      ? self.editorUi.editor.graph.getSelectionCells()
+      : null;
+  let cellBegin = cellsBegin && cellsBegin.length > 0 ? cellsBegin[0] : null;
+  let technicalAssetId =
+    cellBegin && cellBegin.technicalAsset && cellBegin.technicalAsset.id
+      ? cellBegin.technicalAsset.id
+      : null;
+
+  WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then(
+    (result) => {
+      go.run(result.instance);
+      let exportYaml = exportToYaml(graph);
+      let jsonObj = JSON.parse(parseModelViaString(exportYaml));
+      applyRAAJS();
+      yaml = JSON.parse(applyRiskGenerationJS());
+
+      endWASM();
+      let span = document.createElement("span");
+      span.innerHTML = "<b>Relative Attacker Attractivness:</b> ";
+      this.container.appendChild(span);
+      let listContainer = document.createElement("div");
+      listContainer.style.maxWidth = "400px";
+      listContainer.style.margin = "0 auto";
+
+      var list = document.createElement("ul");
+      list.style.listStyleType = "none";
+      list.style.padding = "0";
+
+      var items = [];
+
+      for (let i = 0; i < items.length; i++) {
+        listItem.textContent = items[i];
+        listItem.style.display = "flex";
+        listItem.style.alignItems = "center";
+        listItem.style.padding = "8px";
+        listItem.style.borderBottom = "1px solid #ccc";
+
+        let xButton = document.createElement("button");
+        xButton.innerHTML =
+          '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEV7mr3///+wksspAAAAAnRSTlP/AOW3MEoAAAAdSURBVAgdY9jXwCDDwNDRwHCwgeExmASygSL7GgB12QiqNHZZIwAAAABJRU5ErkJggg==" alt="X">';
+        xButton.style.marginLeft = "auto";
+        xButton.style.padding = "5px";
+        xButton.style.backgroundColor = "transparent";
+        xButton.style.border = "none";
+        xButton.style.cursor = "pointer";
+
+        listItem.appendChild(xButton);
+
+        list.appendChild(listItem);
+      }
+      if (
+        yaml != "" &&
+        technicalAssetId != "" &&
+        technicalAssetId !== undefined
+      ) {
+        let filteredArray = [];
+        // Gauge
+        let gaugeElement = document.createElement("div");
+        gaugeElement.id = "gaugeElement";
+        gaugeElement.style.width = "234px";
+        gaugeElement.style.height = "130px";
+
+        this.container.appendChild(gaugeElement);
+        let gauge = new JustGage({
+          id: "gaugeElement",
+          value: jsonObj.TechnicalAssets[technicalAssetId].RAA,
+          min: 0,
+          max: 100,
+          decimals: 2,
+          gaugeWidthScale: 0.6,
+        });
+        for (var i = 0; i < yaml.length; i++) {
+          let obj = yaml[i];
+          if (obj.synthetic_id.includes(technicalAssetId)) {
+            filteredArray.push(obj);
+          }
+        }
+        for (let jsonData in filteredArray) {
+          let value = filteredArray[jsonData];
+
+          let regex = /<b>(.*?)<\/b>/i;
+          let match = regex.exec(filteredArray[jsonData].title);
+          let property = "";
+          if (match && match[1]) {
+            property = match[1];
+          }
+          let clonedMenu = this.addInspectionMenu(
+            this.createPanel(),
+            filteredArray[jsonData]
+          );
+          clonedMenu.id = property;
+          let listItem = document.createElement("li");
+          listItem.style.display = "flex";
+          listItem.style.flexDirection = "column";
+          listItem.style.padding = "8px";
+          listItem.style.borderBottom = "1px solid #ccc";
+          let parentNode = clonedMenu.childNodes[0];
+          for (var key in value) {
+            if (value.hasOwnProperty(key)) {
+              var childNode = value[key];
+
+              for (var i = 0; i < parentNode.childNodes.length; i++) {
+                var currentChildNode = parentNode.childNodes[i];
+
+                if (
+                  currentChildNode.nodeType === Node.ELEMENT_NODE &&
+                  currentChildNode.children.length > 0 &&
+                  currentChildNode.children[0].textContent === key
+                ) {
+                  if (
+                    currentChildNode.children.length > 1 &&
+                    currentChildNode.childNodes.length > 0
+                  ) {
+                    let nextChildNode =
+                      currentChildNode.children[1].children[0];
+
+                    if (nextChildNode.nodeName === "SELECT") {
+                      nextChildNode.selectedIndex = childNode;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          let textContainer = document.createElement("div");
+          textContainer.style.display = "flex";
+          textContainer.style.alignItems = "center";
+          textContainer.style.marginBottom = "8px";
+          let arrowIcon = document.createElement("img");
+          arrowIcon.src =
+            " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
+          arrowIcon.style.width = "15px";
+          arrowIcon.style.height = "15px";
+          arrowIcon.style.marginRight = "5px";
+          let dataText = document.createElement("div");
+          dataText.textContent = property;
+
+          arrowIcon.style.transform = "rotate(270deg)";
+          textContainer.appendChild(arrowIcon);
+          textContainer.appendChild(dataText);
+
+          textContainer.appendChild(dataText);
+          let current = false;
+          if (current["visible"] === undefined) {
+            current["visible"] = true;
+          }
+          let state = current["visible"];
+          if (state) {
+            listItem.style.backgroundColor = "";
+            arrowIcon.style.transform = "rotate(270deg)";
+            clonedMenu.style.display = "block";
+          } else {
+            listItem.style.backgroundColor = "lightgray";
+            arrowIcon.style.transform = "rotate(90deg)";
+            clonedMenu.style.display = "none";
+          }
+
+          listItem.appendChild(textContainer);
+          listItem.appendChild(clonedMenu);
+          function toggleContent() {
+            let state = current["visible"];
+            current["visible"] = !current["visible"];
+            if (!state) {
+              listItem.style.backgroundColor = "";
+              arrowIcon.style.transform = "rotate(270deg)";
+              clonedMenu.style.display = "block";
+            } else {
+              listItem.style.backgroundColor = "lightgray";
+              arrowIcon.style.transform = "rotate(90deg)";
+              clonedMenu.style.display = "none";
+            }
+          }
+          arrowIcon.addEventListener("click", toggleContent);
+          dataText.addEventListener("click", toggleContent);
+
+          list.appendChild(listItem);
+        }
+      }
+
+      let generalHeader = document.createElement("div");
+      generalHeader.innerHTML = "Risks:";
+      generalHeader.style.padding = "10px 0px 6px 0px";
+      generalHeader.style.whiteSpace = "nowrap";
+      generalHeader.style.overflow = "hidden";
+      generalHeader.style.width = "200px";
+      generalHeader.style.fontWeight = "bold";
+      this.container.appendChild(generalHeader);
+
+      listContainer.appendChild(list);
+      this.container.appendChild(listContainer);
+
+      let listContainer2 = document.createElement("div");
+      listContainer2.style.maxWidth = "400px";
+      listContainer2.style.margin = "0 auto";
+
+      let list2 = document.createElement("ul");
+      list2.style.listStyleType = "none";
+      list2.style.padding = "0";
+
+      let riskTracking = document.createElement("div");
+      riskTracking.innerHTML = "RisksTracking:";
+      riskTracking.style.padding = "10px 0px 6px 0px";
+      riskTracking.style.whiteSpace = "nowrap";
+      riskTracking.style.overflow = "hidden";
+      riskTracking.style.width = "200px";
+      riskTracking.style.fontWeight = "bold";
+      this.container.appendChild(riskTracking);
+
+      listContainer2.appendChild(list2);
+      this.container.appendChild(listContainer2);
+
+      if (yaml != "") {
+        let cellsBegin = self.editorUi.editor.graph.getSelectionCells();
+        let cellBegin =
+          cellsBegin && cellsBegin.length > 0 ? cellsBegin[0] : null;
+
+        let technicalAssetId = cellBegin.technicalAsset["id"];
+        let filteredArray = [];
+
+        for (var i = 0; i < yaml.length; i++) {
+          let obj = yaml[i];
+          if (obj.synthetic_id.includes(technicalAssetId)) {
+            filteredArray.push(obj);
+          }
+        }
+        for (let jsonData in filteredArray) {
+          let value = filteredArray[jsonData];
+
+          let regex = /<b>(.*?)<\/b>/i;
+          let match = regex.exec(filteredArray[jsonData].title);
+          let property = "";
+          if (match && match[1]) {
+            property = match[1];
+          }
+          let clonedMenu = this.addInspectionMenu2(
+            this.createPanel(),
+            filteredArray[jsonData]
+          );
+          clonedMenu.id = property;
+          let listItem = document.createElement("li");
+          listItem.style.display = "flex";
+          listItem.style.flexDirection = "column";
+          listItem.style.padding = "8px";
+          listItem.style.borderBottom = "1px solid #ccc";
+          let parentNode = clonedMenu.childNodes[0];
+          for (var key in value) {
+            if (value.hasOwnProperty(key)) {
+              var childNode = value[key];
+
+              for (var i = 0; i < parentNode.childNodes.length; i++) {
+                var currentChildNode = parentNode.childNodes[i];
+
+                if (
+                  currentChildNode.nodeType === Node.ELEMENT_NODE &&
+                  currentChildNode.children.length > 0 &&
+                  currentChildNode.children[0].textContent === key
+                ) {
+                  if (
+                    currentChildNode.children.length > 1 &&
+                    currentChildNode.childNodes.length > 0
+                  ) {
+                    let nextChildNode =
+                      currentChildNode.children[1].children[0];
+
+                    if (nextChildNode.nodeName === "SELECT") {
+                      nextChildNode.selectedIndex = childNode;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          let textContainer = document.createElement("div");
+          textContainer.style.display = "flex";
+          textContainer.style.alignItems = "center";
+          textContainer.style.marginBottom = "8px";
+          let arrowIcon = document.createElement("img");
+          arrowIcon.src =
+            " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
+          arrowIcon.style.width = "15px";
+          arrowIcon.style.height = "15px";
+          arrowIcon.style.marginRight = "5px";
+          let dataText = document.createElement("div");
+          dataText.textContent = property;
+
+          arrowIcon.style.transform = "rotate(270deg)";
+          textContainer.appendChild(arrowIcon);
+          textContainer.appendChild(dataText);
+
+          textContainer.appendChild(dataText);
+          let current = false;
+          if (current["visible"] === undefined) {
+            current["visible"] = true;
+          }
+          let state = current["visible"];
+          if (state) {
+            listItem.style.backgroundColor = "";
+            arrowIcon.style.transform = "rotate(270deg)";
+            clonedMenu.style.display = "block";
+          } else {
+            listItem.style.backgroundColor = "lightgray";
+            arrowIcon.style.transform = "rotate(90deg)";
+            clonedMenu.style.display = "none";
+          }
+
+          listItem.appendChild(textContainer);
+          listItem.appendChild(clonedMenu);
+          function toggleContent() {
+            let state = current["visible"];
+            current["visible"] = !current["visible"];
+            if (!state) {
+              listItem.style.backgroundColor = "";
+              arrowIcon.style.transform = "rotate(270deg)";
+              clonedMenu.style.display = "block";
+            } else {
+              listItem.style.backgroundColor = "lightgray";
+              arrowIcon.style.transform = "rotate(90deg)";
+              clonedMenu.style.display = "none";
+            }
+          }
+          arrowIcon.addEventListener("click", toggleContent);
+          dataText.addEventListener("click", toggleContent);
+
+          list2.appendChild(listItem);
+        }
+      }
+    }
+  );
+};
+InspectionFormatPanel.prototype.addInspectionFormatMenuDynamic = function (
+  container,
+  graph,
+  yaml
+) {
+  var self = this;
+  let jsonContainer = document.createElement("div");
+  let cellsBegin = self.editorUi.editor.graph.getSelectionCells();
+  let cellBegin = cellsBegin && cellsBegin.length > 0 ? cellsBegin[0] : null;
+
+  let technicalAssetId = cellBegin.technicalAsset["id"];
+  var filteredArray = [];
+
+  for (var i = 0; i < yaml.length; i++) {
+    var obj = yaml[i];
+    if (obj.synthetic_id.includes(technicalAssetId)) {
+      filteredArray.push(obj);
+    }
+  }
+  for (let jsonData in filteredArray) {
+    for (let key in filteredArray[jsonData]) {
+      let value = filteredArray[jsonData][key];
+
+      let propertyName = document.createElement("span");
+      propertyName.innerHTML = key;
+      propertyName.style.width = "100px";
+      propertyName.style.marginRight = "10px";
+
+      let propertyValue = document.createElement("span");
+      propertyValue.innerHTML = value;
+
+      jsonContainer.appendChild(propertyName);
+      jsonContainer.appendChild(propertyValue);
+      jsonContainer.appendChild(document.createElement("br"));
+    }
+    container.appendChild(jsonContainer);
+  }
+
+  // Add line break
+  // Add Properties section
+  var propertiesSection = createSection("Properties");
+  container.appendChild(propertiesSection);
+
+  var typeProperties = {
+    id: {
+      description: "ID",
+      type: "button",
+      tooltip: "The unique identifier for the element",
+      defaultValue: "E.g. Element1",
+    },
+    description: {
+      description: "Description",
+      type: "button",
+      tooltip: "Provide a brief description of the element",
+      defaultValue: "E.g. This element is responsible for...",
+    },
+    usage: {
+      description: "Usage",
+      type: "select",
+      options: ["business", "devops"],
+      tooltip:
+        "Indicates whether the element is used for business or devops purposes",
+      defaultValue: "business",
+    },
+    tags: {
+      description: "Tags",
+      type: "array",
+      uniqueItems: true,
+      items: {
+        type: "button",
+      },
+      tooltip: "Provide tags to help categorize the element",
+      defaultValue: "E.g. Tag1",
+    },
+    origin: {
+      description: "Origin",
+      type: "button",
+      tooltip: "Specifies the origin of the element",
+      defaultValue: "E.g. Internal Development",
+    },
+    owner: {
+      description: "Owner",
+      type: "button",
+      tooltip: "Specifies the owner of the element",
+      defaultValue: "E.g. Marketing Team",
+    },
+    quantity: {
+      description: "Quantity",
+      type: "select",
+      options: ["very-few", "few", "many", "very-many"],
+      tooltip: "Specifies the quantity of the element",
+      defaultValue: "few",
+    },
+    confidentiality: {
+      description: "Confidentiality",
+      type: "select",
+      options: [
+        "public",
+        "internal",
+        "restricted",
+        "confidential",
+        "strictly-confidential",
+      ],
+      tooltip: "Specifies the level of confidentiality of the element",
+      defaultValue: "internal",
+    },
+    integrity: {
+      description: "Integrity",
+      type: "select",
+      options: [
+        "archive",
+        "operational",
+        "important",
+        "critical",
+        "mission-critical",
+      ],
+      tooltip: "Specifies the level of integrity of the element",
+      defaultValue: "operational",
+    },
+    availability: {
+      description: "Availability",
+      type: "select",
+      options: [
+        "archive",
+        "operational",
+        "important",
+        "critical",
+        "mission-critical",
+      ],
+      tooltip: "Specifies the level of availability of the element",
+      defaultValue: "operational",
+    },
+    justification_cia_rating: {
+      description: "Justification of the rating",
+      type: "button",
+      tooltip:
+        "Justify the confidentiality, integrity, and availability rating",
+      defaultValue: "E.g. This rating is due to...",
+    },
+  };
+  var customListener = {
+    install: function (apply) {
+      this.listener = function () {};
+    },
+    destroy: function () {},
+  };
+
+  var self = this;
+
+  var typePropertiesMap = {};
+  for (let property in typeProperties) {
+    var typeItem = document.createElement("li");
+    typeItem.style.display = "flex";
+    typeItem.style.alignItems = "baseline";
+    typeItem.style.marginBottom = "8px";
+
+    var propertyName = document.createElement("span");
+    propertyName.innerHTML = property;
+    propertyName.style.width = "100px";
+    propertyName.style.marginRight = "10px";
+
+    var propertyType = typeProperties[property].type;
+
+    if (propertyType === "select") {
+      const propertySelect = property;
+      typeItem.appendChild(propertyName);
+      var selectContainer = document.createElement("div");
+      selectContainer.style.display = "flex";
+      selectContainer.style.alignItems = "center";
+      selectContainer.style.marginLeft = "auto";
+
+      var selectDropdown = document.createElement("select");
+      selectDropdown.style.width = "100px";
+      selectDropdown.title = typeProperties[property].tooltip;
+      selectContainer.appendChild(selectDropdown);
+
+      var options = typeProperties[property].options;
+      for (var i = 0; i < options.length; i++) {
+        var option = document.createElement("option");
+        option.value = options[i];
+        option.text = options[i];
+        selectDropdown.appendChild(option);
+      }
+
+      var createChangeListener = function (selectDropdown, property) {
+        var self = this.editorUi;
+        return function (evt) {
+          var menuId =
+            evt.target.parentNode.parentNode.parentNode.parentNode.id;
+          var newValue = selectDropdown.value;
+          currentValue = newValue;
+
+          let current = self.editor.graph.model.threagile.get(menuId);
+          if (!current[property]) {
+            current[property] = "";
+          }
+          if (newValue != null) {
+            current[property] = newValue;
+          }
+        };
+      }.bind(this);
+
+      mxEvent.addListener(
+        selectDropdown,
+        "change",
+        createChangeListener(selectDropdown, property)
+      );
+
+      typeItem.appendChild(selectContainer);
+    } else if (propertyType === "checkbox") {
+      let optionElement = this.createOption(
+        property,
+        createCustomOption(self, property),
+        setCustomOption(self, property),
+        customListener
+      );
+      optionElement.querySelector('input[type="checkbox"]').title =
+        typeProperties[property].tooltip;
+      container.appendChild(optionElement);
+    } else if (propertyType === "button") {
+      let functionName =
+        "editData" + property.charAt(0).toUpperCase() + property.slice(1);
+      let button = mxUtils.button(
+        property,
+        mxUtils.bind(this, function (evt) {
+          var menuId = evt.target.parentNode.parentNode.parentNode.id;
+          current =
+            this.editorUi.editor.graph.model.threagile.data_assets.get(menuId);
+
+          if (!current[property]) {
+            current[property] = typeProperties[property].defaultValue;
+          }
+
+          var dataValue = current[property];
+
+          var dlg = new TextareaDialog(
+            this.editorUi,
+            property + ":",
+            dataValue,
+            function (newValue) {
+              if (newValue != null) {
+                current[property] = newValue;
+              }
+            },
+            null,
+            null,
+            400,
+            220
+          );
+          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
+
+          dlg.init();
+        })
+      );
+      button.title = typeProperties[property].tooltip;
+      button.style.width = "200px";
+      typeItem.appendChild(button);
+    }
+    propertiesSection.appendChild(typeItem);
+  }
+  // Create a new input element
+  let inputElement = document.createElement("input");
+  inputElement.placeholder = "Enter your tags and press Enter";
+  // Append it to body (or any other container)
+  propertiesSection.appendChild(inputElement);
+  var tagify = new Tagify(inputElement);
+  //
+
+  return container;
+};
 mxUtils.extend(BoundaryFormatPanel, BaseFormatPanel);
+InspectionFormatPanel.prototype.addInspectionMenu2 = function (
+  container,
+  value
+) {
+  let self = this;
 
+  var propertiesSection = createSection("risk_identified:");
+  container.appendChild(propertiesSection);
+
+  let typeProperties = {
+    status: {
+      description: "Status",
+      type: "select",
+      options: [
+        "unchecked",
+        "in-discussion",
+        "accepted",
+        "in-progress",
+        "mitigated",
+        "false-positive",
+      ],
+      tooltip:
+        "The status indicates the current stage of processing for the risk.",
+      defaultValue: "unchecked",
+    },
+    justification: {
+      description: "Justification",
+      type: "button",
+      defaultValue: "",
+      tooltip:
+        "The justification describes why the risk is considered relevant or explains the reasoning behind specific actions taken.",
+    },
+    ticket: {
+      description: "Ticket",
+      type: "button",
+      defaultValue: "",
+      tooltip:
+        "The ticket refers to the associated issue tracking system where additional details or activities related to the risk can be recorded.",
+    },
+    date: {
+      description: "Date",
+      type: "button",
+      format: "date",
+      defaultValue: "",
+      tooltip: "The date indicates when the risk was captured or last updated.",
+    },
+    checked_by: {
+      description: "Checked by",
+      type: "button",
+      defaultValue: "",
+      tooltip:
+        "The 'Checked by' field specifies the individual or team responsible for verifying the risk mitigation measures.",
+    },
+  };
+
+  var customListener = {
+    install: function (apply) {
+      this.listener = function () {};
+    },
+    destroy: function () {},
+  };
+
+  var typePropertiesMap = {};
+  for (let property in typeProperties) {
+    var typeItem = document.createElement("li");
+    typeItem.style.display = "flex";
+    typeItem.style.alignItems = "baseline";
+    typeItem.style.marginBottom = "8px";
+
+    var propertyName = document.createElement("span");
+    propertyName.innerHTML = property;
+    propertyName.style.width = "100px";
+    propertyName.style.marginRight = "10px";
+    propertyName.innerHTML = property.replace(
+      /exploitation_|data_breach_/g,
+      ""
+    );
+
+    var propertyType = typeProperties[property].type;
+
+    if (propertyType === "select") {
+      const propertySelect = property;
+      typeItem.appendChild(propertyName);
+
+      var selectContainer = document.createElement("div");
+      selectContainer.style.display = "flex";
+      selectContainer.style.alignItems = "center";
+      selectContainer.style.marginLeft = "auto";
+
+      var selectDropdown = document.createElement("select");
+      selectDropdown.style.width = "100px";
+      selectDropdown.title = typeProperties[property].tooltip;
+
+      var options = typeProperties[property].options;
+      for (var i = 0; i < options.length; i++) {
+        var option = document.createElement("option");
+        option.value = options[i];
+        option.text = options[i];
+        selectDropdown.appendChild(option);
+      }
+
+      selectContainer.appendChild(selectDropdown);
+
+      var createChangeListener = function (selectDropdown, property) {
+        var self = this.editorUi;
+        return function (evt) {
+          var menuId =
+            evt.target.parentNode.parentNode.parentNode.parentNode.id;
+          var newValue = selectDropdown.value;
+          currentValue = newValue;
+
+          let current = value;
+          if (!current[property]) {
+            current[property] = "";
+          }
+          if (newValue != null) {
+            current[property] = newValue;
+          }
+        };
+      }.bind(this);
+
+      mxEvent.addListener(
+        selectDropdown,
+        "change",
+        createChangeListener(selectDropdown, property)
+      );
+
+      typeItem.appendChild(selectContainer);
+    } else if (propertyType === "checkbox") {
+      let optionElement = this.createOption(
+        property,
+        createCustomOption(self, property),
+        setCustomOption(self, property),
+        customListener
+      );
+      optionElement.querySelector('input[type="checkbox"]').title =
+        typeProperties[property].tooltip;
+      container.appendChild(optionElement);
+    } else if (propertyType === "button") {
+      let functionName =
+        "editData" + property.charAt(0).toUpperCase() + property.slice(1);
+      let button = mxUtils.button(
+        property,
+        mxUtils.bind(this, function (evt) {
+          var menuId = evt.target.parentNode.parentNode.parentNode.id;
+          current = value;
+
+          if (!current[property]) {
+            current[property] = typeProperties[property].defaultValue;
+          }
+
+          var dataValue = current[property];
+
+          var dlg = new TextareaDialog(
+            this.editorUi,
+            property + ":",
+            dataValue,
+            function (newValue) {
+              if (newValue != null) {
+                current[property] = newValue;
+              }
+            },
+            null,
+            null,
+            400,
+            220
+          );
+          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
+
+          dlg.init();
+        })
+      );
+      button.title = typeProperties[property].tooltip;
+      button.style.width = "200px";
+      typeItem.appendChild(button);
+    }
+    propertiesSection.appendChild(typeItem);
+  }
+  return container;
+};
+InspectionFormatPanel.prototype.addInspectionMenu = function (
+  container,
+  value
+) {
+  let self = this;
+  var propertiesSection = createSection("risk_identified:");
+  container.appendChild(propertiesSection);
+
+  let typeProperties = {
+    severity: {
+      description: "Severity",
+      type: "select",
+      options: ["low", "medium", "elevated", "high", "critical"],
+      tooltip: "Specifies the severity level",
+      defaultValue: "low",
+    },
+    exploitation_likelihood: {
+      description: "Exploitation Likelihood",
+      type: "select",
+      options: ["unlikely", "likely", "very-likely", "frequent"],
+      tooltip: "Specifies the likelihood of exploitation",
+      defaultValue: "unlikely",
+    },
+    exploitation_impact: {
+      description: "Exploitation Impact",
+      type: "select",
+      options: ["low", "medium", "high", "very-high"],
+      tooltip: "Specifies the impact of exploitation",
+      defaultValue: "low",
+    },
+    data_breach_probability: {
+      description: "Data Breach Probability",
+      type: "select",
+      options: ["improbable", "possible", "probable"],
+      tooltip: "Specifies the probability of a data breach",
+      defaultValue: "improbable",
+    },
+    data_breach_technical_assets: {
+      description: "Data Breach Technical Assets",
+      type: "array",
+      uniqueItems: true,
+      items: {
+        type: "button",
+      },
+      tooltip: "List of technical asset IDs which might have data breach",
+      defaultValue: [],
+    },
+    most_relevant_data_asset: {
+      description: "Most Relevant Data Asset",
+      type: "button",
+      tooltip: "Specifies the most relevant data asset",
+      defaultValue: "",
+    },
+    most_relevant_technical_asset: {
+      description: "Most Relevant Technical Asset",
+      type: "button",
+      tooltip: "Specifies the most relevant technical asset",
+      defaultValue: "",
+    },
+    most_relevant_communication_link: {
+      description: "Most Relevant Communication Link",
+      type: "button",
+      tooltip: "Specifies the most relevant communication link",
+      defaultValue: "",
+    },
+    most_relevant_trust_boundary: {
+      description: "Most Relevant Trust Boundary",
+      type: "button",
+      tooltip: "Specifies the most relevant trust boundary",
+      defaultValue: "",
+    },
+    most_relevant_shared_runtime: {
+      description: "Most Relevant Shared Runtime",
+      type: "button",
+      tooltip: "Specifies the most relevant shared runtime",
+      defaultValue: "",
+    },
+  };
+  var customListener = {
+    install: function (apply) {
+      this.listener = function () {};
+    },
+    destroy: function () {},
+  };
+
+  var typePropertiesMap = {};
+  for (let property in typeProperties) {
+    var typeItem = document.createElement("li");
+    typeItem.style.display = "flex";
+    typeItem.style.alignItems = "baseline";
+    typeItem.style.marginBottom = "8px";
+
+    var propertyName = document.createElement("span");
+    propertyName.innerHTML = property;
+    propertyName.style.width = "100px";
+    propertyName.style.marginRight = "10px";
+    propertyName.innerHTML = property.replace(
+      /exploitation_|data_breach_/g,
+      ""
+    );
+
+    var propertyType = typeProperties[property].type;
+
+    if (propertyType === "select") {
+      const propertySelect = property;
+      typeItem.appendChild(propertyName);
+
+      var selectContainer = document.createElement("div");
+      selectContainer.style.display = "flex";
+      selectContainer.style.alignItems = "center";
+      selectContainer.style.marginLeft = "auto";
+
+      var selectDropdown = document.createElement("select");
+      selectDropdown.style.width = "100px";
+      selectDropdown.title = typeProperties[property].tooltip;
+
+      var options = typeProperties[property].options;
+      for (var i = 0; i < options.length; i++) {
+        var option = document.createElement("option");
+        option.value = options[i];
+        option.text = options[i];
+        selectDropdown.appendChild(option);
+      }
+
+      selectContainer.appendChild(selectDropdown);
+
+      var createChangeListener = function (selectDropdown, property) {
+        var self = this.editorUi;
+        return function (evt) {
+          var menuId =
+            evt.target.parentNode.parentNode.parentNode.parentNode.id;
+          var newValue = selectDropdown.value;
+          currentValue = newValue;
+
+          let current = value;
+          if (!current[property]) {
+            current[property] = "";
+          }
+          if (newValue != null) {
+            current[property] = newValue;
+          }
+        };
+      }.bind(this);
+
+      mxEvent.addListener(
+        selectDropdown,
+        "change",
+        createChangeListener(selectDropdown, property)
+      );
+
+      typeItem.appendChild(selectContainer);
+    } else if (propertyType === "checkbox") {
+      let optionElement = this.createOption(
+        property,
+        createCustomOption(self, property),
+        setCustomOption(self, property),
+        customListener
+      );
+      optionElement.querySelector('input[type="checkbox"]').title =
+        typeProperties[property].tooltip;
+      container.appendChild(optionElement);
+    } else if (propertyType === "button") {
+      let functionName =
+        "editData" + property.charAt(0).toUpperCase() + property.slice(1);
+      let button = mxUtils.button(
+        property,
+        mxUtils.bind(this, function (evt) {
+          var menuId = evt.target.parentNode.parentNode.parentNode.id;
+          current = value;
+
+          if (!current[property]) {
+            current[property] = typeProperties[property].defaultValue;
+          }
+
+          var dataValue = current[property];
+
+          var dlg = new TextareaDialog(
+            this.editorUi,
+            property + ":",
+            dataValue,
+            function (newValue) {
+              if (newValue != null) {
+                current[property] = newValue;
+              }
+            },
+            null,
+            null,
+            400,
+            220
+          );
+          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
+
+          dlg.init();
+        })
+      );
+      button.title = typeProperties[property].tooltip;
+      button.style.width = "200px";
+      typeItem.appendChild(button);
+    }
+    propertiesSection.appendChild(typeItem);
+  }
+  // Create a new input element
+  let inputElement = document.createElement("input");
+  inputElement.placeholder = "Enter your tags and press Enter";
+  // Append it to body (or any other container)
+  propertiesSection.appendChild(inputElement);
+  var tagify = new Tagify(inputElement);
+  //
+
+  return container;
+};
 BoundaryFormatPanel.prototype.init = function () {
   var ui = this.editorUi;
   var editor = ui.editor;
@@ -8679,34 +9764,35 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
 ) {
   var self = this;
   var typeProperties = {
-    Id: {
+    id: {
       description: "Id",
       type: "button",
       section: "General",
       tooltip: "All id attribute values must be unique ",
       defaultValue: "<Your ID>",
     },
-    Description: {
+    description: {
       description: "Description",
       type: "button",
       section: "General",
       tooltip: "Provide a brief description of the trust boundary. ",
       defaultValue: "",
     },
-    Title: {
+    title: {
       description: "Type",
       type: "button",
       section: "Properties",
       tooltip: "Your Title",
       defaultValue: "<Your Title>",
     },
-    Type: {
+    type: {
       description: "Type",
       type: "select",
       options: [
         {
           group: "Category 1",
           options: [
+            "network-on-prem",
             "network-dedicated-hoster",
             "network-virtual-lan",
             "network-cloud-provider",
@@ -8873,6 +9959,7 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
   for (let sectionName in sections) {
     container.appendChild(sections[sectionName]);
   }
+
   var cell = graph.getSelectionCell();
   if (cell.isVertex()) {
     var cellGeometry = cell.getGeometry();
@@ -9082,7 +10169,7 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       section: "Properties",
     },
     */
-    Id: {
+    id: {
       description: "Id",
       type: "button",
       section: "General",
@@ -9090,14 +10177,14 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       defaultValue: "<Your ID>",
     },
 
-    Description: {
+    description: {
       description: "Description",
       type: "button",
       tooltip: "Provide a brief description of the component.",
       defaultValue: "<Your Description>",
       section: "General",
     },
-    Protocol: {
+    protocol: {
       description: "Protocol",
       type: "select",
       options: [
@@ -9180,8 +10267,9 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
         },
       ],
       section: "Properties",
+      defaultValue: 0,
     },
-    Authentication: {
+    authentication: {
       description: "Authentication",
       type: "select",
       options: [
@@ -9201,8 +10289,9 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       ],
       tooltip: "Select the authentication method for the component.",
       section: "Properties",
+      defaultValue: 0,
     },
-    Authorization: {
+    authorization: {
       description: "Authorization",
       type: "select",
       options: [
@@ -9214,8 +10303,9 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       ],
       tooltip: "Select the authorization level for the component.",
       section: "Properties",
+      defaultValue: 0,
     },
-    Usage: {
+    usage: {
       description: "Usage",
       type: "select",
       options: [
@@ -9227,8 +10317,9 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       ],
       tooltip: "Select the usage type of the component.",
       section: "Properties",
+      defaultValue: 0,
     },
-    Tags: {
+    tags: {
       description: "Tags",
       type: "array",
       uniqueItems: true,
@@ -9239,21 +10330,21 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       defaultValue: [],
       section: "Properties",
     },
-    VPN: {
+    vpn: {
       description: "VPN",
       type: "checkbox",
       tooltip: "Check if the component is accessed over VPN.",
       defaultValue: false,
       section: "Properties",
     },
-    IpFiltered: {
+    ip_filtered: {
       description: "IP filtered",
       type: "checkbox",
       tooltip: "Check if the component is IP filtered.",
       defaultValue: false,
       section: "Properties",
     },
-    Readonly: {
+    readonly: {
       description: "Readonly",
       type: "checkbox",
       tooltip: "Check if the component is readonly.",
@@ -9261,6 +10352,24 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       section: "Properties",
     },
   };
+  {
+    let cell = self.editorUi.editor.graph.getSelectionCell();
+    for (let property in typeProperties) {
+      if (typeProperties.hasOwnProperty(property)) {
+        let propertyValue = typeProperties[property];
+
+        if (
+          !cell.communicationAsset ||
+          cell.communicationAsset[property] === undefined
+        ) {
+          if (propertyValue.hasOwnProperty("defaultValue")) {
+            cell.communicationAsset = cell.communicationAsset || {};
+            cell.communicationAsset[property] = propertyValue.defaultValue;
+          }
+        }
+      }
+    }
+  }
 
   var customListener = {
     install: function (apply) {
@@ -9421,16 +10530,18 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   for (let sectionName in sections) {
     container.appendChild(sections[sectionName]);
   }
-  if (typeof this.editorUi.editor.graph.model.diagramData === "undefined") {
-    this.editorUi.editor.graph.model.diagramData = new Map();
+  if (typeof this.editorUi.editor.graph.model.threagile === "undefined") {
+    this.editorUi.editor.graph.model.threagile = new Map();
   }
-  var diagramData = this.editorUi.editor.graph.model.diagramData.DataAssets;
+  var threagile = this.editorUi.editor.graph.model.threagile.data_assets;
 
   idsData = [];
   // Iterate over the Map and create table rows
-  diagramData.forEach(function (value, property) {
-    idsData.push(value.Id);
-  });
+  if (threagile !== undefined) {
+    threagile.forEach(function (value, property) {
+      idsData.push(value.id);
+    });
+  }
 
   let inputElement = document.createElement("input");
   inputElement.placeholder = "Data sent";
@@ -9440,8 +10551,12 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   let sentSection = createSection("Data Sent:");
 
   sentSection.appendChild(document.createElement("br"));
-  if (cell) {
-    inputElement.value = cell.communicationAsset.DataAssetsSent;
+  if (
+    cell &&
+    cell.communicationAsset &&
+    cell.communicationAsset.data_assets_sent
+  ) {
+    inputElement.value = cell.communicationAsset.data_assets_sent;
   } // Append it to body (or any other container)
   sentSection.appendChild(inputElement);
   let tinput = document.querySelector('input[name="input-custom-dropdown"]'),
@@ -9458,11 +10573,16 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   container.appendChild(sentSection);
   let inputElement2 = document.createElement("input");
 
+  inputElement2.placeholder = "Data received";
   let receivedSecion = createSection("Data Received:");
 
   receivedSecion.appendChild(document.createElement("br"));
-  if (cell) {
-    inputElement2.value = cell.communicationAsset.DataAssetsReceived;
+  if (
+    cell &&
+    cell.communcationAsset &&
+    cell.communicationAsset.data_assets_received
+  ) {
+    inputElement2.value = cell.communicationAsset.data_assets_received;
   } // Append it to body (or any other container)
   receivedSecion.appendChild(inputElement2);
   let tinput2 = document.querySelector('input[name="input-custom-dropdown"]'),
@@ -9999,6 +11119,7 @@ AssetFormatPanel.prototype.init = function () {
 
 function createSection(title) {
   var section = document.createElement("div");
+
   section.style.padding = "6px 0px 6px 0px";
   section.style.marginTop = "8px";
   section.style.borderTop = "1px solid rgb(192, 192, 192)";
@@ -10095,19 +11216,19 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
   container.appendChild(propertiesSection);
 
   var typeProperties = {
-    Id: {
+    id: {
       description: "ID",
       type: "button",
       tooltip: "The unique identifier for the element",
       defaultValue: "E.g. Element1",
     },
-    Description: {
+    description: {
       description: "Description",
       type: "button",
       tooltip: "Provide a brief description of the element",
       defaultValue: "E.g. This element is responsible for...",
     },
-    Usage: {
+    usage: {
       description: "Usage",
       type: "select",
       options: ["business", "devops"],
@@ -10115,7 +11236,7 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
         "Indicates whether the element is used for business or devops purposes",
       defaultValue: "business",
     },
-    Tags: {
+    tags: {
       description: "Tags",
       type: "array",
       uniqueItems: true,
@@ -10125,26 +11246,26 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
       tooltip: "Provide tags to help categorize the element",
       defaultValue: "E.g. Tag1",
     },
-    Origin: {
+    origin: {
       description: "Origin",
       type: "button",
       tooltip: "Specifies the origin of the element",
       defaultValue: "E.g. Internal Development",
     },
-    Owner: {
+    owner: {
       description: "Owner",
       type: "button",
       tooltip: "Specifies the owner of the element",
       defaultValue: "E.g. Marketing Team",
     },
-    Quantity: {
+    quantity: {
       description: "Quantity",
       type: "select",
       options: ["very-few", "few", "many", "very-many"],
       tooltip: "Specifies the quantity of the element",
       defaultValue: "few",
     },
-    Confidentiality: {
+    confidentiality: {
       description: "Confidentiality",
       type: "select",
       options: [
@@ -10157,7 +11278,7 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
       tooltip: "Specifies the level of confidentiality of the element",
       defaultValue: "internal",
     },
-    Integrity: {
+    integrity: {
       description: "Integrity",
       type: "select",
       options: [
@@ -10170,7 +11291,7 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
       tooltip: "Specifies the level of integrity of the element",
       defaultValue: "operational",
     },
-    Availability: {
+    availability: {
       description: "Availability",
       type: "select",
       options: [
@@ -10183,7 +11304,7 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
       tooltip: "Specifies the level of availability of the element",
       defaultValue: "operational",
     },
-    Justification_CIA_Rating: {
+    justification_cia_rating: {
       description: "Justification of the rating",
       type: "button",
       tooltip:
@@ -10243,7 +11364,7 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
           var newValue = selectDropdown.value;
           currentValue = newValue;
 
-          let current = self.editor.graph.model.diagramData.get(menuId);
+          let current = self.editor.graph.model.threagile.get(menuId);
           if (!current[property]) {
             current[property] = "";
           }
@@ -10278,7 +11399,7 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
         mxUtils.bind(this, function (evt) {
           var menuId = evt.target.parentNode.parentNode.parentNode.id;
           current =
-            this.editorUi.editor.graph.model.diagramData.DataAssets.get(menuId);
+            this.editorUi.editor.graph.model.threagile.data_assets.get(menuId);
 
           if (!current[property]) {
             current[property] = typeProperties[property].defaultValue;
@@ -10323,8 +11444,10 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
 };
 AssetFormatPanel.prototype.addThreagileMenu = function (container) {
   let self = this;
+
+  let main = document.createElement("div");
   var typeProperties = {
-    Description: {
+    description: {
       description: "Description",
       type: "button",
       section: "General",
@@ -10332,15 +11455,16 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       defaultValue:
         "<This technology asset is responsible for managing the secure transmission of data between client applications and the server infrastructure.>",
     },
-    Id: {
+    id: {
       description: "Id",
       type: "button",
       section: "General",
       tooltip: "All id attribute values must be unique ",
       defaultValue: "<Your ID>",
     },
-    Type: {
+    type: {
       description: "Type",
+      defaultValue: 0,
       type: "select",
       options: [
         {
@@ -10353,8 +11477,9 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "Select the 'Type' for your threat model component. 'external-entity' represents an outside actor or system, 'process' indicates an operational component, and 'datastore' refers to data storage within the system.",
     },
-    Technology: {
+    technology: {
       description: "Technologies",
+      defaultValue: 0,
       type: "select",
       defaultValue: "unknown-technology",
       options: [
@@ -10475,7 +11600,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "The 'Technologies' field allows you to classify your components based on the underlying technologies ",
     },
-    Size: {
+    size: {
       description: "Size",
       type: "select",
       defaultValue: "system",
@@ -10489,10 +11614,10 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "The 'Size' option classifies the component based on its scope in your system hierarchy - 'system' for a whole system, 'service' for an individual service, 'application' for a specific application, and 'component' for smaller, constituent parts.",
     },
-    Machine: {
+    machine: {
       description: "Machine",
       type: "select",
-      defaultValue: "physical",
+      defaultValue: 0,
       options: [
         {
           group: "Category 1",
@@ -10503,10 +11628,10 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "The 'Machine' option indicates the infrastructure type of your component - 'physical' for traditional hardware, 'virtual' for virtualized environments, 'container' for containerized applications, and 'serverless' for serverless architectures.",
     },
-    Encryption: {
+    encryption: {
       description: "Encryption",
       type: "select",
-      defaultValue: "none",
+      defaultValue: 0,
       options: [
         {
           group: "Category 1",
@@ -10522,7 +11647,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "The 'Encryption' option specifies the type of encryption used for your data - 'none' for no encryption, 'data-with-symmetric-shared-key' for symmetric encryption, 'data-with-asymmetric-shared-key' for asymmetric encryption, and 'data-with-enduser-individual-key' for encryption with unique keys per end user.",
     },
-    Owner: {
+    owner: {
       description: "Owner",
       type: "button",
       section: "Properties",
@@ -10530,7 +11655,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "The 'Owner' field designates the individual or the entity that has administrative authority or control over the component.",
     },
-    Internet: {
+    internet: {
       defaultValue: "false",
       description: "Internet",
       type: "checkbox",
@@ -10538,7 +11663,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "The 'Internet' field indicates whether the component is connected to the internet or not.",
     },
-    Confidentiality: {
+    confidentiality: {
       section: "CIA",
       description: "Confidentility",
       type: "select",
@@ -10554,11 +11679,11 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
           ],
         },
       ],
-      defaultValue: "public",
+      defaultValue: 0,
       tooltip:
         "Confidentiality: refers to the practice of keeping sensitive information private and secure from unauthorized access. This ensures that only authorized individuals can view the sensitive data.",
     },
-    Integrity: {
+    integrity: {
       section: "CIA",
       description: "Integritity",
       type: "select",
@@ -10574,11 +11699,11 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
           ],
         },
       ],
-      defaultValue: "archive",
+      defaultValue: 0,
       tooltip:
         "Integrity: refers to the assurance that the information is trustworthy and accurate. It ensures that the data has not been improperly modified, whether intentionally or accidentally, and remains consistent and accurate in its intended lifecycle.",
     },
-    Availability: {
+    availability: {
       section: "CIA",
       description: "Availiablity",
       type: "select",
@@ -10594,11 +11719,11 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
           ],
         },
       ],
-      defaultValue: "archive",
+      defaultValue: 0,
       tooltip:
         "Availability: refers to the guarantee that information and resources are accessible to authorized individuals when needed. This ensures that systems, applications, and data are always up and running, reducing downtime and providing reliable access to necessary information.",
     },
-    Usage: {
+    usage: {
       section: "Utilization",
       description: "Usage",
       type: "select",
@@ -10608,18 +11733,18 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
           options: ["business", "devops"],
         },
       ],
-      defaultValue: "business",
+      defaultValue: 0,
       tooltip: "Select the main usage category of this resource.",
     },
 
-    UsedAsClientByHuman: {
+    used_as_client_by_human: {
       defaultValue: "false",
       description: "Used as client by human",
       type: "checkbox",
       section: "Utilization",
       tooltip: "Check this if the resource is directly used by a human client.",
     },
-    MultiTenant: {
+    multi_tenant: {
       defaultValue: "false",
       description: "Multi tenant",
       type: "checkbox",
@@ -10627,7 +11752,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "Check this if the resource is designed to serve multiple users in a multi-tenant environment.",
     },
-    Redudant: {
+    redudant: {
       defaultValue: "false",
       description: "Redudant",
       type: "checkbox",
@@ -10635,7 +11760,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "Check this if the resource has redundancy features to prevent failure or data loss.",
     },
-    CustomDevelopedParts: {
+    custom_developed_parts: {
       defaultValue: "false",
       description: "Custom Developed parts",
       type: "checkbox",
@@ -10643,7 +11768,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "Check this if the resource includes parts that were custom developed.",
     },
-    OutOfScope: {
+    out_of_scope: {
       defaultValue: "false",
       description: "Out of Scope",
       type: "checkbox",
@@ -10651,7 +11776,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "Check this if the resource is out of the scope of your threat model analysis.",
     },
-    JustificationOutOfScope: {
+    justification_out_of_scope: {
       description: "Justification out of Scope",
       type: "button",
       section: "Utilization",
@@ -10668,7 +11793,24 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
     destroy: function () {},
   };
 
-  let sections = {};
+  {
+    let cell = self.editorUi.editor.graph.getSelectionCell();
+    for (let property in typeProperties) {
+      if (typeProperties.hasOwnProperty(property)) {
+        let propertyValue = typeProperties[property];
+
+        if (
+          !cell.technicalAsset ||
+          cell.technicalAsset[property] === undefined
+        ) {
+          if (propertyValue.hasOwnProperty("defaultValue")) {
+            cell.technicalAsset[property] = propertyValue.defaultValue;
+          }
+        }
+      }
+    }
+  }
+  sections = {};
   for (let property in typeProperties) {
     let sectionName = typeProperties[property].section;
     if (!sections[sectionName]) {
@@ -10772,7 +11914,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
             function (newValue) {
               if (newValue != null) {
                 if (cell) {
-                  if (property === "Id") {
+                  if (property === "id") {
                     var adjustedValue = newValue
                       .replace(/</g, "&lt;")
                       .replace(/>/g, "&gt;");
@@ -10813,65 +11955,88 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       sections[sectionName].appendChild(typeItem);
     }
   }
+  let selects = sections.CIA.querySelectorAll("select");
+  selects.forEach(function (select) {
+    switch (select.value) {
+      case "public":
+      case "archive":
+        select.style.backgroundColor = "#CCFFCC";
+        break;
+      case "internal":
+      case "operational":
+        select.style.backgroundColor = "#99FF99";
+        break;
+      case "restricted":
+      case "important":
+        select.style.backgroundColor = "#FFCCCC";
+        break;
+      case "confidential":
+      case "critical":
+        select.style.backgroundColor = "#FF9999";
+        break;
+      case "strictly-confidential":
+      case "mission-critical":
+        select.style.backgroundColor = "#FF6666";
+        break;
+      default:
+        select.style.backgroundColor = "";
+    }
+
+    select.addEventListener("change", function () {
+      switch (this.value) {
+        case "public":
+        case "archive":
+          this.style.backgroundColor = "#CCFFCC";
+          break;
+        case "internal":
+        case "operational":
+          this.style.backgroundColor = "#99FF99";
+          break;
+        case "restricted":
+        case "important":
+          this.style.backgroundColor = "#FFCCCC";
+          break;
+        case "confidential":
+        case "critical":
+          this.style.backgroundColor = "#FF9999";
+          break;
+        case "strictly-confidential":
+        case "mission-critical":
+          this.style.backgroundColor = "#FF6666";
+          break;
+        default:
+          this.style.backgroundColor = "";
+      }
+    });
+    let options = select.querySelectorAll("option");
+    options.forEach(function (option) {
+      switch (option.value) {
+        case "public":
+        case "archive":
+          option.style.backgroundColor = "#CCFFCC";
+          break;
+        case "internal":
+        case "operational":
+          option.style.backgroundColor = "#99FF99";
+          break;
+        case "restricted":
+        case "important":
+          option.style.backgroundColor = "#FFCCCC";
+          break;
+        case "confidential":
+        case "critical":
+          option.style.backgroundColor = "#FF9999";
+          break;
+        case "strictly-confidential":
+        case "mission-critical":
+          option.style.backgroundColor = "#FF6666";
+          break;
+      }
+    });
+  });
   for (let sectionName in sections) {
-    container.appendChild(sections[sectionName]);
+    main.appendChild(sections[sectionName]);
   }
-  // Add Listener for Out of Scope gray
-
-  /* Feat Gray Stuff out
-  // Missing       let originalStyle = JSON.parse(model.getValue(cell, "originalStyle"));
-  // If that value is not set, set it
-  {
-    function applyOutOfScopeStyle() {
-      let cells = self.editorUi.editor.graph.getSelectionCells();
-      let cell = cells && cells.length > 0 ? cells[0] : null;
-
-      let model = self.editorUi.editor.graph.model;
-      let style = graph.getCellStyle(cell);
-
-      model.setValue(cell, "originalStyle", JSON.stringify(style));
-
-      style["opacity"] = 50;
-      style["strokeColor"] = "#808080";
-      style["fillColor"] = "#C0C0C0";
-
-      graph.setCellStyle(style, [cell]);
-    }
-
-    function restoreOriginalStyle() {
-      let cells = self.editorUi.editor.graph.getSelectionCells();
-      let cell = cells && cells.length > 0 ? cells[0] : null;
-
-      let model = self.editorUi.editor.graph.model;
-      let originalStyle = JSON.parse(model.getValue(cell, "originalStyle"));
-
-      if (originalStyle) {
-        graph.setCellStyle(originalStyle, [cell]);
-
-        model.setValue(cell, "originalStyle", null);
-      }
-    }
-    let outOfScopeLabel = sections["Utilization"].querySelector(
-      `input[title="${typeProperties["Out_of_Scope"].tooltip}"]`
-    );
-    function handleOutOfScope() {
-      if (outOfScopeLabel.checked) {
-        applyOutOfScopeStyle();
-      } else {
-        restoreOriginalStyle();
-      }
-    }
-
-    if (outOfScopeLabel) {
-      mxEvent.addListener(outOfScopeLabel, "click", handleOutOfScope);
-      mxEvent.addListener(
-        outOfScopeLabel.nextSibling,
-        "click",
-        handleOutOfScope
-      );
-    }
-  }
-  */
   // Add Cell Value
   {
     let cells = self.editorUi.editor.graph.getSelectionCells();
@@ -10882,7 +12047,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       try {
         let newStyle = cell.getStyle() + "verticalAlign=top";
         cell.setStyle(newStyle);
-        model.setValue(cell, typeProperties["Id"].defaultValue);
+        model.setValue(cell, typeProperties["id"].defaultValue);
         self.editorUi.editor.graph.refresh(cell);
         self.editorUi.editor.graph.refresh();
       } finally {
@@ -10893,12 +12058,12 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
 
   idsData = [];
   // Iterate over the Map and create table rows
-  this.editorUi.editor.graph.model.diagramData.DataAssets.forEach(function (
-    value,
-    property
-  ) {
-    idsData.push(value.Id);
-  });
+  let threagile = this.editorUi.editor.graph.model.threagile;
+  if (threagile && threagile.data_assets) {
+    threagile.data_assets.forEach(function (value, property) {
+      idsData.push(value.id);
+    });
+  }
 
   let inputElement = document.createElement("input");
   inputElement.placeholder = "Data Processed";
@@ -10909,7 +12074,7 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
 
   sentSection.appendChild(document.createElement("br"));
   if (cell && cell.technicalAsset) {
-    inputElement.value = cell.technicalAsset.DataAssetsStored;
+    inputElement.value = cell.technicalAsset.data_assets_stored;
   } // Append it to body (or any other container)
   sentSection.appendChild(inputElement);
   let tinput = document.querySelector('input[name="input-custom-dropdown"]'),
@@ -10923,14 +12088,14 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
         closeOnSelect: false, // <- do not hide the suggestions dropdown once an item has been selected
       },
     });
-  container.appendChild(sentSection);
+  main.appendChild(sentSection);
   let inputElement2 = document.createElement("input");
 
   let receivedSecion = createSection("Data Stored:");
 
   receivedSecion.appendChild(document.createElement("br"));
   if (cell && cell.technicalAsset) {
-    inputElement2.value = cell.technicalAsset.DataAssetsProcessed;
+    inputElement2.value = cell.technicalAsset.data_assets_processed;
   } // Append it to body (or any other container)
   receivedSecion.appendChild(inputElement2);
   let tinput2 = document.querySelector('input[name="input-custom-dropdown"]'),
@@ -10944,7 +12109,8 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
         closeOnSelect: false, // <- do not hide the suggestions dropdown once an item has been selected
       },
     });
-  container.appendChild(receivedSecion);
+  main.appendChild(receivedSecion);
+  container.appendChild(main);
 
   return container;
 };

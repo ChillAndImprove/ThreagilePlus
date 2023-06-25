@@ -1,14 +1,32 @@
-TODOs:
+/TODOs:
 
--~~ Menü für Trust Boundaries erstellen~~
+- Bau Caching ein
+  -~~ Menü für Trust Boundaries erstellen~~
+  bei xml import durch alle cells iterieren und setzen
 
-- Import Funktion schreiben, also in der this.addAction("import...", function () {
-  ~~ DataDiagram importieren anschließend Assets importieren und edges~~
-- Defaultwerte setzen bei ersten erstellen
+~~- Defaultwerte setzen bei ersten erstellen~~
+
+- Export programmieren.
+  - Export mapping machen
+  - Trust Boundaries vernüpftig exportieren
+  - ...
+  -
+  - Eine Methode schreiben ExportThreagileModel()
+    - Die erstellt eine yaml.
+    - Setze beim init alle threagile einstellung , außer die 4 TrustBoundarie etc.
+    - Iteriere über Cells die keine Edges sind, DataAssets, sowie technicalAssets. , trustboundaries.
+      - Erkenne TRustBoundaries durch die Form.
+        - Gehe jetzt durch die verschiedenen KÖrper und mcah noch mehr zu trustboundaries, also z.b. square.
+    - Iteriere über edges. Ein Edge holt sich die sourcevertex und fügt sich ein
+    - func applyRiskGeneration() und hol dir die Risk
+    - hol dir den RAA und stell ihn erstmal einfach dar. als werte und fertig
+    -
 - Tagify listener programmmieren, damit die Werte gesetzt werden.
 - Christian Schneider Styles vielleicht einbauen
+
   - z.B. Birectional
   - Legende einbauen
+
 -
 - Threat Analysis Tab erstellen in den Technology Assets und dort RAA, sowie Threats berechnen
   wenn darauf geklickt wird und erlauben das man dort Sachen mitigiert und so weiter
@@ -475,3 +493,64 @@ Info:
   ]
   }
   },
+
+Tests:
+
+- Feature
+
+  - Asset deaktivieren können
+    - ein Slider Asset yes/no mit if, wenn if
+      let buttonToggle = document.createElement("button");
+      let main = document.createElement("div");
+      buttonToggle.id = "uniqueToggleButton";
+      buttonToggle.innerHTML = "ON";
+      buttonToggle.classList.add("toggleOnState");
+
+  {
+  let cell = self.editorUi.editor.graph.getSelectionCell();
+  buttonToggle.addEventListener("click", function () {
+  if (buttonToggle.innerHTML === "ON") {
+  buttonToggle.innerHTML = "OFF";
+  buttonToggle.classList.remove("toggleOnState");
+  buttonToggle.classList.add("toggleOffState");
+  main.style.display = "none"; // Versteckt den Container
+  cell.IsTechnicalAsset = false;
+  } else if (buttonToggle.innerHTML === "OFF") {
+  buttonToggle.innerHTML = "ON";
+  buttonToggle.classList.remove("toggleOffState");
+  buttonToggle.classList.add("toggleOnState");
+  main.style.display = "block"; // Zeigt den Container an
+  cell.IsTechnicalAsset = true;
+  }
+  });
+  }
+  this.container.appendChild(buttonToggle);
+
+- CleanUp:
+
+  Gutes Yaml, schlechtes Yaml
+  -~~ 1. Parse das. Wenn es nicht klappt. Console.log den Fehler j~~
+
+  -~~ 1. Erst initialisierung in der graph,js wo default gesetzt wird für die json.~~
+
+  - 2. Anstatt mit dem returned zu arbeiten, arbeite mit der jsonOb2.
+  - 3. Ändere die ganzen Methoden TrustBoundary, DataAsset, TechnicalAsset
+  - 4. Ändere die Export methode so das sie zwei Methoden hat: einmal full und einmal nur die nötigsten, data_asste, technical; trust, shared und business_criticality.
+  - 5. Schreibe einem test.html die import, export aufruft am anfang mit einer beispiel yaml
+
+  Exakter graph von svg
+
+  - Debugge einmal den import und schaue nach was da passiert mit chatgpt
+
+  - ~~Show only supported Filetypes~~
+  - RiskTracking
+  - Business_criticallty in Diagram
+  - Bei richitgen export auch die anderen elemente exportierten
+    - Auch newline einbauen
+    - vergleichbar mit vorigen importierten yaml schaffen
+  -
+  - ## Sidebar Menü anpassen
+
+- ## XML reinladen
+- ## YAML reinladen
+- ## Gar nix reinladen

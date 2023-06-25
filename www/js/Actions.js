@@ -9,6 +9,40 @@ function Actions(editorUi) {
   this.actions = new Object();
   this.init();
 }
+function camelToSnakeCase(str) {
+  return str
+    .replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
+    .replace(/^_/, "");
+}
+
+function handleImportAFile(xml, filename) {}
+function keysToSnakeCase(obj, depth = 0) {
+  if (typeof obj !== "object" || obj === null) return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => keysToSnakeCase(item, depth));
+  }
+
+  const recurseKeys = [
+    "data_assets",
+    "technical_assets",
+    "trust_boundaries",
+    "shared_runtime",
+    "risk_tracking",
+  ];
+  return Object.keys(obj).reduce((accum, key) => {
+    const newKey = camelToSnakeCase(key);
+    if (depth < 2 && typeof obj[key] === "object" && obj[key] !== null) {
+      accum[newKey] = keysToSnakeCase(
+        obj[key],
+        recurseKeys.includes(newKey) ? depth + 1 : depth
+      );
+    } else {
+      accum[newKey] = obj[key];
+    }
+    return accum;
+  }, {});
+}
 
 /**
  * Adds the default actions.
@@ -56,13 +90,19 @@ Actions.prototype.init = function () {
             ).then((result) => {
               go.run(result.instance);
               const startTime = performance.now();
-              var jsonObj = JSON.parse(parseModelViaString(xml));
-              applyRAAJS();
+              let jsonObj;
+              try {
+                jsonObj = JSON.parse(parseModelViaString(xml));
+              } catch (error) {
+                console.error("Fehler beim Parsen des JSON-Objekts: ", error);
+                return; // Beendet die Funktion, wenn ein Fehler auftritt.
+              }
+              let jsonObj2 = new YAWN(xml);
               dot = printDataFlowDiagramGraphvizDOT();
               //let jsonObj = dotParser.parse(dot);
               let dotJson = dotParser.parse(dot)[0];
               //First data import
-              console.log(jsonObj);
+              jsonObj = keysToSnakeCase(jsonObj);
 
               endWASM();
               let cnt = 0;
@@ -75,30 +115,30 @@ Actions.prototype.init = function () {
               var destinationObj = new Map();
               for (let entry in jsonObj) {
                 if (
-                  entry !== "TrustBoundaries" &&
-                  entry !== "DataAssets" &&
-                  entry !== "TechnicalAssets"
+                  entry !== "trust_boundaries" &&
+                  entry !== "data_assets" &&
+                  entry !== "technical_Assets"
                 ) {
                   destinationObj.set(entry, jsonObj[entry]);
                 }
               }
-              graph.getModel().diagramData = destinationObj;
-              graph.getModel().diagramData.DataAssets = new Map();
-              for (let entries in jsonObj.DataAssets) {
-                let entry = jsonObj.DataAssets[entries];
-                console.log(entry);
-                graph.getModel().diagramData.DataAssets.set("" + cnt++, {
-                  Id: jsonObj.DataAssets[entries].id,
-                  Title: jsonObj.DataAssets[entries].title,
-                  Description: jsonObj.DataAssets[entries].Description,
-                  Availability: jsonObj.DataAssets[entries].Availability,
-                  Confidentiality: jsonObj.DataAssets[entries].Confidentiality,
-                  Integrity: jsonObj.DataAssets[entries].Integrity,
-                  JustificationCiaRating:
-                    jsonObj.DataAssets[entries].JustificationCiaRating,
-                  Origin: jsonObj.DataAssets[entries].Origin,
-                  Owner: jsonObj.DataAssets[entries].Owner,
-                  Quantity: jsonObj.DataAssets[entries].Quantity,
+              graph.getModel().threagile = destinationObj;
+              graph.getModel().threagile.data_assets = new Map();
+              for (let entries in jsonObj.data_assets) {
+                let entry = jsonObj.data_assets[entries];
+                graph.getModel().threagile.data_assets.set("" + cnt++, {
+                  id: jsonObj.data_assets[entries].id,
+                  title: jsonObj.data_assets[entries].title,
+                  description: jsonObj.data_assets[entries].description,
+                  availability: jsonObj.data_assets[entries].availability,
+                  confidentiality: jsonObj.data_assets[entries].confidentiality,
+                  integrity: jsonObj.data_assets[entries].integrity,
+                  justification_cia_rating:
+                    jsonObj.data_assets[entries].justification_cia_rating,
+                  origin: jsonObj.data_assets[entries].origin,
+                  owner: jsonObj.data_assets[entries].owner,
+                  usage: jsonObj.data_assets[entries].usage,
+                  quantity: jsonObj.data_assets[entries].quantity,
                   visible: false,
                 });
               }
@@ -181,14 +221,14 @@ Actions.prototype.init = function () {
                         clusterStyle
                       );
                       clusterVertex.setConnectable(false);
-                      let trust = jsonObj.TrustBoundaries;
+                      let trust = jsonObj.trust_boundaries;
 
                       let titleMap = new Map();
 
                       for (let key in trust) {
                         if (trust.hasOwnProperty(key)) {
                           let asset = trust[key];
-                          let title = asset.Title;
+                          let title = asset.title;
 
                           titleMap.set(title, asset);
                         }
@@ -196,7 +236,7 @@ Actions.prototype.init = function () {
 
                       if (titleMap.has(titleCluster.textContent)) {
                         let asset = titleMap.get(titleCluster.textContent);
-                        clusterVertex.TrustBoundaries = asset;
+                        clusterVertex.trust_boundaries = asset;
                       }
                     }
                   }
@@ -424,14 +464,14 @@ Actions.prototype.init = function () {
                           style
                         );
                       }
-                      let technicalAssets = jsonObj.TechnicalAssets;
+                      let technicalAssets = jsonObj.technical_assets;
 
                       let titleMap = new Map();
 
                       for (let key in technicalAssets) {
                         if (technicalAssets.hasOwnProperty(key)) {
                           let asset = technicalAssets[key];
-                          let title = asset.Title;
+                          let title = asset.title;
 
                           titleMap.set(title, asset);
                         }
@@ -546,24 +586,31 @@ Actions.prototype.init = function () {
                         targetVertex.technicalAsset !== undefined
                       ) {
                         for (links in sourceVertex.technicalAsset
-                          .CommunicationLinks) {
+                          .communication_links) {
                           if (
-                            targetVertex.technicalAsset.Id ===
-                            sourceVertex.technicalAsset.CommunicationLinks[
+                            targetVertex.technicalAsset.id ===
+                            sourceVertex.technicalAsset.communication_links[
                               links
-                            ].TargetId
+                            ].target_id
                           ) {
                             edge.communicationAsset =
-                              sourceVertex.technicalAsset.CommunicationLinks[
+                              sourceVertex.technicalAsset.communication_links[
                                 links
                               ];
                             break;
                           }
                         }
                       }
-                      // sourceVertex.technicalAsset.CommunicationLinks[0].TargetId
-                      // edge.communicationAsset
                     });
+                    let cells = graph.getModel().cells;
+                    for (let id in cells) {
+                      let cell = cells[id];
+                      if (cell.technicalAsset) {
+                        if (cell.technicalAsset.communication_links) {
+                          delete cell.technicalAsset.communication_links;
+                        }
+                      }
+                    }
                   } catch (error) {
                     console.error(error);
                   } finally {
@@ -579,6 +626,7 @@ Actions.prototype.init = function () {
             editor.graph.setSelectionCells(
               editor.graph.importGraphModel(doc.documentElement)
             );
+            graph.fit();
           }
         } catch (e) {
           mxUtils.alert(
@@ -2159,9 +2207,9 @@ Actions.prototype.init = function () {
     "loadDiagramData",
     mxUtils.bind(this, function (list, menu) {
       console.log("this");
-      var diagramData = graph.model.diagramData;
-      if (typeof diagramData !== "undefined") {
-        diagramData.forEach(
+      var threagile = graph.model.threagile;
+      if (typeof threagile !== "undefined") {
+        threagile.forEach(
           function (value, property) {
             var clonedMenu = this.addDataMenu(this.createPanel());
             var listItem = document.createElement("li");
@@ -2223,7 +2271,7 @@ Actions.prototype.init = function () {
               var parentListItem = xButton.parentNode.parentNode;
               var parentList = parentListItem.parentNode;
               parentList.removeChild(parentListItem);
-              graph.model.diagramData.delete(menu.id);
+              graph.model.threagile.delete(menu.id);
             });
 
             textContainer.appendChild(dataText);
@@ -2234,7 +2282,7 @@ Actions.prototype.init = function () {
             function toggleContent() {
               // Überprüfe, ob die enthaltenen Elemente bereits versteckt sind
               var isHidden = listItem.style.backgroundColor === "lightgray";
-              let current = diagramData.get(menu.id)["isHidden"];
+              let current = threagile.get(menu.id)["isHidden"];
               if (!current["isHidden"]) {
                 current["isHidden"] = false;
               }
@@ -2265,18 +2313,20 @@ Actions.prototype.init = function () {
   this.addAction(
     "addDataAssets",
     mxUtils.bind(this, function (list, menu) {
-      if (typeof graph.model.diagramData === "undefined") {
-        graph.model.diagramData = new Map();
-        graph.model.diagramData.DataAssets = new Map();
+      if (
+        typeof graph.model.threagile === null ||
+        graph.model.threagile.json.data_assets === undefined
+      ) {
+        graph.model.threagile.json.data_assets = new Map();
       }
-      if (graph.model.diagramData.DataAssets instanceof Map) {
+      if (graph.model.threagile.json.data_assets instanceof Map) {
         var menuId = "menu_" + list.childElementCount;
-        graph.model.diagramData.DataAssets.set(menuId, {
+        graph.model.threagile.json.data_assets.set(menuId, {
           descriptionMenu: "Data" + list.childElementCount + ":",
         });
         menu.id = menuId;
       } else {
-        console.error("diagramData is not a Map");
+        console.error("threagile is not a Map");
       }
       var listItem = document.createElement("li");
       listItem.style.display = "flex";
@@ -2300,7 +2350,7 @@ Actions.prototype.init = function () {
 
       var dataText = document.createElement("div");
       dataText.textContent = "Data " + list.childElementCount + ":";
-      //dataText.textContent = graph.model.diagramData.get(menu.id).id;
+      //dataText.textContent = graph.model.threagile.get(menu.id).id;
 
       var xButton = document.createElement("button");
       xButton.innerHTML =
@@ -2315,7 +2365,7 @@ Actions.prototype.init = function () {
         var parentList = parentListItem.parentNode;
         parentList.removeChild(parentListItem);
 
-        var menuId = graph.model.diagramData.DataAssets.delete(menuId);
+        var menuId = graph.model.threagile.data_assets.delete(menuId);
       });
 
       textContainer.appendChild(dataText);
@@ -2480,7 +2530,7 @@ Actions.prototype.init = function () {
     "editDataDescription...",
     mxUtils.bind(this, function (evt) {
       var menuId = evt.target.parentNode.id;
-      var current = graph.model.diagramData.DataAssets.get(menuId);
+      var current = graph.model.threagile.data_assets.get(menuId);
 
       if (!current.description) {
         current.description = "";

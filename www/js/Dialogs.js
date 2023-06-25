@@ -851,28 +851,15 @@ var ExportDialog = function (editorUi) {
   var imageFormatSelect = document.createElement("select");
   imageFormatSelect.style.width = "180px";
 
-  var pngOption = document.createElement("option");
-  pngOption.setAttribute("value", "png");
-  mxUtils.write(pngOption, mxResources.get("formatPng"));
-  imageFormatSelect.appendChild(pngOption);
+  var threagileYamlOption = document.createElement("option");
+  threagileYamlOption.setAttribute("value", "yaml");
+  mxUtils.write(threagileYamlOption, "YAML");
+  imageFormatSelect.appendChild(threagileYamlOption);
 
-  var gifOption = document.createElement("option");
-
-  if (ExportDialog.showGifOption) {
-    gifOption.setAttribute("value", "gif");
-    mxUtils.write(gifOption, mxResources.get("formatGif"));
-    imageFormatSelect.appendChild(gifOption);
-  }
-
-  var jpgOption = document.createElement("option");
-  jpgOption.setAttribute("value", "jpg");
-  mxUtils.write(jpgOption, mxResources.get("formatJpg"));
-  imageFormatSelect.appendChild(jpgOption);
-
-  var pdfOption = document.createElement("option");
-  pdfOption.setAttribute("value", "pdf");
-  mxUtils.write(pdfOption, mxResources.get("formatPdf"));
-  imageFormatSelect.appendChild(pdfOption);
+  var threagilePackageOption = document.createElement("option");
+  threagilePackageOption.setAttribute("value", "threagile-package");
+  mxUtils.write(threagilePackageOption, "THREAGILE-PACKAGE");
+  imageFormatSelect.appendChild(threagilePackageOption);
 
   var svgOption = document.createElement("option");
   svgOption.setAttribute("value", "svg");
@@ -1080,7 +1067,11 @@ var ExportDialog = function (editorUi) {
       nameInput.value = name + "." + imageFormatSelect.value;
     }
 
-    if (imageFormatSelect.value === "xml") {
+    if (
+      imageFormatSelect.value === "xml" ||
+      imageFormatSelect.value === "yaml" ||
+      imageFormatSelect.value === "threagileYaml"
+    ) {
       zoomInput.setAttribute("disabled", "true");
       widthInput.setAttribute("disabled", "true");
       heightInput.setAttribute("disabled", "true");
@@ -1234,7 +1225,382 @@ var ExportDialog = function (editorUi) {
   table.appendChild(tbody);
   this.container = table;
 };
+function keysToLower(obj) {
+  return Object.keys(obj).reduce(function (accum, key) {
+    accum[key.toLowerCase()] = obj[key];
+    return accum;
+  }, {});
+}
+function exportToYaml(graph) {
+  let datatypeProperties = {
+    usage: {
+      options: ["business", "devops"],
+    },
+    quantity: {
+      options: ["very-few", "few", "many", "very-many"],
+    },
+    confidentiality: {
+      options: [
+        "public",
+        "internal",
+        "restricted",
+        "confidential",
+        "strictly-confidential",
+      ],
+    },
+    integrity: {
+      options: [
+        "archive",
+        "operational",
+        "important",
+        "critical",
+        "mission-critical",
+      ],
+    },
+    availability: {
+      options: [
+        "archive",
+        "operational",
+        "important",
+        "critical",
+        "mission-critical",
+      ],
+    },
+  };
+  let technologytypeProperties = {
+    type: {
+      options: ["external-entity", "process", "datastore"],
+    },
+    technology: {
+      options: [
+        "unknown-technology",
+        "client-system",
+        "desktop",
+        "mobile-app",
+        "devops-client",
+        "browser",
+        "web-server",
+        "web-application",
+        "reverse-proxy",
+        "load-balancer",
+        "code-inspection-platform",
+        "build-pipeline",
+        "artifact-registry",
+        "sourcecode-repository",
+        "file-server",
+        "local-file-system",
+        "database",
+        "ldap-server",
+        "container-platform",
+        "mainframe",
+        "block-storage",
+        "web-service-rest",
+        "web-service-soap",
+        "cms",
+        "erp",
+        "identity-provider",
+        "identity-store-ldap",
+        "identity-store-database",
+        "vault",
+        "hsm",
+        "waf",
+        "ids",
+        "ips",
+        "tool",
+        "cli",
+        "message-queue",
+        "stream-processing",
+        "batch-processing",
+        "event-listener",
+        "gateway",
+        "service-mesh",
+        "data-lake",
+        "report-engine",
+        "ai",
+        "monitoring",
+        "search-index",
+        "search-engine",
+        "application-server",
+        "ejb",
+        "service-registry",
+        "task",
+        "function",
+        "iot-device",
+        "data-lake",
+        "mail-server",
+        "scheduler",
+        "library",
+      ],
+    },
+    size: {
+      options: ["system", "service", "application", "component"],
+    },
+    machine: {
+      options: ["physical", "virtual", "container", "serverless"],
+    },
+    encryption: {
+      options: [
+        "none",
+        "data-with-symmetric-shared-key",
+        "data-with-asymmetric-shared-key",
+        "data-with-enduser-individual-key",
+      ],
+    },
+    confidentiality: {
+      options: [
+        "public",
+        "internal",
+        "restricted",
+        "confidential",
+        "strictly-confidential",
+      ],
+    },
+    integrity: {
+      options: [
+        "archive",
+        "operational",
+        "important",
+        "critical",
+        "mission-critical",
+      ],
+    },
+    availability: {
+      options: [
+        "archive",
+        "operational",
+        "important",
+        "critical",
+        "mission-critical",
+      ],
+    },
+    usage: {
+      options: ["business", "devops"],
+    },
+  };
+  let communicationtypeProperties = {
+    protocol: {
+      options: [
+        "http",
+        "https",
+        "ws",
+        "wss",
+        "reverse-proxy-web-protocol",
+        "reverse-proxy-web-protocol-encrypted",
+        "jdbc",
+        "jdbc-encrypted",
+        "odbc",
+        "odbc-encrypted",
+        "sql-access-protocol",
+        "sql-access-protocol-encrypted",
+        "nosql-access-protocol",
+        "nosql-access-protocol-encrypted",
+        "unknown-protocol",
+        "mqtt",
+        "binary",
+        "binary-encrypted",
+        "text",
+        "text-encrypted",
+        "ssh",
+        "ssh-tunnel",
+        "smtp",
+        "smtp-encrypted",
+        "pop3",
+        "pop3-encrypted",
+        "imap",
+        "imap-encrypted",
+        "ftp",
+        "ftps",
+        "sftp",
+        "scp",
+        "nfs",
+        "smb",
+        "smb-encrypted",
+        "local-file-access",
+        "ldap",
+        "ldaps",
+        "jms",
+        "nrpe",
+        "xmpp",
+        "iiop",
+        "iiop-encrypted",
+        "jrmp",
+        "jrmp-encrypted",
+        "in-process-library-call",
+        "container-spawning",
+      ],
+    },
+    authentication: {
+      options: [
+        "none",
+        "credentials",
+        "session-id",
+        "token",
+        "client-certificate",
+        "two-factor",
+        "externalized",
+      ],
+    },
+    authorization: {
+      options: ["none", "technical-user", "enduser-identity-propagation"],
+    },
+    usage: {
+      options: ["business", "devops"],
+    },
+  };
+  var trustBoundaryProperties = {
+    type: {
+      options: [
+        "network-on-prem",
+        "network-dedicated-hoster",
+        "network-virtual-lan",
+        "network-cloud-provider",
+        "network-cloud-security-group",
+        "network-policy-namespace-isolation",
+        "execution-environment",
+      ],
+    },
+  };
+  let yaml = {};
+  yaml.data_assets = {};
+  yaml.technical_assets = {};
+  yaml.trust_boundaries = {};
+  yaml.tags_available = {};
+  if (yaml.business_criticality === undefined) {
+    yaml.business_criticality = "important";
+  }
+  let dataMap = new Map();
+  let data = graph.model.diagramData.data_assets;
+  data.forEach(function (value, property) {
+    value = keysToLower(value);
+    dataMap.set(value.id, value);
+  });
+  yaml.data_assets = Object.fromEntries(dataMap);
+  let model = graph.getModel();
+  let root = model.getRoot();
 
+  let tags = new Set();
+  if (root.children && root.children[0] && root.children[0].children) {
+    let cells = root.children[0].children;
+    for (let i = 0; i < cells.length; i++) {
+      let cell = cells[i];
+      if (cell.technicalAsset && cell.technicalAsset.id) {
+        delete cell.technicalAsset.data_formats_accepted;
+        yaml.technical_assets[cell.technicalAsset.id] = JSON.parse(
+          JSON.stringify(cell.technicalAsset)
+        );
+        // Assuming the tags are in an array
+        if (cell.technicalAsset.tags) {
+          for (let tag of cell.technicalAsset.tags) {
+            // Add the tag to the set. If it already exists, it won't be added again.
+            tags.add(tag);
+          }
+        }
+      } else if (cell.communicationAsset) {
+        let source = model.getTerminal(cell, true);
+        if (source && source.technicalAsset && source.technicalAsset.id) {
+          if (!source.technicalAsset.communication_links) {
+            source.technicalAsset.communication_links = {};
+          }
+          source.technicalAsset.communication_links[source.technicalAsset.id] =
+            cell.communicationAsset;
+          if (yaml.technical_assets[source.technicalAsset.id]) {
+            if (
+              yaml.technical_assets[source.technicalAsset.id]
+                .communication_links === undefined
+            ) {
+              yaml.technical_assets[
+                source.technicalAsset.id
+              ].communication_links = {};
+            }
+            let clonedObj = JSON.parse(JSON.stringify(cell.communicationAsset));
+            clonedObj.vpn = clonedObj.v_p_n;
+            if (clonedObj.target_id) {
+              clonedObj.target = clonedObj.target_id;
+              delete clonedObj.target_id;
+            }
+            if (clonedObj.source_id) {
+              delete clonedObj.source_id;
+            }
+            let clonedId = clonedObj.id;
+            if (clonedObj.id) {
+              delete clonedObj.id;
+            }
+            delete clonedObj.v_p_n;
+            delete clonedObj.r_a_a;
+            if (clonedObj.tags) {
+              for (let tag of clonedObj.tags) {
+                // Add the tag to the set. If it already exists, it won't be added again.
+                tags.add(tag);
+              }
+            }
+            yaml.technical_assets[source.technicalAsset.id].communication_links[
+              clonedId
+            ] = clonedObj;
+          }
+        }
+      } else if (cell.trust_boundaries && cell.trust_boundaries.id) {
+        yaml.trust_boundaries[cell.trust_boundaries.id] = JSON.parse(
+          JSON.stringify(cell.trust_boundaries)
+        );
+      }
+    }
+  } else {
+    console.error(
+      "The root does not have any children or the first child does not have any children."
+    );
+  }
+  for (let asset in yaml.technical_assets) {
+    if (
+      yaml.technical_assets[asset].id &&
+      yaml.technical_assets[asset].communication_links
+    ) {
+      delete yaml.technical_assets[asset].communication_links[
+        yaml.technical_assets[asset].id
+      ];
+    }
+    for (let property in communicationtypeProperties) {
+      for (let links in yaml.technical_assets[asset].communication_links) {
+        yaml.technical_assets[asset].communication_links[links][property] =
+          communicationtypeProperties[property].options[
+            yaml.technical_assets[asset].communication_links[links][property]
+          ];
+      }
+    }
+  }
+
+  for (let asset in yaml.technical_assets) {
+    for (let property in technologytypeProperties) {
+      yaml.technical_assets[asset][property] =
+        technologytypeProperties[property].options[
+          yaml.technical_assets[asset][property]
+        ];
+    }
+  }
+
+  for (let asset in yaml.data_assets) {
+    for (let property in datatypeProperties) {
+      yaml.data_assets[asset][property] =
+        datatypeProperties[property].options[yaml.data_assets[asset][property]];
+    }
+  }
+  for (let asset in yaml.trust_boundaries) {
+    if (yaml.trust_boundaries[asset].tags) {
+      for (let tag of yaml.trust_boundaries[asset].tags) {
+        tags.add(tag);
+      }
+    }
+    for (let property in trustBoundaryProperties) {
+      yaml.trust_boundaries[asset][property] =
+        trustBoundaryProperties[property].options[
+          yaml.trust_boundaries[asset][property]
+        ];
+    }
+  }
+  yaml.tags_available = Array.from(tags);
+  return jsyaml.dump(yaml, {
+    indent: 4,
+  });
+}
 /**
  * Remembers last value for border.
  */
@@ -1273,6 +1639,20 @@ ExportDialog.exportFile = function (editorUi, name, format, bg, s, b, dpi) {
       name,
       format
     );
+  } else if (format == "yaml") {
+    editorUi.hideDialog();
+    let yaml = exportToYaml(graph);
+    let filename = name;
+    let blob = new Blob([yaml], { type: "text/yaml" });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } else if (format == "threagile-package") {
+    editorUi.hideDialog();
   } else {
     var bounds = graph.getGraphBounds();
 
@@ -1300,24 +1680,28 @@ ExportDialog.exportFile = function (editorUi, name, format, bg, s, b, dpi) {
     // Requests image if request is valid
     if (param.length <= MAX_REQUEST_SIZE && w * h < MAX_AREA) {
       editorUi.hideDialog();
-      var req = new mxXmlRequest(
-        EXPORT_URL,
-        "format=" +
-          format +
-          "&filename=" +
-          encodeURIComponent(name) +
-          "&bg=" +
-          (bg != null ? bg : "none") +
-          "&w=" +
-          w +
-          "&h=" +
-          h +
-          "&" +
-          param +
-          "&dpi=" +
-          dpi
-      );
-      req.simulate(document, "_blank");
+
+      // Create a Blob object from the XML data
+      var blob = new Blob([mxUtils.getXml(root)], {
+        type: "text/xml;charset=utf-8",
+      });
+
+      // Create an object URL for the Blob
+      var url = URL.createObjectURL(blob);
+
+      // Create a link element
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = name + ".xml"; // Add appropriate extension if needed
+
+      // Append the link to the body
+      document.body.appendChild(link);
+
+      // Simulate a click on the link
+      link.click();
+
+      // Remove the link from the body
+      document.body.removeChild(link);
     } else {
       mxUtils.alert(mxResources.get("drawingTooLarge"));
     }
@@ -1333,16 +1717,27 @@ ExportDialog.exportFile = function (editorUi, name, format, bg, s, b, dpi) {
 ExportDialog.saveLocalFile = function (editorUi, data, filename, format) {
   if (data.length < MAX_REQUEST_SIZE) {
     editorUi.hideDialog();
-    var req = new mxXmlRequest(
-      SAVE_URL,
-      "xml=" +
-        encodeURIComponent(data) +
-        "&filename=" +
-        encodeURIComponent(filename) +
-        "&format=" +
-        format
-    );
-    req.simulate(document, "_blank");
+    editorUi.hideDialog();
+
+    // Create a Blob object from your data
+    var blob = new Blob([data], { type: "text/plain;charset=utf-8" });
+
+    // Create an object URL for the Blob
+    var url = URL.createObjectURL(blob);
+
+    // Create a link element
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+
+    // Append the link to the body
+    document.body.appendChild(link);
+
+    // Simulate a click on the link
+    link.click();
+
+    // Remove the link from the body
+    document.body.removeChild(link);
   } else {
     mxUtils.alert(mxResources.get("drawingTooLarge"));
     mxUtils.popup(xml);

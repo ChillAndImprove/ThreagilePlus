@@ -61,8 +61,10 @@
 </style>
 
 	<script src="wasm_exec.js"></script>
-	<script src="dotparser.js"></script>
 	<script src="js-yaml.min.js"></script>
+	<script src="lodash.min.js"></script>
+	<script src="yawn.js"></script>
+	<script src="dotparser.js"></script>
 	<script src="viz.js"></script>
 	<script src="tagify.min.js"></script>
 	<script src="tagify.polyfills.min.js"></script>
@@ -100,6 +102,8 @@
 		mxLoadResources = false;
 	</script>
 	<script type="text/javascript" src="js/Init.js"></script>
+	<script type="text/javascript" src="raphael-min.js"></script>
+	<script type="text/javascript" src="justgage.min.js"></script>
 	<script type="text/javascript" src="deflate/pako.min.js"></script>
 	<script type="text/javascript" src="deflate/base64.js"></script>
 	<script type="text/javascript" src="jscolor/jscolor.js"></script>
@@ -120,6 +124,8 @@
 	<img src="images/logo.png" id="logo_tiger" class="image-fade-out-transition">
 	<script type="text/javascript">
 		// Extends EditorUi to update I/O action states based on availability of backend
+window.addEventListener('load', function() {
+    setTimeout(function() {
 		(function()
 		{
 			var editorUiInit = EditorUi.prototype.init;
@@ -130,7 +136,6 @@
 				this.actions.get('export').setEnabled(false);
 
 				// Updates action states which require a backend
-				/*
 				if (!Editor.useLocalStorage)
 				{
 					mxUtils.post(OPEN_URL, '', mxUtils.bind(this, function(req)
@@ -143,7 +148,6 @@
 						this.actions.get('export').setEnabled(enabled);
 					}));
 				}
-				*/
 			};
 			
 			// Adds required resources (disables loading of fallback properties, this can only
@@ -169,6 +173,9 @@
 				document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
 			});
 		})();
+    }, 2000);
+});
+
 	</script>
 </body>
 </html>
