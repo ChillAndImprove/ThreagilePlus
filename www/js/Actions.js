@@ -89,10 +89,7 @@ Actions.prototype.init = function () {
             ).then((result) => {
               go.run(result.instance);
               const startTime = performance.now();
-              //~~ 1. Parse das. Wenn es nicht klappt. Console.log den Fehler j~~
-              //   2. Anstatt mit dem returned zu arbeiten, arbeite mit der jsonOb2.
-              //   3. Ändere die ganzen Methoden TrustBoundary, DataAsset, TechicalAsset
-              try {
+                try {
                 graph.model.threagile = YAML.parseDocument(xml);
               } catch (error) {
                 console.error("Can not parse: ", error);
@@ -112,12 +109,7 @@ Actions.prototype.init = function () {
 
               endWASM();
               let cnt = 0;
-              /*
-               -  Okay, also wir holen uns die id von source und target über ThreatAssets
-               -  Anschließend inserten wir in CommunicationAsset die Infos  
-               -    
-              */
-
+         
               var destinationObj = new Map();
               for (let entry in jsonObj) {
                 if (
