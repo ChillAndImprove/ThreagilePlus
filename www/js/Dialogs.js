@@ -1231,7 +1231,7 @@ function keysToLower(obj) {
     return accum;
   }, {});
 }
-function exportToYaml(graph) {
+function exportToYaml(graph, full) {
   let datatypeProperties = {
     usage: {
       options: ["business", "devops"],
@@ -1469,12 +1469,15 @@ function exportToYaml(graph) {
     yaml.business_criticality = "important";
   }
   let dataMap = new Map();
-  let data = graph.model.diagramData.data_assets;
-  data.forEach(function (value, property) {
-    value = keysToLower(value);
-    dataMap.set(value.id, value);
-  });
-  yaml.data_assets = Object.fromEntries(dataMap);
+
+  if (graph && graph.model && graph.model.diagramData) {
+    let data = graph.model.diagramData.data_assets;
+    data.forEach(function (value, property) {
+      value = keysToLower(value);
+      dataMap.set(value.id, value);
+    });
+    yaml.data_assets = Object.fromEntries(dataMap);
+  }
   let model = graph.getModel();
   let root = model.getRoot();
 
@@ -1596,10 +1599,42 @@ function exportToYaml(graph) {
         ];
     }
   }
+  function fixIndentation(yamlString) {
+    return yamlString.replace(/(^[^\:]+):(.*:)/gm, "$1:\n $2");
+  }
+
+  let json = graph.model.threagile;
+  for (let asset in json.toJSON().shared_runtimes) {
+    if (json.toJSON().shared_runtimes[asset].tags) {
+      for (let tag of json.toJSON().shared_runtimes[asset].tags) {
+        tags.add(tag);
+      }
+    }
+  }
+
   yaml.tags_available = Array.from(tags);
-  return jsyaml.dump(yaml, {
-    indent: 4,
-  });
+  json.delete("business_criticality");
+  json.add("business_criticality");
+  json.set("business_criticality", yaml.business_criticality);
+
+  json.delete("tags_available");
+  json.add("tags_available", yaml.tags_available);
+  json.set("tags_available", yaml.tags_available);
+  json.delete("technical_assets");
+  json.add("technical_assets");
+  json.set("technical_assets", yaml.technical_assets);
+  json.delete("data_assets");
+  json.add("data_assets", yaml.data_assets);
+  json.set("data_assets", yaml.data_assets);
+  json.delete("trust_boundaries");
+  json.add("trust_boundaries", yaml.trust_boundaries);
+  json.set("trust_boundaries", yaml.trust_boundaries);
+  json.defaultStringType = "BLOCK_LITERAL";
+  if (full) {
+    return json.toString();
+  } else {
+    return YAML.stringify(json);
+  }
 }
 /**
  * Remembers last value for border.
@@ -1641,7 +1676,7 @@ ExportDialog.exportFile = function (editorUi, name, format, bg, s, b, dpi) {
     );
   } else if (format == "yaml") {
     editorUi.hideDialog();
-    let yaml = exportToYaml(graph);
+    let yaml = exportToYaml(graph, true);
     let filename = name;
     let blob = new Blob([yaml], { type: "text/yaml" });
     let url = URL.createObjectURL(blob);

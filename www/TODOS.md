@@ -554,3 +554,6 @@ Tests:
 - ## XML reinladen
 - ## YAML reinladen
 - ## Gar nix reinladen
+
+- Visible löschen
+- Title anstatt id oben nehmen

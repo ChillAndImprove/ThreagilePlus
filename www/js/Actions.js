@@ -24,11 +24,11 @@ function keysToSnakeCase(obj, depth = 0) {
   }
 
   const recurseKeys = [
-    "data_assets",
-    "technical_assets",
-    "trust_boundaries",
-    "shared_runtime",
-    "risk_tracking",
+    "DataAssets",
+    "TechnicalAssets",
+    "TrustBoundaries",
+    "SharedRuntime",
+    "RiskTracking",
   ];
   return Object.keys(obj).reduce((accum, key) => {
     const newKey = camelToSnakeCase(key);
@@ -82,7 +82,6 @@ Actions.prototype.init = function () {
       mxUtils.bind(this, function (xml, filename) {
         try {
           if (filename.endsWith(".yaml")) {
-            var parsedYaml = jsyaml.load(xml);
             const go = new Go();
             WebAssembly.instantiateStreaming(
               fetch("main.wasm"),
@@ -90,6 +89,14 @@ Actions.prototype.init = function () {
             ).then((result) => {
               go.run(result.instance);
               const startTime = performance.now();
+              //~~ 1. Parse das. Wenn es nicht klappt. Console.log den Fehler j~~
+              //   2. Anstatt mit dem returned zu arbeiten, arbeite mit der jsonOb2.
+              //   3. Ändere die ganzen Methoden TrustBoundary, DataAsset, TechicalAsset
+              try {
+                graph.model.threagile = YAML.parseDocument(xml);
+              } catch (error) {
+                console.error("Can not parse: ", error);
+              }
               let jsonObj;
               try {
                 jsonObj = JSON.parse(parseModelViaString(xml));
@@ -97,7 +104,6 @@ Actions.prototype.init = function () {
                 console.error("Fehler beim Parsen des JSON-Objekts: ", error);
                 return; // Beendet die Funktion, wenn ein Fehler auftritt.
               }
-              let jsonObj2 = new YAWN(xml);
               dot = printDataFlowDiagramGraphvizDOT();
               //let jsonObj = dotParser.parse(dot);
               let dotJson = dotParser.parse(dot)[0];
@@ -122,11 +128,11 @@ Actions.prototype.init = function () {
                   destinationObj.set(entry, jsonObj[entry]);
                 }
               }
-              graph.getModel().threagile = destinationObj;
-              graph.getModel().threagile.data_assets = new Map();
+              graph.getModel().diagramData = destinationObj;
+              graph.getModel().diagramData.data_assets = new Map();
               for (let entries in jsonObj.data_assets) {
                 let entry = jsonObj.data_assets[entries];
-                graph.getModel().threagile.data_assets.set("" + cnt++, {
+                graph.getModel().diagramData.data_assets.set("" + cnt++, {
                   id: jsonObj.data_assets[entries].id,
                   title: jsonObj.data_assets[entries].title,
                   description: jsonObj.data_assets[entries].description,
@@ -2207,9 +2213,9 @@ Actions.prototype.init = function () {
     "loadDiagramData",
     mxUtils.bind(this, function (list, menu) {
       console.log("this");
-      var threagile = graph.model.threagile;
-      if (typeof threagile !== "undefined") {
-        threagile.forEach(
+      var diagramData = graph.model.diagramData;
+      if (typeof diagramData !== "undefined") {
+        diagramData.forEach(
           function (value, property) {
             var clonedMenu = this.addDataMenu(this.createPanel());
             var listItem = document.createElement("li");
@@ -2271,7 +2277,7 @@ Actions.prototype.init = function () {
               var parentListItem = xButton.parentNode.parentNode;
               var parentList = parentListItem.parentNode;
               parentList.removeChild(parentListItem);
-              graph.model.threagile.delete(menu.id);
+              graph.model.diagramData.delete(menu.id);
             });
 
             textContainer.appendChild(dataText);
@@ -2282,7 +2288,7 @@ Actions.prototype.init = function () {
             function toggleContent() {
               // Überprüfe, ob die enthaltenen Elemente bereits versteckt sind
               var isHidden = listItem.style.backgroundColor === "lightgray";
-              let current = threagile.get(menu.id)["isHidden"];
+              let current = diagramData.get(menu.id)["isHidden"];
               if (!current["isHidden"]) {
                 current["isHidden"] = false;
               }
@@ -2313,20 +2319,18 @@ Actions.prototype.init = function () {
   this.addAction(
     "addDataAssets",
     mxUtils.bind(this, function (list, menu) {
-      if (
-        typeof graph.model.threagile === null ||
-        graph.model.threagile.json.data_assets === undefined
-      ) {
-        graph.model.threagile.json.data_assets = new Map();
+      if (typeof graph.model.diagramData === "undefined") {
+        graph.model.diagramData = new Map();
+        graph.model.diagramData.DataAssets = new Map();
       }
-      if (graph.model.threagile.json.data_assets instanceof Map) {
+      if (graph.model.diagramData.DataAssets instanceof Map) {
         var menuId = "menu_" + list.childElementCount;
-        graph.model.threagile.json.data_assets.set(menuId, {
+        graph.model.diagramData.DataAssets.set(menuId, {
           descriptionMenu: "Data" + list.childElementCount + ":",
         });
         menu.id = menuId;
       } else {
-        console.error("threagile is not a Map");
+        console.error("diagramData is not a Map");
       }
       var listItem = document.createElement("li");
       listItem.style.display = "flex";
@@ -2350,7 +2354,7 @@ Actions.prototype.init = function () {
 
       var dataText = document.createElement("div");
       dataText.textContent = "Data " + list.childElementCount + ":";
-      //dataText.textContent = graph.model.threagile.get(menu.id).id;
+      //dataText.textContent = graph.model.diagramData.get(menu.id).id;
 
       var xButton = document.createElement("button");
       xButton.innerHTML =
@@ -2365,7 +2369,7 @@ Actions.prototype.init = function () {
         var parentList = parentListItem.parentNode;
         parentList.removeChild(parentListItem);
 
-        var menuId = graph.model.threagile.data_assets.delete(menuId);
+        var menuId = graph.model.diagramData.DataAssets.delete(menuId);
       });
 
       textContainer.appendChild(dataText);
@@ -2530,7 +2534,7 @@ Actions.prototype.init = function () {
     "editDataDescription...",
     mxUtils.bind(this, function (evt) {
       var menuId = evt.target.parentNode.id;
-      var current = graph.model.threagile.data_assets.get(menuId);
+      var current = graph.model.diagramData.DataAssets.get(menuId);
 
       if (!current.description) {
         current.description = "";

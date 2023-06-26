@@ -4,127 +4,16 @@
 Format = function (editorUi, container) {
   this.editorUi = editorUi;
   this.container = container;
-  let data = `threagile_version: 1.0.0
-# NOTE:
-#
-# For a perfect editing experience within your IDE of choice you can easily
-# get model syntax validation and autocompletion (very handy for enum values)
-# as well as live templates: Just import the schema.json into your IDE and assign
-# it as "schema" to each Threagile YAML file. Also try to import individual parts
-# from the live-templates.txt file into your IDE as live editing templates.
-#
-# You might also want to try the REST API when running in server mode...
-
-
-
-title: Some Example Application
-
-date: 2020-07-01
-
-author:
-  name: John Doe
-  homepage: www.example.com
-
-
-
-
-management_summary_comment: >
-  Just some <b>more</b> custom summary possible here...
-
+  let threagileInit = `
+threagile_version: 1.0.0
 business_criticality: important # values: archive, operational, important, critical, mission-critical
 
-
-
-
-business_overview:
-  description: Some more <i>demo text</i> here and even images...
-  images:
-#    - custom-image-1.png: Some dummy image 1
-#    - custom-image-2.png: Some dummy image 2
-
-
-technical_overview:
-  description: Some more <i>demo text</i> here and even images...
-  images:
-#    - custom-image-1.png: Some dummy image 1
-#    - custom-image-2.png: Some dummy image 2
-
-
-
-questions: # simply use "" as answer to signal "unanswered"
-  How are the admin clients managed/protected against compromise?: ""
-  How are the development clients managed/protected against compromise?: >
-    Managed by XYZ
-  How are the build pipeline components managed/protected against compromise?: >
-    Managed by XYZ
-
-
-
-abuse_cases:
-  Denial-of-Service: >
-    As a hacker I want to disturb the functionality of the backend system in order to cause indirect
-    financial damage via unusable features.
-  CPU-Cycle Theft: >
-    As a hacker I want to steal CPU cycles in order to transform them into money via installed crypto currency miners.
-  Ransomware: >
-    As a hacker I want to encrypt the storage and file systems in order to demand ransom.
-  Identity Theft: >
-    As a hacker I want to steal identity data in order to reuse credentials and/or keys on other targets of the same company or outside.
-  PII Theft: >
-    As a hacker I want to steal PII (Personally Identifiable Information) data in order to blackmail the company and/or damage
-    their repudiation by publishing them.
-
-  ERP-System Compromise: >
-    As a hacker I want to access the ERP-System in order to steal/modify sensitive business data.
-  Database Compromise: >
-    As a hacker I want to access the database backend of the ERP-System in order to steal/modify sensitive
-    business data.
-  Contract Filesystem Compromise: >
-    As a hacker I want to access the filesystem storing the contract PDFs in order to steal/modify contract data.
-  Cross-Site Scripting Attacks: >
-    As a hacker I want to execute Cross-Site Scripting (XSS) and similar attacks in order to takeover victim sessions and
-    cause reputational damage.
-  Denial-of-Service of Enduser Functionality: >
-    As a hacker I want to disturb the functionality of the enduser parts of the application in order to cause direct financial
-    damage (lower sales).
-  Denial-of-Service of ERP/DB Functionality: >
-    As a hacker I want to disturb the functionality of the ERP system and/or it's database in order to cause indirect
-    financial damage via unusable internal ERP features (not related to customer portal).
-
-
-security_requirements:
-  Input Validation: Strict input validation is required to reduce the overall attack surface.
-  Securing Administrative Access: Administrative access must be secured with strong encryption and multi-factor authentication.
-  EU-DSGVO: Mandatory EU-Datenschutzgrundverordnung
-
-
-# Tags can be used for anything, it's just a tag. Also risk rules can act based on tags if you like.
-# Tags can be used for example to name the products used (which is more concrete than the technology types that only specify the type)
-tags_available:
-
-data_assets:
-
-technical_assets:
-
-trust_boundaries:
-
-
-#diagram_tweak_edge_layout: spline # values: spline, polyline, false, ortho (this suppresses edge labels), curved (this suppresses edge labels and can cause problems with edges)
-
-#diagram_tweak_suppress_edge_labels: true
-#diagram_tweak_layout_left_to_right: true
-#diagram_tweak_nodesep: 2
-#diagram_tweak_ranksep: 2
-#diagram_tweak_invisible_connections_between_assets:
-#  - tech-asset-source-id-A:tech-asset-target-id-B
-#  - tech-asset-source-id-C:tech-asset-target-id-D
-#diagram_tweak_same_rank_assets:
-#  - tech-asset-source-id-E:tech-asset-target-id-F:tech-asset-source-id-G:tech-asset-target-id-H
-#  - tech-asset-source-id-M:tech-asset-target-id-N:tech-asset-source-id-O
 `;
-  let jsonObj2 = new YAWN(data);
-  editorUi.editor.graph.model.threagile = jsonObj2;
-  console.log("How often?");
+
+  let wow = YAML.parse(threagileInit);
+  let wow2 = YAML.parseDocument(threagileInit);
+  this.editorUi.editor.graph.model.threagile =
+    YAML.parseDocument(threagileInit);
 };
 
 /**
@@ -8042,11 +7931,11 @@ DiagramFormatPanel.prototype.init = function () {
   }
 
   if (
-    typeof graph.model.threagile !== null &&
-    typeof this.editorUi.editor.graph.model.threagile.data_assets !==
+    typeof graph.model.diagramData !== "undefined" &&
+    typeof this.editorUi.editor.graph.model.diagramData.data_assets !==
       "undefined"
   ) {
-    graph.model.threagile.data_assets.forEach(
+    graph.model.diagramData.data_assets.forEach(
       function (value, property) {
         var clonedMenu = this.addDataMenu(this.createPanel());
         clonedMenu.id = property;
@@ -8112,12 +8001,12 @@ DiagramFormatPanel.prototype.init = function () {
           var parentList = parentListItem.parentNode;
           parentList.removeChild(parentListItem);
 
-          var menuId = graph.model.threagile.delete(clonedMenu.id);
+          var menuId = graph.model.diagramData.delete(clonedMenu.id);
         });
 
         textContainer.appendChild(dataText);
         textContainer.appendChild(xButton);
-        let current = graph.model.threagile.data_assets.get(clonedMenu.id);
+        let current = graph.model.diagramData.data_assets.get(clonedMenu.id);
         if (current["visible"] === undefined) {
           current["visible"] = true;
         }
@@ -8768,7 +8657,7 @@ InspectionFormatPanel.prototype.init = function () {
   WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then(
     (result) => {
       go.run(result.instance);
-      let exportYaml = exportToYaml(graph);
+      let exportYaml = exportToYaml(graph, false);
       let jsonObj = JSON.parse(parseModelViaString(exportYaml));
       applyRAAJS();
       yaml = JSON.parse(applyRiskGenerationJS());
@@ -9278,7 +9167,7 @@ InspectionFormatPanel.prototype.addInspectionFormatMenuDynamic = function (
           var newValue = selectDropdown.value;
           currentValue = newValue;
 
-          let current = self.editor.graph.model.threagile.get(menuId);
+          let current = self.editor.graph.model.diagramData.get(menuId);
           if (!current[property]) {
             current[property] = "";
           }
@@ -9313,7 +9202,9 @@ InspectionFormatPanel.prototype.addInspectionFormatMenuDynamic = function (
         mxUtils.bind(this, function (evt) {
           var menuId = evt.target.parentNode.parentNode.parentNode.id;
           current =
-            this.editorUi.editor.graph.model.threagile.data_assets.get(menuId);
+            this.editorUi.editor.graph.model.diagramData.data_assets.get(
+              menuId
+            );
 
           if (!current[property]) {
             current[property] = typeProperties[property].defaultValue;
@@ -10530,15 +10421,15 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   for (let sectionName in sections) {
     container.appendChild(sections[sectionName]);
   }
-  if (typeof this.editorUi.editor.graph.model.threagile === "undefined") {
-    this.editorUi.editor.graph.model.threagile = new Map();
+  if (typeof this.editorUi.editor.graph.model.diagramData === "undefined") {
+    this.editorUi.editor.graph.model.diagramData = new Map();
   }
-  var threagile = this.editorUi.editor.graph.model.threagile.data_assets;
+  var diagramData = this.editorUi.editor.graph.model.diagramData.data_assets;
 
   idsData = [];
   // Iterate over the Map and create table rows
-  if (threagile !== undefined) {
-    threagile.forEach(function (value, property) {
+  if (diagramData !== undefined) {
+    diagramData.forEach(function (value, property) {
       idsData.push(value.id);
     });
   }
@@ -11364,7 +11255,7 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
           var newValue = selectDropdown.value;
           currentValue = newValue;
 
-          let current = self.editor.graph.model.threagile.get(menuId);
+          let current = self.editor.graph.model.diagramData.get(menuId);
           if (!current[property]) {
             current[property] = "";
           }
@@ -11399,7 +11290,9 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
         mxUtils.bind(this, function (evt) {
           var menuId = evt.target.parentNode.parentNode.parentNode.id;
           current =
-            this.editorUi.editor.graph.model.threagile.data_assets.get(menuId);
+            this.editorUi.editor.graph.model.diagramData.data_assets.get(
+              menuId
+            );
 
           if (!current[property]) {
             current[property] = typeProperties[property].defaultValue;
@@ -12058,9 +11951,9 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
 
   idsData = [];
   // Iterate over the Map and create table rows
-  let threagile = this.editorUi.editor.graph.model.threagile;
-  if (threagile && threagile.data_assets) {
-    threagile.data_assets.forEach(function (value, property) {
+  let diagramData = this.editorUi.editor.graph.model.diagramData;
+  if (diagramData && diagramData.data_assets) {
+    diagramData.data_assets.forEach(function (value, property) {
       idsData.push(value.id);
     });
   }

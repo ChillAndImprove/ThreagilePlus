@@ -9,9 +9,6 @@ threagile_version: 1.0.0
 # from the live-templates.txt file into your IDE as live editing templates.
 #
 # You might also want to try the REST API when running in server mode...
-
-
-
 title: Some Example Application
 
 date: 2020-07-01
@@ -19,9 +16,6 @@ date: 2020-07-01
 author:
   name: John Doe
   homepage: www.example.com
-
-
-
 
 management_summary_comment: >
   Just some <b>more</b> custom summary possible here...
