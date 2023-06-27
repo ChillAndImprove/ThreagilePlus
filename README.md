@@ -40,7 +40,3 @@ I understand the importance of privacy and security, especially when it comes to
 This application is purely static JavaScript. All processing is done locally on your machine, and no data is sent out. You can verify this yourself by inspecting the network traffic in your browser's developer tools.
 
 Furthermore, being an open source project, the code is fully transparent and open for review. This means you (and anyone else) can take a look and make sure there's no funny business happening. 
-
-I encourage you to review the code and see for yourself! 
-
-If you have any questions, issues, or suggestions, feel free to open an issue. I highly value your input and feedback.
