@@ -9,7 +9,7 @@ Welcome to Threagile Plus! This open-source project, developed solely by me (vac
 
 ![showcase](finished.gif)
 
-# Project Status Update
+# Project Status
 
 I would like to kindly inform you that the current state of this project is somewhat challenging. At this point in time, the codebase contains a considerable number of bugs that need attention.
 
