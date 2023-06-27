@@ -11,11 +11,11 @@ Welcome to Threagile Plus! This open-source project, developed solely by me (vac
 
 # Project Status
 
-I would like to kindly inform you that the current state of this project is somewhat challenging. At this point in time, the codebase contains a considerable number of bugs that need attention.
+The current state of this project is somewhat challenging. At this point in time, the codebase contains a considerable number of bugs that need attention.
 
 I find myself unable to dedicate the required time to address these bugs promptly. 
 
-I am looking forward to dedicating more time to this project in the near future. Until then, contributions or even issue reports from you will be highly appreciated to help improve the project.
+I am looking forward to dedicating more time to this project in the near future.
 
 ## Getting Started
 
