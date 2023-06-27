@@ -37,6 +37,4 @@ Threagile Plus is built upon JGraph (also known as mxGraph) and Threagile, which
 
 I understand the importance of privacy and security, especially when it comes to something as critical as threat modeling. I want to assure you that your threat models are not being sent anywhere. 
 
-This application is purely static JavaScript. All processing is done locally on your machine, and no data is sent out. You can verify this yourself by inspecting the network traffic in your browser's developer tools.
-
-Furthermore, being an open source project, the code is fully transparent and open for review. This means you (and anyone else) can take a look and make sure there's no funny business happening. 
+This application is purely static JavaScript. All processing is done locally on your machine, and no data is sent out. You can verify this yourself by inspecting the network traffic in your browser.
