@@ -98,8 +98,9 @@ Actions.prototype.init = function () {
               try {
                 jsonObj = JSON.parse(parseModelViaString(xml));
               } catch (error) {
-                console.error("Fehler beim Parsen des JSON-Objekts: ", error);
-                return; // Beendet die Funktion, wenn ein Fehler auftritt.
+                console.error("Couldn't parse JSON-Object: ", error);
+                alert("Error while parsing JSON-Object: " + error);
+                return;
               }
               dot = printDataFlowDiagramGraphvizDOT();
               //let jsonObj = dotParser.parse(dot);
