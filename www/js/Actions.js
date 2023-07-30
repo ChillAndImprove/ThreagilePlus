@@ -110,37 +110,17 @@ Actions.prototype.init = function () {
 
               endWASM();
               let cnt = 0;
-         
-              var destinationObj = new Map();
-              for (let entry in jsonObj) {
-                if (
-                  entry !== "trust_boundaries" &&
-                  entry !== "data_assets" &&
-                  entry !== "technical_Assets"
-                ) {
-                  destinationObj.set(entry, jsonObj[entry]);
-                }
-              }
-              graph.getModel().diagramData = destinationObj;
+
+              graph.getModel().diagramData = new Object();
               graph.getModel().diagramData.data_assets = new Map();
-              for (let entries in jsonObj.data_assets) {
-                let entry = jsonObj.data_assets[entries];
-                graph.getModel().diagramData.data_assets.set("" + cnt++, {
-                  id: jsonObj.data_assets[entries].id,
-                  title: jsonObj.data_assets[entries].title,
-                  description: jsonObj.data_assets[entries].description,
-                  availability: jsonObj.data_assets[entries].availability,
-                  confidentiality: jsonObj.data_assets[entries].confidentiality,
-                  integrity: jsonObj.data_assets[entries].integrity,
-                  justification_cia_rating:
-                    jsonObj.data_assets[entries].justification_cia_rating,
-                  origin: jsonObj.data_assets[entries].origin,
-                  owner: jsonObj.data_assets[entries].owner,
-                  usage: jsonObj.data_assets[entries].usage,
-                  quantity: jsonObj.data_assets[entries].quantity,
-                  visible: false,
-                });
-              }
+
+	      let dataAssets = graph.model.threagile.getIn(["data_assets"]).items;
+   		dataAssets.forEach((item, index) => {
+	       let key = item.key.value; // Get the key of this data asset
+		    graph.getModel().diagramData.data_assets.set(key, {
+			visible: false
+		    });
+		});	
 
               //Technology Asset Import
 
@@ -220,23 +200,10 @@ Actions.prototype.init = function () {
                         clusterStyle
                       );
                       clusterVertex.setConnectable(false);
-                      let trust = jsonObj.trust_boundaries;
+			if (titleCluster.textContent) {
+			    clusterVertex.trust_boundaries = titleCluster.textContent;
+			}	
 
-                      let titleMap = new Map();
-
-                      for (let key in trust) {
-                        if (trust.hasOwnProperty(key)) {
-                          let asset = trust[key];
-                          let title = asset.title;
-
-                          titleMap.set(title, asset);
-                        }
-                      }
-
-                      if (titleMap.has(titleCluster.textContent)) {
-                        let asset = titleMap.get(titleCluster.textContent);
-                        clusterVertex.trust_boundaries = asset;
-                      }
                     }
                   }
                   for (var i = 0; i < nodes.length; i++) {
@@ -463,26 +430,12 @@ Actions.prototype.init = function () {
                           style
                         );
                       }
-                      let technicalAssets = jsonObj.technical_assets;
-
-                      let titleMap = new Map();
-
-                      for (let key in technicalAssets) {
-                        if (technicalAssets.hasOwnProperty(key)) {
-                          let asset = technicalAssets[key];
-                          let title = asset.title;
-
-                          titleMap.set(title, asset);
-                        }
-                      }
-
-                      if (titleMap.has(text)) {
-                        let asset = titleMap.get(text);
-                        vertex.technicalAsset = asset;
-                      }
-
-                      vertex.setVertex(true);
-                      nodeIdMap[nodeCoords.nodeTitle] = vertex;
+if (graph.model.threagile.hasIn(["technical_assets", text])) {
+    vertex.technicalAsset = text;
+}
+  
+vertex.setVertex(true);  
+nodeIdMap[nodeCoords.nodeTitle] = vertex;
 
                       let bounds = graph.getCellGeometry(vertex);
                       let textWidth = mxUtils.getSizeForString(
