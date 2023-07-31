@@ -8652,19 +8652,20 @@ InspectionFormatPanel.prototype.init = function () {
       : null;
   let cellBegin = cellsBegin && cellsBegin.length > 0 ? cellsBegin[0] : null;
   let technicalAssetId =
-    cellBegin && cellBegin.technicalAsset && cellBegin.technicalAsset.id
-      ? cellBegin.technicalAsset.id
+    cellBegin && cellBegin.technicalAsset 
+      ? cellBegin.technicalAsset
       : null;
 
   WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then(
     (result) => {
       go.run(result.instance);
-      let exportYaml = exportToYaml(graph, false);
+      //let exportYaml = exportToYaml(graph, false);
       
       //let jsonObj = JSON.parse(parseModelViaString(exportYaml));
-      parseModelViaString(graph.model.threagile.toString());
+      let jsonObj = JSON.parse(parseModelViaString(graph.model.threagile.toString()));
       applyRAAJS();
       yaml = JSON.parse(applyRiskGenerationJS());
+     // let jsonObj = JSON.parse(applyRiskGenerationJS());
 
       endWASM();
       let span = document.createElement("span");
@@ -8713,9 +8714,10 @@ InspectionFormatPanel.prototype.init = function () {
         gaugeElement.style.height = "130px";
 
         this.container.appendChild(gaugeElement);
+	let id = graph.model.threagile.getIn(['technical_assets', technicalAssetId, 'id']);
         let gauge = new JustGage({
           id: "gaugeElement",
-          value: jsonObj.TechnicalAssets[technicalAssetId].RAA,
+          value: jsonObj.TechnicalAssets[id].RAA,
           min: 0,
           max: 100,
           decimals: 2,
@@ -8723,7 +8725,7 @@ InspectionFormatPanel.prototype.init = function () {
         });
         for (var i = 0; i < yaml.length; i++) {
           let obj = yaml[i];
-          if (obj.synthetic_id.includes(technicalAssetId)) {
+          if (obj.synthetic_id.includes(id)) {
             filteredArray.push(obj);
           }
         }
@@ -11690,31 +11692,6 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
     destroy: function () {},
   };
 
-/*
-{
-
-     let ast = self.editorUi.editor.graph.model.threagile;
-  const cell = self.editorUi.editor.graph.getSelectionCell();
-const assetId = cell.technicalAsset.id;
-
-for (let property in typeProperties) {
-  if (typeProperties.hasOwnProperty(property)) {
-    let propertyValue = typeProperties[property];
-    
-    // Check if property exists in the AST
-    let propertyExists = ast.getIn(["technical_assets", assetId, property]) !== undefined;
-    
-    if (!cell.technicalAsset || !propertyExists) {
-      if (propertyValue.hasOwnProperty("defaultValue")) {
-        cell.technicalAsset[property] = propertyValue.defaultValue;
-      }
-    } else {
-      cell.technicalAsset[property] = ast.getIn(["technical_assets", assetId, property]);
-    }
-  }
-}  
-} 
-*/
   sections = {};
   for (let property in typeProperties) {
     let sectionName = typeProperties[property].section;
