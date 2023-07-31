@@ -7930,14 +7930,16 @@ DiagramFormatPanel.prototype.init = function () {
     list.appendChild(listItem);
   }
 
-  if (
+if (
     typeof graph.model.diagramData !== "undefined" &&
     typeof this.editorUi.editor.graph.model.diagramData.data_assets !==
       "undefined"
   ) {
-    graph.model.diagramData.data_assets.forEach(
+    let data_assets_map = graph.model.diagramData.data_assets;
+    data_assets_map.forEach(
       function (value, property) {
-        var clonedMenu = this.addDataMenu(this.createPanel());
+       let data_asset = this.editorUi.editor.graph.model.threagile.getIn(["data_assets", property]);
+       var clonedMenu = this.addDataMenu(this.createPanel());
         clonedMenu.id = property;
         var listItem = document.createElement("li");
         listItem.style.display = "flex";
@@ -7986,7 +7988,7 @@ DiagramFormatPanel.prototype.init = function () {
         textContainer.insertBefore(arrowIcon, dataText);
 
         var dataText = document.createElement("div");
-        dataText.textContent = value.id;
+        dataText.textContent = property;
 
         var xButton = document.createElement("button");
         xButton.innerHTML =
@@ -8658,7 +8660,9 @@ InspectionFormatPanel.prototype.init = function () {
     (result) => {
       go.run(result.instance);
       let exportYaml = exportToYaml(graph, false);
-      let jsonObj = JSON.parse(parseModelViaString(exportYaml));
+      
+      //let jsonObj = JSON.parse(parseModelViaString(exportYaml));
+      parseModelViaString(graph.model.threagile.toString());
       applyRAAJS();
       yaml = JSON.parse(applyRiskGenerationJS());
 
@@ -10430,7 +10434,7 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   // Iterate over the Map and create table rows
   if (diagramData !== undefined) {
     diagramData.forEach(function (value, property) {
-      idsData.push(value.id);
+      idsData.push(property);
     });
   }
 
@@ -11686,23 +11690,31 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
     destroy: function () {},
   };
 
-  {
-    let cell = self.editorUi.editor.graph.getSelectionCell();
-    for (let property in typeProperties) {
-      if (typeProperties.hasOwnProperty(property)) {
-        let propertyValue = typeProperties[property];
+/*
+{
 
-        if (
-          !cell.technicalAsset ||
-          cell.technicalAsset[property] === undefined
-        ) {
-          if (propertyValue.hasOwnProperty("defaultValue")) {
-            cell.technicalAsset[property] = propertyValue.defaultValue;
-          }
-        }
+     let ast = self.editorUi.editor.graph.model.threagile;
+  const cell = self.editorUi.editor.graph.getSelectionCell();
+const assetId = cell.technicalAsset.id;
+
+for (let property in typeProperties) {
+  if (typeProperties.hasOwnProperty(property)) {
+    let propertyValue = typeProperties[property];
+    
+    // Check if property exists in the AST
+    let propertyExists = ast.getIn(["technical_assets", assetId, property]) !== undefined;
+    
+    if (!cell.technicalAsset || !propertyExists) {
+      if (propertyValue.hasOwnProperty("defaultValue")) {
+        cell.technicalAsset[property] = propertyValue.defaultValue;
       }
+    } else {
+      cell.technicalAsset[property] = ast.getIn(["technical_assets", assetId, property]);
     }
   }
+}  
+} 
+*/
   sections = {};
   for (let property in typeProperties) {
     let sectionName = typeProperties[property].section;
@@ -11746,31 +11758,27 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
         }
         selectDropdown.appendChild(optgroup);
       }
-      let cell = self.editorUi.editor.graph.getSelectionCell();
-      if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
-        selectDropdown.selectedIndex = cell.technicalAsset[propertySelect];
-      }
-      let createChangeListener = function (selectDropdown, propertySelect) {
-        return function (evt) {
-          var vals = selectDropdown.value;
+     let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset.id;
+let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
 
-          if (vals != null) {
-            var cells = self.editorUi.editor.graph.getSelectionCells();
-            if (cells != null && cells.length > 0) {
-              var cell = self.editorUi.editor.graph.getSelectionCell();
-              if (!cell.technicalAsset) {
-                cell.technicalAsset = {
-                  [propertySelect]: selectDropdown.selectedIndex,
-                };
-              } else {
-                cell.technicalAsset[propertySelect] =
-                  selectDropdown.selectedIndex;
-              }
+if (assetInAst && assetInAst[propertySelect]) {
+    selectDropdown.selectedIndex = assetInAst[propertySelect];
+}
+
+let createChangeListener = function (selectDropdown, propertySelect) {
+    return function (evt) {
+        var vals = selectDropdown.value;
+
+        if (vals != null) {
+            var assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset.id;
+            if (assetId) {
+                let assetPath = ["technical_assets", assetId, propertySelect];
+                self.editorUi.editor.graph.model.threagile.setIn(assetPath, selectDropdown.selectedIndex);
             }
-          }
-          mxEvent.consume(evt);
-        };
-      };
+        }
+        mxEvent.consume(evt);
+    };
+}; 
       mxEvent.addListener(
         selectDropdown,
         "change",
@@ -11790,58 +11798,52 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
 
       sections[sectionName].appendChild(optionElement);
     } else if (propertyType === "button") {
-      let button = mxUtils.button(
-        property,
-        mxUtils.bind(this, function (evt) {
-          let cells = self.editorUi.editor.graph.getSelectionCells();
-          let cell = cells && cells.length > 0 ? cells[0] : null;
-          let dataValue =
-            cell && cell.technicalAsset && cell.technicalAsset[property]
-              ? cell.technicalAsset[property]
-              : typeProperties[property].defaultValue;
+let button = mxUtils.button(
+    property,
+    mxUtils.bind(this, function (evt) {
+        let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset.id;
+        let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
 
-          var dlg = new TextareaDialog(
+        let dataValue = assetInAst && assetInAst[property] ? assetInAst[property] : typeProperties[property].defaultValue;
+
+        var dlg = new TextareaDialog(
             this.editorUi,
             property + ":",
             dataValue,
             function (newValue) {
-              if (newValue != null) {
-                if (cell) {
-                  if (property === "id") {
-                    var adjustedValue = newValue
-                      .replace(/</g, "&lt;")
-                      .replace(/>/g, "&gt;");
-                    let model = self.editorUi.editor.graph.model;
-                    model.beginUpdate();
-                    try {
-                      model.setValue(cell, adjustedValue);
+                if (newValue != null) {
+                    if (assetId) {
+                        if (property === "id") {
+                            var adjustedValue = newValue.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                            let model = self.editorUi.editor.graph.model;
+                            model.beginUpdate();
+                            try {
+                                let assetPath = ["technical_assets", assetId, property];
+                                self.editorUi.editor.graph.model.threagile.setIn(assetPath, adjustedValue);
 
-                      self.editorUi.editor.graph.refresh(cell);
+                                self.editorUi.editor.graph.refresh(cell);
 
-                      self.editorUi.editor.graph.refresh();
-                    } finally {
-                      model.endUpdate();
+                                self.editorUi.editor.graph.refresh();
+                            } finally {
+                                model.endUpdate();
+                            }
+                        }
+                        else {
+                            let assetPath = ["technical_assets", assetId, property];
+                            self.editorUi.editor.graph.model.threagile.setIn(assetPath, newValue);
+                        }
                     }
-                  }
-                  if (!cell.technicalAsset) {
-                    cell.technicalAsset = {
-                      [property]: newValue,
-                    };
-                  } else {
-                    cell.technicalAsset[property] = newValue;
-                  }
                 }
-              }
             },
             null,
             null,
             400,
             220
-          );
-          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
-          dlg.init();
-        })
-      );
+        );
+        this.editorUi.showDialog(dlg.container, 420, 300, true, true);
+        dlg.init();
+    })
+); 
       button.title = typeProperties[property].tooltip;
       button.style.width = "200px";
       typeItem.appendChild(button);
@@ -11954,58 +11956,64 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
   let diagramData = this.editorUi.editor.graph.model.diagramData;
   if (diagramData && diagramData.data_assets) {
     diagramData.data_assets.forEach(function (value, property) {
-      idsData.push(value.id);
+      idsData.push(property);
     });
   }
 
-  let inputElement = document.createElement("input");
-  inputElement.placeholder = "Data Processed";
-  let cells = self.editorUi.editor.graph.getSelectionCells();
-  let cell = cells && cells.length > 0 ? cells[0] : null;
+let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
+console.log('assetId:', assetId); // Log the value of assetId
 
-  let sentSection = createSection("Data Processed:");
+let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
+console.log('assetInAst:', assetInAst); // Log the value of assetInAst
 
-  sentSection.appendChild(document.createElement("br"));
-  if (cell && cell.technicalAsset) {
-    inputElement.value = cell.technicalAsset.data_assets_stored;
-  } // Append it to body (or any other container)
-  sentSection.appendChild(inputElement);
-  let tinput = document.querySelector('input[name="input-custom-dropdown"]'),
-    // init Tagify script on the above inputs
-    tagify = new Tagify(inputElement, {
-      whitelist: idsData,
-      dropdown: {
-        maxItems: 20, // <- mixumum allowed rendered suggestions
-        classname: "tags-look", // <- custom classname for this dropdown, so it could be targeted
-        enabled: 0, // <- show suggestions on focus
-        closeOnSelect: false, // <- do not hide the suggestions dropdown once an item has been selected
-      },
-    });
-  main.appendChild(sentSection);
-  let inputElement2 = document.createElement("input");
+let inputElement = document.createElement("input");
+inputElement.placeholder = "Data Processed";
 
-  let receivedSecion = createSection("Data Stored:");
+let sentSection = createSection("Data Processed:");
 
-  receivedSecion.appendChild(document.createElement("br"));
-  if (cell && cell.technicalAsset) {
-    inputElement2.value = cell.technicalAsset.data_assets_processed;
-  } // Append it to body (or any other container)
-  receivedSecion.appendChild(inputElement2);
-  let tinput2 = document.querySelector('input[name="input-custom-dropdown"]'),
-    // init Tagify script on the above inputs
-    tagify2 = new Tagify(inputElement2, {
-      whitelist: idsData,
-      dropdown: {
-        maxItems: 20, // <- mixumum allowed rendered suggestions
-        classname: "tags-look", // <- custom classname for this dropdown, so it could be targeted
-        enabled: 0, // <- show suggestions on focus
-        closeOnSelect: false, // <- do not hide the suggestions dropdown once an item has been selected
-      },
-    });
-  main.appendChild(receivedSecion);
-  container.appendChild(main);
+sentSection.appendChild(document.createElement("br"));
+if (assetInAst) {
+  inputElement.value = assetInAst.data_assets_stored;
+  console.log('inputElement.value:', inputElement.value); // Log the value of inputElement.value
+} 
+sentSection.appendChild(inputElement);
 
-  return container;
+console.log('idsData:', idsData); // Log the value of idsData
+let tagify = new Tagify(inputElement, {
+  whitelist: idsData,
+  dropdown: {
+    maxItems: 20, 
+    classname: "tags-look", 
+    enabled: 0, 
+    closeOnSelect: false, 
+  },
+});
+main.appendChild(sentSection);
+
+let inputElement2 = document.createElement("input");
+
+let receivedSecion = createSection("Data Stored:");
+
+receivedSecion.appendChild(document.createElement("br"));
+if (assetInAst) {
+  inputElement2.value = assetInAst.data_assets_processed;
+  console.log('inputElement2.value:', inputElement2.value); // Log the value of inputElement2.value
+} 
+receivedSecion.appendChild(inputElement2);
+
+let tagify2 = new Tagify(inputElement2, {
+  whitelist: idsData,
+  dropdown: {
+    maxItems: 20, 
+    classname: "tags-look", 
+    enabled: 0, 
+    closeOnSelect: false, 
+  },
+});
+main.appendChild(receivedSecion);
+container.appendChild(main);
+
+return container;
 };
 
 // Helper function to create property items
