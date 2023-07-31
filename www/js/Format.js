@@ -8662,7 +8662,39 @@ InspectionFormatPanel.prototype.init = function () {
       //let exportYaml = exportToYaml(graph, false);
       
       //let jsonObj = JSON.parse(parseModelViaString(exportYaml));
-      let jsonObj = JSON.parse(parseModelViaString(graph.model.threagile.toString()));
+	// TODO: We could instead of returning the entire json, write a go method that simply returns the raa value
+      //let jsonObj = JSON.parse(parseModelViaString(graph.model.threagile.toString()));
+       let start, end;
+
+// Start timing
+start = performance.now();
+
+// Serialize the object to a string
+let threagileString = graph.model.threagile.toString();
+
+// End timing and calculate the duration
+end = performance.now();
+console.log('toString() time: ' + (end - start) + ' ms');
+
+// Start timing again
+start = performance.now();
+
+// Parse the string with your custom function
+let parsedString = parseModelViaString(threagileString);
+
+// End timing and calculate the duration
+end = performance.now();
+console.log('parseModelViaString() time: ' + (end - start) + ' ms');
+
+// Start timing again
+start = performance.now();
+
+// Convert the parsed string to JSON
+let jsonObj = JSON.parse(parsedString);
+
+// End timing and calculate the duration
+end = performance.now();
+console.log('JSON.parse() time: ' + (end - start) + ' ms');
       applyRAAJS();
       yaml = JSON.parse(applyRiskGenerationJS());
      // let jsonObj = JSON.parse(applyRiskGenerationJS());
