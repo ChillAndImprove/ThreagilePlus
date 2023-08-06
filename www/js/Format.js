@@ -11975,10 +11975,8 @@ let button = mxUtils.button(
   }
 
 let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
-console.log('assetId:', assetId); // Log the value of assetId
 
 let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
-console.log('assetInAst:', assetInAst); // Log the value of assetInAst
 
 let inputElement = document.createElement("input");
 inputElement.placeholder = "Data Processed";
@@ -11986,9 +11984,8 @@ inputElement.placeholder = "Data Processed";
 let sentSection = createSection("Data Processed:");
 
 sentSection.appendChild(document.createElement("br"));
-if (assetInAst) {
-  inputElement.value = assetInAst.data_assets_stored;
-  console.log('inputElement.value:', inputElement.value); // Log the value of inputElement.value
+if (assetInAst && assetInAst.get("data_assets_stored")) {
+  inputElement.value = assetInAst.get("data_assets_stored");
 } 
 sentSection.appendChild(inputElement);
 
@@ -12009,8 +12006,8 @@ let inputElement2 = document.createElement("input");
 let receivedSecion = createSection("Data Stored:");
 
 receivedSecion.appendChild(document.createElement("br"));
-if (assetInAst) {
-  inputElement2.value = assetInAst.data_assets_processed;
+if (assetInAst && assetInAst.get("data_assets_processed")) {
+  inputElement2.value = assetInAst.get("data_assets_processed");
   console.log('inputElement2.value:', inputElement2.value); // Log the value of inputElement2.value
 } 
 receivedSecion.appendChild(inputElement2);
