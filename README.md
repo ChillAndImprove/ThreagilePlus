@@ -40,3 +40,17 @@ Threagile Plus is built upon JGraph (also known as mxGraph) and Threagile, which
 I understand the importance of privacy and security, especially when it comes to something as critical as threat modeling. I want to assure you that your threat models are not being sent anywhere. 
 
 This application is purely static JavaScript. All processing is done locally on your machine, and no data is sent out. You can verify this yourself by inspecting the network traffic in your browser.
+
+
+## TODOs
+
+### Bugs: 
+- Technical Assets
+	- Tagify set don't work
+	- Risks don't work
+	- If Value does not exists, set does't work, we have to check beforehand
+### Check: 
+- Check Trust Boundary
+	- TrustBoudary button don't work
+- Check Communication Links
+- Check all setters, (e.g. tagify and what have you)
