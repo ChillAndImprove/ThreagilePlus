@@ -11106,35 +11106,37 @@ function createPropertyItem(label, type, options) {
 }
 function createCustomOption(self, parameter) {
   return function () {
+    // Getting the selected cells
     var cells = self.editorUi.editor.graph.getSelectionCells();
     if (cells != null && cells.length > 0) {
+      // Selecting the current cell
       var cell = self.editorUi.editor.graph.getSelectionCell();
-      if (!cell.technicalAsset) {
-        cell.technicalAsset = {
-          [parameter]: false,
-        };
-      }
-      var customValue = cell.technicalAsset[parameter];
+      
+      // Checking if the 'technicalAsset' property exists in the cell, otherwise create a new instance with the given parameter
+      var customValue = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.technicalAsset, parameter]);
+      
       return customValue;
     }
     return false;
   };
 }
-
+                                                 
+// Function to set a custom option
 function setCustomOption(self, parameter) {
   return function (checked) {
+    // Getting the selected cells
     var cells = self.editorUi.editor.graph.getSelectionCells();
     if (cells != null && cells.length > 0) {
+      // Selecting the current cell
       var cell = self.editorUi.editor.graph.getSelectionCell();
-      if (!cell.technicalAsset) {
-        cell.technicalAsset = {
-          [parameter]: false,
-        };
-      }
-      cell.technicalAsset[parameter] = checked;
+      
+      // Checking if the 'technicalAsset' property exists in the cell, otherwise create a new instance with the given parameter
+      graph.model.threagile = self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.technicalAsset, parameter], checked);
     }
   };
 }
+
+
 
 DiagramFormatPanel.prototype.addDataMenu = function (container) {
   var self = this;
@@ -11767,11 +11769,11 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
         }
         selectDropdown.appendChild(optgroup);
       }
-     let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset.id;
+     let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
 let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
 
-if (assetInAst && assetInAst[propertySelect]) {
-    selectDropdown.selectedIndex = assetInAst[propertySelect];
+if (assetInAst && self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId, propertySelect])) {
+    selectDropdown.value = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId, propertySelect]);
 }
 
 let createChangeListener = function (selectDropdown, propertySelect) {
@@ -11779,7 +11781,7 @@ let createChangeListener = function (selectDropdown, propertySelect) {
         var vals = selectDropdown.value;
 
         if (vals != null) {
-            var assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset.id;
+            var assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
             if (assetId) {
                 let assetPath = ["technical_assets", assetId, propertySelect];
                 self.editorUi.editor.graph.model.threagile.setIn(assetPath, selectDropdown.selectedIndex);
@@ -11810,10 +11812,11 @@ let createChangeListener = function (selectDropdown, propertySelect) {
 let button = mxUtils.button(
     property,
     mxUtils.bind(this, function (evt) {
-        let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset.id;
+        let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
         let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
+	let assetInAstValue = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId, property]);
 
-        let dataValue = assetInAst && assetInAst[property] ? assetInAst[property] : typeProperties[property].defaultValue;
+        let dataValue = assetInAst && assetInAstValue ? assetInAstValue : typeProperties[property].defaultValue;
 
         var dlg = new TextareaDialog(
             this.editorUi,
@@ -11859,6 +11862,12 @@ let button = mxUtils.button(
       sections[sectionName].appendChild(typeItem);
     }
   }
+{
+let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
+let outOfScope = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId, "out_of_scope"]);
+	//let button = container.querySelector("#justification_out_of_scope"); 
+//button.disabled = !outOfScope;
+}
   let selects = sections.CIA.querySelectorAll("select");
   selects.forEach(function (select) {
     switch (select.value) {
