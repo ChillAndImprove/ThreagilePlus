@@ -11131,7 +11131,7 @@ function setCustomOption(self, parameter) {
       var cell = self.editorUi.editor.graph.getSelectionCell();
       
       // Checking if the 'technicalAsset' property exists in the cell, otherwise create a new instance with the given parameter
-      graph.model.threagile = self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.technicalAsset, parameter], checked);
+      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.technicalAsset, parameter], checked);
     }
   };
 }
@@ -11863,10 +11863,6 @@ let button = mxUtils.button(
     }
   }
 {
-let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
-let outOfScope = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId, "out_of_scope"]);
-	//let button = container.querySelector("#justification_out_of_scope"); 
-//button.disabled = !outOfScope;
 }
   let selects = sections.CIA.querySelectorAll("select");
   selects.forEach(function (select) {
