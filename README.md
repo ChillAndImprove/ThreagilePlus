@@ -49,6 +49,9 @@ This application is purely static JavaScript. All processing is done locally on 
 	- Tagify set don't work
 	- Risks don't work
 	- If Value does not exists, set does't work, we have to check beforehand
+
+- Import:
+	- Edges should be colored in the import step
 ### Check: 
 - Check Trust Boundary
 	- TrustBoudary button don't work
