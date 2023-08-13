@@ -563,6 +563,47 @@ nodeIdMap[nodeCoords.nodeTitle] = vertex;
                         }
                       }
                     }
+		   const edges = graph.getModel().getEdges(cell);
+	    function getEdgeDirection(sourcePoint, targetPoint) {
+    const dx = targetPoint.x - sourcePoint.x;
+    const dy = targetPoint.y - sourcePoint.y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+        return dx > 0 ? 'EAST' : 'WEST';
+    } else {
+        return dy > 0 ? 'SOUTH' : 'NORTH';
+    }
+}
+
+    edges.forEach((edge) => {
+        const geometry = edge.getGeometry();
+        const sourceGeometry = edge.source.getGeometry();
+        const targetGeometry = edge.target.getGeometry();
+        if (geometry && sourceGeometry && targetGeometry) {
+            const sourcePoint = new mxPoint(sourceGeometry.x + sourceGeometry.width / 2, sourceGeometry.y + sourceGeometry.height / 2);
+            const targetPoint = new mxPoint(targetGeometry.x + targetGeometry.width / 2, targetGeometry.y + targetGeometry.height / 2);
+            const direction = getEdgeDirection(sourcePoint, targetPoint);
+            switch (direction) {
+                case 'NORTH':
+                    geometry.setTerminalPoint(new mxPoint(sourceGeometry.getCenterX(), sourceGeometry.y), true);
+                    geometry.setTerminalPoint(new mxPoint(targetGeometry.getCenterX(), targetGeometry.y + targetGeometry.height), false);
+                    break;
+                case 'SOUTH':
+                    geometry.setTerminalPoint(new mxPoint(sourceGeometry.getCenterX(), sourceGeometry.y + sourceGeometry.height), true);
+                    geometry.setTerminalPoint(new mxPoint(targetGeometry.getCenterX(), targetGeometry.y), false);
+                    break;
+                case 'EAST':
+                    geometry.setTerminalPoint(new mxPoint(sourceGeometry.x + sourceGeometry.width, sourceGeometry.getCenterY()), true);
+                    geometry.setTerminalPoint(new mxPoint(targetGeometry.x, targetGeometry.getCenterY()), false);
+                    break;
+                case 'WEST':
+                    geometry.setTerminalPoint(new mxPoint(sourceGeometry.x, sourceGeometry.getCenterY()), true);
+                    geometry.setTerminalPoint(new mxPoint(targetGeometry.x + targetGeometry.width, targetGeometry.getCenterY()), false);
+                    break;
+                default:
+                    break;
+            }
+            graph.getModel().setGeometry(edge, geometry);
+        }
                   } catch (error) {
                     console.error(error);
                   } finally {
