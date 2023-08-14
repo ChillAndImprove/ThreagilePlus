@@ -1,5 +1,6 @@
 import unittest
 from selenium import webdriver
+from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 import time
 import os
@@ -47,12 +48,79 @@ class MyTestCase(unittest.TestCase):
             time.sleep(10)
             cls.driver.switch_to.default_content()
         finally:
-            print("failed")
-    '''
-    def test_aselect_confidential(self):
+            print("done")
+    def test_technical_assets_import_confidential(self):
         try:
             # Click on the specified element
-            element_to_click = self.driver.find_element(By.CSS_SELECTOR, ".geDiagramContainer > svg:nth-child(2) > g:nth-child(1) > g:nth-child(2) > g:nth-child(18) > g:nth-child(1) > text:nth-child(1)")
+            element_to_click = self.driver.find_element(By.CSS_SELECTOR, ".geDiagramContainer > svg:nth-child(2) > g:nth-child(1) > g:nth-child(2) > g:nth-child(36) > g:nth-child(1) > text:nth-child(1)")
+            element_to_click.click()
+
+            time.sleep(2) # Wait to allow the dropdown to load
+
+            # Find the select element
+            select_element = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(6) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > li:nth-child(1) > div:nth-child(2) > select:nth-child(1)")
+            # Use the Select class to choose "confidential" from the dropdown
+            select = Select(select_element)
+
+            # Check that "confidential" was indeed selected
+            selected_option = select.first_selected_option
+            self.assertEqual(selected_option.text, 'confidential', msg="The 'confidential' option was not selected")
+
+        except Exception as e:
+            print(f"Test failed with error: {e}")
+            raise
+    def test_technical_assets_set_data_processed(self):
+        try:
+            # Click on the specified element
+            element_to_click = self.driver.find_element(By.CSS_SELECTOR, ".geDiagramContainer > svg:nth-child(2) > g:nth-child(1) > g:nth-child(2) > g:nth-child(36) > g:nth-child(1) > text:nth-child(1)")
+            element_to_click.click()
+
+            time.sleep(2) # Wait to allow the dropdown to load
+
+            delete_button= self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(6) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(5) > tags:nth-child(2) > tag:nth-child(1) > x:nth-child(1)")
+            delete_button.click()            
+            script = """
+             var result = window.editorUi.editor.graph.model.threagile.getIn(['technical_assets','External Development Client','data_assets_processed']);
+            return result;
+             """
+            value = self.driver.execute_script(script)
+            self.assertEqual(1, len(value), msg="There is not one object left.")
+
+
+        except Exception as e:
+            print(f"Test failed with error: {e}")
+            raise
+
+
+
+    def test_technical_assets_set_internet(self):
+        try:
+            # Click on the specified element
+            element_to_click = self.driver.find_element(By.CSS_SELECTOR, ".geDiagramContainer > svg:nth-child(2) > g:nth-child(1) > g:nth-child(2) > g:nth-child(36) > g:nth-child(1) > text:nth-child(1)")
+            element_to_click.click()
+
+            time.sleep(2) # Wait to allow the dropdown to load
+
+            checkbox_element = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(6) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(7) > input:nth-child(1)")
+            checkbox_element.click()            
+            # Check that "confidential" was indeed selected
+            script = """
+             var result = window.editorUi.editor.graph.model.threagile.getIn(['technical_assets','External Development Client','internet']);
+            return result;
+             """
+            value = self.driver.execute_script(script)
+            self.assertEqual(value, 'false', msg="The value is not set to 'false'")
+
+
+        except Exception as e:
+            print(f"Test failed with error: {e}")
+            raise
+
+
+    def test_technical_assets_set_confidential(self):
+        try:
+            # Click on the specified element
+            element_to_click = self.driver.find_element(By.CSS_SELECTOR, ".geDiagramContainer > svg:nth-child(2) > g:nth-child(1) > g:nth-child(2) > g:nth-child(36) > g:nth-child(1) > text:nth-child(1)")
             element_to_click.click()
 
             time.sleep(2) # Wait to allow the dropdown to load
@@ -63,16 +131,48 @@ class MyTestCase(unittest.TestCase):
             # Use the Select class to choose "confidential" from the dropdown
             from selenium.webdriver.support.ui import Select
             select = Select(select_element)
-            select.select_by_visible_text('confidential')
+            select.select_by_visible_text('internal')
 
             # Check that "confidential" was indeed selected
             selected_option = select.first_selected_option
-            self.assertEqual(selected_option.text, 'confidential', msg="The 'confidential' option was not selected")
+            script = "return window.editorUi.editor.graph.model.threagile.getIn(['technical_assets','External Development Client','confidentiality']);"
+            value = self.driver.execute_script(script)
+            self.assertEqual(value, 'Public', msg="The value is not set to 'Public'")
+
 
         except Exception as e:
             print(f"Test failed with error: {e}")
             raise
-'''
+
+
+
+    def test_technical_assets_set_confidential(self):
+        try:
+            # Click on the specified element
+            element_to_click = self.driver.find_element(By.CSS_SELECTOR, ".geDiagramContainer > svg:nth-child(2) > g:nth-child(1) > g:nth-child(2) > g:nth-child(36) > g:nth-child(1) > text:nth-child(1)")
+            element_to_click.click()
+
+            time.sleep(2) # Wait to allow the dropdown to load
+
+            # Find the select element
+            select_element = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(6) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > li:nth-child(1) > div:nth-child(2) > select:nth-child(1)")
+
+            # Use the Select class to choose "confidential" from the dropdown
+            from selenium.webdriver.support.ui import Select
+            select = Select(select_element)
+            select.select_by_visible_text('internal')
+
+            # Check that "confidential" was indeed selected
+            selected_option = select.first_selected_option
+            script = "return window.editorUi.editor.graph.model.threagile.getIn(['technical_assets','External Development Client','confidentiality']);"
+            value = self.driver.execute_script(script)
+            self.assertEqual(value, 'Public', msg="The value is not set to 'Public'")
+
+
+        except Exception as e:
+            print(f"Test failed with error: {e}")
+            raise
+
     def test_data_assets(self):
         try:
             time.sleep(2)

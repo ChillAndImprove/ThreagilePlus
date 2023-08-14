@@ -563,16 +563,7 @@ nodeIdMap[nodeCoords.nodeTitle] = vertex;
                         }
                       }
                     }
-		   const edges = graph.getModel().getEdges(cell);
-	    function getEdgeDirection(sourcePoint, targetPoint) {
-    const dx = targetPoint.x - sourcePoint.x;
-    const dy = targetPoint.y - sourcePoint.y;
-    if (Math.abs(dx) > Math.abs(dy)) {
-        return dx > 0 ? 'EAST' : 'WEST';
-    } else {
-        return dy > 0 ? 'SOUTH' : 'NORTH';
-    }
-}
+		  
 
     
                   } catch (error) {

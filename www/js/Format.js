@@ -2,6 +2,7 @@
  * Copyright (c) 2006-2012, JGraph Ltd
  */
 Format = function (editorUi, container) {
+  window.editorUi = editorUi;
   this.editorUi = editorUi;
   this.container = container;
   let threagileInit = `
