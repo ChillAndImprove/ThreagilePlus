@@ -15,6 +15,12 @@ business_criticality: important # values: archive, operational, important, criti
   let wow2 = YAML.parseDocument(threagileInit);
   this.editorUi.editor.graph.model.threagile =
     YAML.parseDocument(threagileInit);
+  editorUi.editor.graph.addListener(mxEvent.CELL_CONNECTED, function(sender, evt) {
+    var edge = evt.getProperty('edge');
+    var source = evt.getProperty('source');
+    var terminal = evt.getProperty('terminal');
+	  console.log(edge);
+});
 };
 
 /**

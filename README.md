@@ -43,17 +43,36 @@ This application is purely static JavaScript. All processing is done locally on 
 
 
 ## TODOs
+Tests: 
+- Next up tests fürs Verbinden von vertices
+	Dafür brauch ich hovern und 
+	from selenium.webdriver.common.action_chains import ActionChains
 
-### Bugs: 
-- Technical Assets
-	- Tagify set don't work
-	- Risks don't work
-	- If Value does not exists, set does't work, we have to check beforehand
+	element_to_hover = driver.find_element_by_css_selector("Element")
+	hover_action = ActionChains(driver).move_to_element(element_to_hover)
+	hover_action.perform()
 
-- Import:
-	- Edges should be colored in the import step
-### Check: 
-- Check Trust Boundary
-	- TrustBoudary button don't work
-- Check Communication Links
-- Check all setters, (e.g. tagify and what have you)
+	dragg:
+	from selenium.webdriver.common.action_chains import ActionChains
+
+	element_to_drag = driver.find_element_by_css_selector("element")
+	target_location = driver.find_element_by_css_selector("target")
+
+	drag_and_drop_action = ActionChains(driver).drag_and_drop(element_to_drag, target_location)
+	drag_and_drop_action.perform()
+- Data Asset 
+	- Element löschen
+	- Elemente hinzufügen
+	- Set
+		- Tag
+		- Dropdown Menü
+		- Buttonz.b description
+
+- Trust Boundary
+	- Set
+		- Button
+		- Dropdown
+		- Elemente raus bewegen und reinbewegen
+- Check Risks readonly
+- Check RiskTracking readonly
+
