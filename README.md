@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./www/images/logo.png" alt="Threagile Plus Logo" width="200">
+  <img src="./images/logo.png" alt="Threagile Plus Logo" width="200">
 </p>
 
 
