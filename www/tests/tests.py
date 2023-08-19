@@ -49,6 +49,46 @@ class MyTestCase(unittest.TestCase):
             cls.driver.switch_to.default_content()
         finally:
             print("done")
+
+    def test_acheck_connection(self):
+            script = """
+                var graph = window.editorUi.editor.graph;
+                var parent = graph.getDefaultParent();
+                var vertices = graph.getChildVertices(parent);
+
+
+                var sourceVertex = null;
+                var targetVertex = null;
+
+                vertices.forEach(function(vertex) {
+                  if (vertex.value === 'Jenkins Buildserver') {
+                    sourceVertex = vertex;
+                  }
+                  if (vertex.value === 'Customer Web Client') {
+                    targetVertex = vertex;
+                  }
+                });
+
+                if (sourceVertex && targetVertex) {
+                    var edge = graph.insertEdge(parent, null, '', sourceVertex, targetVertex);
+                    graph.refresh();
+                    return {
+                        source: sourceVertex.value,
+                        target: targetVertex.value,
+                        edge: edge.id
+                    };
+                }
+            """
+            value2 = self.driver.execute_script(script)
+            script2 = """
+             var result =window.editorUi.editor.graph.model.threagile.getIn(['technical_assets', 'Jenkins Buildserver', 'communication_links','Customer Web Client Access']);  
+             return result;
+             """
+            value = self.driver.execute_script(script2)
+            self.assertEqual(None,value , msg="Didn't work")
+
+
+
     def test_technical_assets_import_confidential(self):
         try:
             # Click on the specified element
@@ -173,7 +213,7 @@ class MyTestCase(unittest.TestCase):
             print(f"Test failed with error: {e}")
             raise
 
-    def test_data_assets(self):
+    def test_zata_assets(self):
         try:
             time.sleep(2)
             
