@@ -14,6 +14,11 @@ class MyTestCase(unittest.TestCase):
         cls.driver = webdriver.Firefox()
         cls.url = "localhost:8000/indexTest.html"
         cls.driver.get(cls.url)
+        print()
+        print()
+        print()
+        print()
+        print("Starting...")
         cls.import_file(cls)
 
     @classmethod
@@ -48,7 +53,7 @@ class MyTestCase(unittest.TestCase):
             time.sleep(10)
             cls.driver.switch_to.default_content()
         finally:
-            print("done")
+            print("Setup succeeded" + u'\u2713')
 
     def test_acheck_connection(self):
             script = """
