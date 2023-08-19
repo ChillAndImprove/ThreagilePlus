@@ -44,22 +44,6 @@ This application is purely static JavaScript. All processing is done locally on 
 
 ## TODOs
 Tests: 
-- Next up tests fürs Verbinden von vertices
-	Dafür brauch ich hovern und 
-	from selenium.webdriver.common.action_chains import ActionChains
-
-	element_to_hover = driver.find_element_by_css_selector("Element")
-	hover_action = ActionChains(driver).move_to_element(element_to_hover)
-	hover_action.perform()
-
-	dragg:
-	from selenium.webdriver.common.action_chains import ActionChains
-
-	element_to_drag = driver.find_element_by_css_selector("element")
-	target_location = driver.find_element_by_css_selector("target")
-
-	drag_and_drop_action = ActionChains(driver).drag_and_drop(element_to_drag, target_location)
-	drag_and_drop_action.perform()
 - Data Asset 
 	- Element löschen
 	- Elemente hinzufügen
