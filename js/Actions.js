@@ -80,15 +80,18 @@ Actions.prototype.init = function () {
 
     window.openFile.setConsumer(
       mxUtils.bind(this, function (xml, filename) {
+	let eventsEnabled = graph.isEventsEnabled();
+        graph.setEventsEnabled(false);
+
+        // Turn off automatic layouts
+        let layoutEnabled = graph.isEnabled();
+        graph.setEnabled(false);
+
         try {
-          if (filename.endsWith(".yaml")) {
-            const go = new Go();
-            WebAssembly.instantiateStreaming(
-              fetch("main.wasm"),
-              go.importObject
-            ).then((result) => {
-              go.run(result.instance);
-              const startTime = performance.now();
+        // Turn off automatic rendering
+         if (filename.endsWith(".yaml")) {
+
+       const startTime = performance.now();
                 try {
                 graph.model.threagile = YAML.parseDocument(xml);
               } catch (error) {
@@ -96,21 +99,21 @@ Actions.prototype.init = function () {
               }
               let jsonObj;
               try {
-                jsonObj = JSON.parse(parseModelViaString(xml));
+                jsonObj = JSON.parse(window.parseModelViaString(xml));
               } catch (error) {
                 console.error("Couldn't parse JSON-Object: ", error);
                 alert("Error while parsing JSON-Object: " + error);
                 return;
               }
-              dot = printDataFlowDiagramGraphvizDOT();
+              dot = window.printDataFlowDiagramGraphvizDOT();
               //let jsonObj = dotParser.parse(dot);
               let dotJson = dotParser.parse(dot)[0];
               //First data import
               jsonObj = keysToSnakeCase(jsonObj);
 
-              endWASM();
-              let cnt = 0;
+              //endWASM();
 
+              let cnt = 0;
               graph.getModel().diagramData = new Object();
               graph.getModel().diagramData.data_assets = new Map();
 
@@ -130,6 +133,7 @@ Actions.prototype.init = function () {
               vizInstance
                 .renderString(dot)
                 .then(function (result) {
+
                   let svg = result;
                   let parser = new DOMParser();
                   let svgDoc = parser.parseFromString(svg, "image/svg+xml");
@@ -140,6 +144,8 @@ Actions.prototype.init = function () {
                   graph.getModel().clear();
                   let clusters = svgDoc.querySelectorAll(".cluster");
 
+
+		graph.getModel().beginUpdate();
                   for (var i = 0; i < clusters.length; i++) {
                     let cluster = clusters[i];
                     let polygon = cluster.querySelector("polygon");
@@ -314,12 +320,14 @@ Actions.prototype.init = function () {
                       };
                     }
                   }
+
+
                   let style = graph.getStylesheet().getDefaultEdgeStyle();
                   style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom;
 
                   let parent = graph.getDefaultParent();
 
-                  try {
+
                     for (let nodeId in coordinates) {
                       let nodeCoords = coordinates[nodeId];
 
@@ -378,6 +386,8 @@ Actions.prototype.init = function () {
                           nodeCoords.stroke +
                           ";strokeWidth=" +
                           nodeCoords.strokeWidth;
+
+
                         vertex = graph.insertVertex(
                           parent,
                           null,
@@ -388,7 +398,7 @@ Actions.prototype.init = function () {
                           Math.abs(maxY - minY) * heightScaleFactor,
                           style
                         );
-                      } else if (nodeCoords.shape === "ellipse") {
+              } else if (nodeCoords.shape === "ellipse") {
                         let widthScaleFactor = 0.6;
                         let heightScaleFactor = 0.6;
                         let style =
@@ -409,6 +419,7 @@ Actions.prototype.init = function () {
                           Math.abs(maxY - minY),
                           style
                         );
+        
                       } else {
                         let widthScaleFactor = 0.6;
                         let heightScaleFactor = 0.6;
@@ -419,6 +430,7 @@ Actions.prototype.init = function () {
                           nodeCoords.stroke +
                           ";strokeWidth=" +
                           nodeCoords.strokeWidth;
+
                         vertex = graph.insertVertex(
                           parent,
                           null,
@@ -429,14 +441,15 @@ Actions.prototype.init = function () {
                           Math.abs(maxY - minY),
                           style
                         );
+        
                       }
-if (graph.model.threagile.hasIn(["technical_assets", text])) {
-    vertex.technicalAsset = text;
-}
-  
-vertex.setVertex(true);  
-nodeIdMap[nodeCoords.nodeTitle] = vertex;
-
+		if (graph.model.threagile.hasIn(["technical_assets", text])) {
+		    vertex.technicalAsset = text;
+		}
+		  
+		vertex.setVertex(true);  
+		nodeIdMap[nodeCoords.nodeTitle] = vertex;
+	
                       let bounds = graph.getCellGeometry(vertex);
                       let textWidth = mxUtils.getSizeForString(
                         text,
@@ -458,6 +471,10 @@ nodeIdMap[nodeCoords.nodeTitle] = vertex;
                       }
                       graph.resizeCell(vertex, bounds);
                     }
+	
+
+
+
 
                     // Parse edges
                     let edgeStmts = dotJson.children.filter(
@@ -465,6 +482,7 @@ nodeIdMap[nodeCoords.nodeTitle] = vertex;
                     );
                     let edgeMap = {};
                     let uniqueEdgeStmts = [];
+
 
                     edgeStmts.forEach((edgeStmt) => {
                       let key =
@@ -554,6 +572,10 @@ nodeIdMap[nodeCoords.nodeTitle] = vertex;
                         }
                       }
                     });
+		const endTime = performance.now();
+		console.log(`Call to doSomething took ${endTime - startTime} milliseconds.`);
+
+
                     let cells = graph.getModel().cells;
                     for (let id in cells) {
                       let cell = cells[id];
@@ -564,18 +586,13 @@ nodeIdMap[nodeCoords.nodeTitle] = vertex;
                       }
                     }
 		  
-
-    
-                  } catch (error) {
-                    console.error(error);
-                  } finally {
-                    graph.fit();
-                  }
+		graph.getModel().endUpdate();
+		graph.fit();
+                  
                 })
                 .catch(function (error) {
                   console.error(error);
                 });
-            });
           } else {
             var doc = mxUtils.parseXml(xml);
             editor.graph.setSelectionCells(
@@ -588,7 +605,15 @@ nodeIdMap[nodeCoords.nodeTitle] = vertex;
             mxResources.get("invalidOrMissingFile") + ": " + e.message
           );
         }
+	 finally {
+		    graph.setEnabled(layoutEnabled);
+                    graph.setEventsEnabled(eventsEnabled);
+                    graph.fit();
+      }
+
+       
       })
+ 
     );
 
     function getPolygonPoints(coordinates) {
