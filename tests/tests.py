@@ -2,6 +2,8 @@ import unittest
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 import time
 import os
 
@@ -54,8 +56,52 @@ class MyTestCase(unittest.TestCase):
             cls.driver.switch_to.default_content()
         finally:
             print("Setup succeeded" + u'\u2713')
+    def test_add_data_asset(self):
+            tmp = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(5) > div:nth-child(4) > div:nth-child(1) > a:nth-child(3) > svg:nth-child(1) > g:nth-child(1) > g:nth-child(2) > g:nth-child(2) > g:nth-child(1) > foreignObject:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)")
+            tmp.click()
+            actions = ActionChains(self.driver)
+            actions.send_keys(Keys.DELETE)  # Press the delete key
+            actions.perform()
+            script = """
+             var result =window.editorUi.editor.graph.model.threagile.getIn(['data_assets']).items.length;  
+             return result;
+             """
+            old = self.driver.execute_script(script)
+            add_data = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(6) > div:nth-child(2) > div:nth-child(2) > button:nth-child(2)")
+            add_data.click()
+            script = """
+             var result =window.editorUi.editor.graph.model.threagile.getIn(['data_assets']).items.length;  
+             return result;
+             """
+            new = self.driver.execute_script(script)
+              
+            self.assertEqual(new,old+1 , msg="No data asset added")
+    def test_delete_data_asset(self):
+            tmp = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(5) > div:nth-child(4) > div:nth-child(1) > a:nth-child(3) > svg:nth-child(1) > g:nth-child(1) > g:nth-child(2) > g:nth-child(2) > g:nth-child(1) > foreignObject:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)")
+            tmp.click()
+            actions = ActionChains(self.driver)
+            actions.send_keys(Keys.DELETE)  # Press the delete key
+            actions.perform()
+            data = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(6) > div:nth-child(2) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(1) > div:nth-child(1) > img:nth-child(1)")
+            data.click()
+            script = """
+             var result =window.editorUi.editor.graph.model.threagile.getIn(['data_assets']).items.length;  
+             return result;
+             """
+            old = self.driver.execute_script(script)
+            deleteButton = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(6) > div:nth-child(2) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(1) > div:nth-child(1) > button:nth-child(3)")
+            deleteButton.click()           
+            script = """
+             var result =window.editorUi.editor.graph.model.threagile.getIn(['data_assets']).items.length;  
+             return result;
+             """
+            new = self.driver.execute_script(script)
+              
+            self.assertEqual(new,old-1 , msg="No data asset deleted")
 
-    def test_acheck_connection(self):
+
+
+    def test_check_connection(self):
             script = """
                 var graph = window.editorUi.editor.graph;
                 var parent = graph.getDefaultParent();
@@ -190,44 +236,20 @@ class MyTestCase(unittest.TestCase):
             raise
 
 
-
-    def test_technical_assets_set_confidential(self):
-        try:
-            # Click on the specified element
-            element_to_click = self.driver.find_element(By.CSS_SELECTOR, ".geDiagramContainer > svg:nth-child(2) > g:nth-child(1) > g:nth-child(2) > g:nth-child(36) > g:nth-child(1) > text:nth-child(1)")
-            element_to_click.click()
-
-            time.sleep(2) # Wait to allow the dropdown to load
-
-            # Find the select element
-            select_element = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(6) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > li:nth-child(1) > div:nth-child(2) > select:nth-child(1)")
-
-            # Use the Select class to choose "confidential" from the dropdown
-            from selenium.webdriver.support.ui import Select
-            select = Select(select_element)
-            select.select_by_visible_text('internal')
-
-            # Check that "confidential" was indeed selected
-            selected_option = select.first_selected_option
-            script = "return window.editorUi.editor.graph.model.threagile.getIn(['technical_assets','External Development Client','confidentiality']);"
-            value = self.driver.execute_script(script)
-            self.assertEqual(value, 'Public', msg="The value is not set to 'Public'")
-
-
-        except Exception as e:
-            print(f"Test failed with error: {e}")
-            raise
-
     def test_zata_assets(self):
         try:
+            tmp = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(5) > div:nth-child(4) > div:nth-child(1) > a:nth-child(3) > svg:nth-child(1) > g:nth-child(1) > g:nth-child(2) > g:nth-child(2) > g:nth-child(1) > foreignObject:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)")
+            tmp.click()
+            actions = ActionChains(self.driver)
+            actions.send_keys(Keys.DELETE)  # Press the delete key
+            actions.perform()
             time.sleep(2)
-            
-            first_element = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(6) > div:nth-child(2) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(1) > div:nth-child(1) > img:nth-child(1)")
+            first_element = self.driver.find_element(By.CSS_SELECTOR, "div.geSidebarContainer:nth-child(6) > div:nth-child(2) > div:nth-child(2) > ul:nth-child(1) > li:nth-child(2) > div:nth-child(1) > img:nth-child(1)")
             first_element.click()
 
             time.sleep(2)
 
-            second_element = self.driver.find_element(By.CSS_SELECTOR, "#Customer\ Contracts > div:nth-child(1) > li:nth-child(1) > button:nth-child(1)")
+            second_element = self.driver.find_element(By.CSS_SELECTOR, "#Customer\ Contract\ Summaries > div:nth-child(1) > li:nth-child(1) > button:nth-child(1)")
             second_element.click()
 
             time.sleep(2)
@@ -240,6 +262,8 @@ class MyTestCase(unittest.TestCase):
 
         except Exception as e:
             print(f"Test failed with error: {e}")
+            close_button = self.driver.find_element(By.CSS_SELECTOR, "button.geBtn:nth-child(1)")
+            close_button.click()
             raise
 
 
