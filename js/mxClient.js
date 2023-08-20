@@ -569,10 +569,18 @@ else
 }
 
 // Adds all required stylesheets and namespaces
-if (mxLoadStylesheets)
-{
-	mxClient.link('stylesheet', mxClient.basePath + '/css/common.css');
+let basePath = mxClient.basePath;
+
+// Check if the current URL contains the repository name, and adjust the base path if needed
+if (window.location.pathname.includes('/ThreagilePlus/')) {
+    basePath = basePath.replace('/src', '/ThreagilePlus/src');
 }
+
+// Now, link the stylesheet using the adjusted base path
+if (mxLoadStylesheets) {
+    mxClient.link('stylesheet', basePath + '/css/common.css');
+}
+
 
 /**
  * Variable: languages
@@ -45547,6 +45555,14 @@ mxPrintPreview.prototype.writeHead = function(doc, css)
 	if (mxClient.IS_VML)
 	{
 		doc.writeln('<style type="text/css">v\\:*{behavior:url(#default#VML)}o\\:*{behavior:url(#default#VML)}</style>');
+	}
+
+	// Adds all required stylesheets and namespaces
+	let basePath = mxClient.basePath;
+
+	// Check if the current URL contains the repository name, and adjust the base path if needed
+	if (window.location.pathname.includes('/ThreagilePlus/')) {
+	    basePath = basePath.replace('/src', '/ThreagilePlus/src');
 	}
 
 	// Adds all required stylesheets
