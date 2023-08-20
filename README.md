@@ -63,8 +63,12 @@ Tests:
 - Check Risks readonly
 - Check RiskTracking readonly
 More testing:
+
 Testing the ability to create a graph from scratch(First we gonna just use dummy values in the yaml, like foo and so on for business critically)
 - New Element is the graph creating a element with that value in technical Asset
 - Same goes for data asset
 - Same goes for edges
 
+
+Bug:
+ Github Pages common.js is not loaded because mxgraph tries to find the css from /src/ but that should be /ThreagilePlus.. 
