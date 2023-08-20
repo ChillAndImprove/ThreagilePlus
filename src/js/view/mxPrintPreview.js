@@ -728,8 +728,12 @@ mxPrintPreview.prototype.writeHead = function(doc, css)
 		doc.writeln('<style type="text/css">v\\:*{behavior:url(#default#VML)}o\\:*{behavior:url(#default#VML)}</style>');
 	}
 
-	// Adds all required stylesheets
-	mxClient.link('stylesheet', mxClient.basePath + '/css/common.css', doc);
+	if (window.location.pathname.includes('/ThreagilePlus/')) {
+	    basePath = basePath.replace('/src', '/ThreagilePlus/src');
+	}
+
+	// Now, link the stylesheet using the adjusted base path
+        mxClient.link('stylesheet', basePath + '/css/common.css', doc);
 
 	// Removes horizontal rules and page selector from print output
 	doc.writeln('<style type="text/css">');
