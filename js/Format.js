@@ -8715,7 +8715,6 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
       yaml = JSON.parse(applyRiskGenerationJS());
      // let jsonObj = JSON.parse(applyRiskGenerationJS());
 
-      endWASM();
       let span = document.createElement("span");
       span.innerHTML = "<b>Relative Attacker Attractivness:</b> ";
       this.container.appendChild(span);
