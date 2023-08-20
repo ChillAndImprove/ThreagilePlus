@@ -569,10 +569,19 @@ else
 }
 
 // Adds all required stylesheets and namespaces
-if (mxLoadStylesheets)
-{
-	mxClient.link('stylesheet', mxClient.basePath + '/css/common.css');
+let basePath = mxClient.basePath;
+
+// Check if the current URL contains the repository name, and adjust the base path if needed
+if (window.location.pathname.includes('/ThreagilePlus/')) {
+    basePath = basePath.replace('/src', '/ThreagilePlus/src');
 }
+
+// Now, link the stylesheet using the adjusted base path
+if (mxLoadStylesheets) {
+    mxClient.link('stylesheet', basePath + '/css/common.css');
+}
+
+
 
 /**
  * Variable: languages
