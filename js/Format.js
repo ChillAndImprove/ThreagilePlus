@@ -8672,10 +8672,7 @@ InspectionFormatPanel.prototype.init = function () {
       ? cellBegin.technicalAsset
       : null;
 
-  WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then(
-    (result) => {
-      go.run(result.instance);
-      //let exportYaml = exportToYaml(graph, false);
+     //let exportYaml = exportToYaml(graph, false);
       
       //let jsonObj = JSON.parse(parseModelViaString(exportYaml));
 	// TODO: We could instead of returning the entire json, write a go method that simply returns the raa value
@@ -8696,7 +8693,7 @@ console.log('toString() time: ' + (end - start) + ' ms');
 start = performance.now();
 
 // Parse the string with your custom function
-let parsedString = parseModelViaString(threagileString);
+let parsedString = window.parseModelViaString(threagileString);
 
 // End timing and calculate the duration
 end = performance.now();
@@ -8711,8 +8708,8 @@ let jsonObj = JSON.parse(parsedString);
 // End timing and calculate the duration
 end = performance.now();
 console.log('JSON.parse() time: ' + (end - start) + ' ms');
-      applyRAAJS();
-      yaml = JSON.parse(applyRiskGenerationJS());
+      window.applyRAAJS();
+      yaml = JSON.parse(window.applyRiskGenerationJS());
      // let jsonObj = JSON.parse(applyRiskGenerationJS());
 
       let span = document.createElement("span");
@@ -9025,8 +9022,7 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
           list2.appendChild(listItem);
         }
       }
-    }
-  );
+    
 };
 InspectionFormatPanel.prototype.addInspectionFormatMenuDynamic = function (
   container,
