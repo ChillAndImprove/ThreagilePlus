@@ -44,10 +44,14 @@ I understand the importance of privacy and security, especially when it comes to
 This application is purely static JavaScript. All processing is done locally on your machine, and no data is sent out. You can verify this yourself by inspecting the network traffic in your browser.
 
 
-## TODOs
-Tests:
+Here's a cleaner and more structured version of your TODO list:
+
+## TODOs for Testing
+
+### General Tests:
 - **Technical Assets:**
-  - Test everything
+  - Test everything.
+  
 - **Data Asset:**
   - Configuration:
     - Tag
@@ -61,30 +65,26 @@ Tests:
     - Move elements in and out
 
 - **Connections:**
-  - Use JavaScript to click on an edge and then verify the values
+  - Use JavaScript to click on an edge and verify the values.
 
-  
-- Check Risks readonly
--[REMOVE this] Check RiskTracking readonly
-- Check if ID change, changes the value too.
-     - Check if Id changes, in other assets the id changes too
-- Data Asset, check if id changes in other assets too via test
-- Teste Title data assets 
+- Check if risk assessments are read-only.
+- Verify that changes in ID update the corresponding values across:
+  - Data Assets
+  - Technical Assets
 
-More testing:
-Testing the ability to create a graph from scratch(First we gonna just use dummy values in the yaml, like foo and so on for business critically)
-- New Element is the graph creating a element with that value in technical Asset
-- Same goes for data asset
-- Same goes for edges
+- Test the display of titles in data assets.
 
+### Graph Creation Testing:
+- Test creating a graph from scratch with dummy values (e.g., business criticality labeled as "foo").
+  - Ensure new elements in the graph create corresponding entries in technical assets.
+  - Verify the same for data assets and edges.
 
+### Bugs:
+- [Resolved] GitHub Pages common.js is not loaded correctly due to mxgraph seeking CSS from `/src/` instead of `/ThreagilePlus`.
 
-Bug:
- [X]Github Pages common.js is not loaded because mxgraph tries to find the css from /src/ but that should be /ThreagilePlus.. 
+### Additional TODOs:
+- Add titles to data assets and technical assets.
+- Implement a gauge to display the number of risks mitigated.
 
-TODO:
-- Add title to datasset und zu techical asset,
-- Add gauge for how many risks are mitigated
-
-Food for thought:
-- How do we work with changes in trust boundaries
+### Considerations:
+- Explore strategies for handling changes in trust boundaries.
