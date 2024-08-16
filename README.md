@@ -45,23 +45,25 @@ This application is purely static JavaScript. All processing is done locally on 
 
 
 ## TODOs
-Tests: 
-- Technical Assets
-	- Test everthing 	
-- Data Asset 
-	- Set
-		- Tag
-		- Dropdown Menü
-		- Buttonz.b description
+Tests:
+- **Technical Assets:**
+  - Test everything
+- **Data Asset:**
+  - Configuration:
+    - Tag
+    - Dropdown menu
+    - Buttons, e.g., description
 
-- Trust Boundary
-	- Set
-		- Button
-		- Dropdown
-		- Elemente raus bewegen und reinbewegen
-- Connections
-	- We can click on an edge via js and then check those values
- 
+- **Trust Boundary:**
+  - Configuration:
+    - Button
+    - Dropdown
+    - Move elements in and out
+
+- **Connections:**
+  - Use JavaScript to click on an edge and then verify the values
+
+  
 - Check Risks readonly
 -[REMOVE this] Check RiskTracking readonly
 - Check if ID change, changes the value too.
