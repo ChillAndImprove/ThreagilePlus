@@ -7982,8 +7982,16 @@ if (
                   let nextChildNode = currentChildNode.children[1].children[0];
 
                   if (nextChildNode.nodeName === "SELECT") {
-                    nextChildNode.selectedIndex = childNode;
-                  }
+                    // Loop through all the options in the select element
+                    for (let i = 0; i < nextChildNode.options.length; i++) {
+                        // Check if the current option's value matches the childNode value
+                        if (nextChildNode.options[i].value === childNode) {
+                            // Set the selectedIndex to the current index if there is a match
+                            nextChildNode.selectedIndex = i;
+                            break; // Exit the loop once the match is found and set
+                        }
+                    }
+                }
                 }
               }
             }
@@ -8018,8 +8026,7 @@ if (
           var parentListItem = xButton.parentNode.parentNode;
           var parentList = parentListItem.parentNode;
           parentList.removeChild(parentListItem);
-
-          var menuId = graph.model.diagramData.delete(clonedMenu.id);
+          delete graph.model.diagramData[clonedMenu.id];
         });
 
         textContainer.appendChild(dataText);

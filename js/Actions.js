@@ -117,13 +117,26 @@ Actions.prototype.init = function () {
               graph.getModel().diagramData = new Object();
               graph.getModel().diagramData.data_assets = new Map();
 
-	      let dataAssets = graph.model.threagile.getIn(["data_assets"]).items;
-   		dataAssets.forEach((item, index) => {
-	       let key = item.key.value; // Get the key of this data asset
-		    graph.getModel().diagramData.data_assets.set(key, {
-			visible: false
-		    });
-		});	
+              let dataAssets = graph.model.threagile.getIn(["data_assets"]).items;
+              dataAssets.forEach((item) => {
+                  let key = item.key.value;  // Get the key of this data asset
+                  let dataAsset = item.value.toJSON();  // Convert the YAML node to a JSON object to easily access properties
+              
+                  // Set the properties in diagramData for each data asset
+                  graph.getModel().diagramData.data_assets.set(key, {
+                      visible: false,
+                      quantity: dataAsset.quantity,
+                      confidentiality: dataAsset.confidentiality,
+                      integrity: dataAsset.integrity,
+                      availability: dataAsset.availability,
+                      origin: dataAsset.origin,
+                      owner: dataAsset.owner,
+                      description: dataAsset.description,
+                      usage: dataAsset.usage,
+                      tags: dataAsset.tags,
+                      justification_cia_rating: dataAsset.justification_cia_rating
+                  });
+              });
 
               //Technology Asset Import
 
@@ -145,7 +158,7 @@ Actions.prototype.init = function () {
                   let clusters = svgDoc.querySelectorAll(".cluster");
 
 
-		graph.getModel().beginUpdate();
+		              graph.getModel().beginUpdate();
                   for (var i = 0; i < clusters.length; i++) {
                     let cluster = clusters[i];
                     let polygon = cluster.querySelector("polygon");
