@@ -15,8 +15,6 @@ The current state of this project is somewhat challenging. At this point in time
 
 I find myself unable to dedicate the required time to address these bugs promptly. 
 
-I am looking forward to dedicating more time to this project in the near future.
-
 ## Getting Started
 
 To start using Threagile Plus, follow these steps:
