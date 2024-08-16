@@ -42,8 +42,6 @@ I understand the importance of privacy and security, especially when it comes to
 This application is purely static JavaScript. All processing is done locally on your machine, and no data is sent out. You can verify this yourself by inspecting the network traffic in your browser.
 
 
-Here's a cleaner and more structured version of your TODO list:
-
 ## TODOs for Testing
 
 ### General Tests:
