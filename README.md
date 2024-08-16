@@ -21,15 +21,17 @@ I am looking forward to dedicating more time to this project in the near future.
 
 To start using Threagile Plus, follow these steps:
 
-1. Navigate to the `www` directory:
+1. Switch to the cloned repository directory:
     ```bash
-    cd www
+    cd path/to/cloned_repo
     ```
-2. Start the server using Python:
+2. Launch the server using Python:
     ```bash
     python3 -m http.server
     ```
-3. Open your web browser and go to `http://localhost:8000`.
+3. Open your web browser and navigate to `http://localhost:8000`.
+
+4. Click on **File** -> **Import** -> **Browse**. Select your `Threagile.yaml` file and click **Import**.
 
 ## Technical Details
 
