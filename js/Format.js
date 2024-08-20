@@ -8,7 +8,8 @@ Format = function (editorUi, container) {
   let threagileInit = `
 threagile_version: 1.0.0
 business_criticality: important # values: archive, operational, important, critical, mission-critical
-
+technical_assets:
+ata_assets:
 `;
 
   let wow = YAML.parse(threagileInit);
@@ -8661,6 +8662,24 @@ InspectionFormatPanel = function (format, editorUi, container) {
 };
 mxUtils.extend(InspectionFormatPanel, BaseFormatPanel);
 
+// Function to generate a unique ID
+function generateUniqueId(graph) {
+  var newId;
+  do {
+      newId = 'ta_' + Math.random().toString(36).substr(2, 9); // Generate a random ID
+  } while (checkIdExists(graph, newId)); // Ensure it's unique
+  return newId;
+}
+
+
+// Function to check if an ID already exists in the graph's model
+function checkIdExists(graph, id) {
+  // Assuming a method to check ID exists in your structure, you can modify this according to your application's logic
+  var exists = graph.model.threagile.getIn(['technical_assets', id, 'id']);
+  return !!exists; // Convert to boolean
+}
+
+
 InspectionFormatPanel.prototype.init = function () {
   var ui = this.editorUi;
   let self = this;
@@ -8674,11 +8693,58 @@ InspectionFormatPanel.prototype.init = function () {
       ? self.editorUi.editor.graph.getSelectionCells()
       : null;
   let cellBegin = cellsBegin && cellsBegin.length > 0 ? cellsBegin[0] : null;
-  let technicalAssetId =
+  
+
+  const undefinedAsset = cellsBegin[0].technicalAsset === undefined 
+
+  
+  var technicalAssetId = !undefinedAsset
+                               ? cellsBegin[0].technicalAsset 
+                               : generateUniqueId(graph);
+
+
+if (undefinedAsset)
+{
+    const path = ['technical_assets', technicalAssetId];
+
+  if (!graph.model.threagile.hasIn(['technical_assets'])) {
+      graph.model.threagile.setIn(['technical_assets'], new Map()); // Initialize as a new map
+  } 
+  if (!graph.model.threagile.hasIn(path)) {
+    graph.model.threagile.setIn(path, new Map()); // Initialize as a new map
+
+  }
+
+  
+  graph.model.threagile.setIn([...path, 'id'], technicalAssetId);
+  graph.model.threagile.setIn([...path, 'description'], 'Your description here');
+  graph.model.threagile.setIn([...path, 'type'], 'external-entity'); // Fixed values: 'external-entity', 'process', 'datastore'
+  graph.model.threagile.setIn([...path, 'usage'], 'devops'); // Fixed values: 'business', 'devops'
+  graph.model.threagile.setIn([...path, 'used_as_client_by_human'], true);
+  graph.model.threagile.setIn([...path, 'out_of_scope'], true);
+  graph.model.threagile.setIn([...path, 'justification_out_of_scope'], 'Managed by an external provider');
+  graph.model.threagile.setIn([...path, 'size'], 'component'); // Fixed values: 'system', 'service', 'application', 'component'
+  graph.model.threagile.setIn([...path, 'technology'], 'browser'); // Example: 'browser', 'server', 'mobile app'
+  graph.model.threagile.setIn([...path, 'tags', 'internet'], false);
+  graph.model.threagile.setIn([...path, 'tags', 'machine'], 'virtual'); // Fixed values: 'physical', 'virtual', 'container', 'serverless'
+  graph.model.threagile.setIn([...path, 'encryption'], 'none'); // Fixed values: 'none', 'transparent', 'data-with-symmetric-shared-key', etc.
+  graph.model.threagile.setIn([...path, 'owner'], 'Default Owner');
+  graph.model.threagile.setIn([...path, 'confidentiality'], 'internal'); // Fixed values: 'public', 'internal', 'restricted', etc.
+  graph.model.threagile.setIn([...path, 'integrity'], 'operational'); // Fixed values: 'archive', 'operational', 'important', etc.
+  graph.model.threagile.setIn([...path, 'availability'], 'operational'); // Fixed values: 'archive', 'operational', 'important', etc.
+  graph.model.threagile.setIn([...path, 'justification_cia_rating'], 'Standard operational ratings applied.');
+  graph.model.threagile.setIn([...path, 'multi_tenant'], false);
+  graph.model.threagile.setIn([...path, 'redundant'], false);
+  graph.model.threagile.setIn([...path, 'custom_developed_parts'], false);
+}
+        console.log('Assigned ID:', technicalAssetId);
+
+
+  /*let technicalAssetId =
     cellBegin && cellBegin.technicalAsset 
       ? cellBegin.technicalAsset
       : null;
-
+*/
      //let exportYaml = exportToYaml(graph, false);
       
       //let jsonObj = JSON.parse(parseModelViaString(exportYaml));
@@ -8765,7 +8831,7 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
         gaugeElement.style.height = "130px";
 
         this.container.appendChild(gaugeElement);
-	let id = graph.model.threagile.getIn(['technical_assets', technicalAssetId, 'id']);
+          let id = graph.model.threagile.getIn(['technical_assets', technicalAssetId, 'id']);
         let gauge = new JustGage({
           id: "gaugeElement",
           value: jsonObj.TechnicalAssets[id].RAA,
