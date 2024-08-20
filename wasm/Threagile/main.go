@@ -1319,6 +1319,7 @@ func doIt(inputFilename string, outputDirectory string) {
 			os.Exit(2)
 		}
 	}()
+
 	if len(*executeModelMacro) > 0 {
 		printLogo()
 	} else {
@@ -4462,28 +4463,29 @@ func copyFile(src, dst string) (int64, error) {
 
 func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 	model.Init()
-
+	/*
+		defer func() {
+			if r := recover(); r != nil {
+				// Prepare a panic response with a custom identifier
+				panicResponse := map[string]string{
+					"error": fmt.Sprintf("::panic:: %v", r),
+				}
+				jsonPanic, err := json.Marshal(panicResponse)
+				if err != nil {
+					// If marshaling the panic fails, return a simple error message
+					this.Set("result", `{"error":"::panic:: Failed to marshal panic response"}`)
+					return
+				}
+				this.Set("result", string(jsonPanic))
+			}
+		}()
+	*/
 	modelYaml := inputs[0].String()
 	modelBytes := []byte(modelYaml)
 
 	var err error
 	err = yaml.Unmarshal(modelBytes, &modelInput)
-	/*
-		jsonString := js.Global().Get("JSON").Call("stringify", inputs[0]).String()
 
-		// Deserialisiere den JSON-String in ein Go-Objekt
-		var inputObj map[string]interface{}
-			err = json.Unmarshal([]byte(jsonString), &modelInput)
-			if err != nil {
-				fmt.Println("Fehler beim Deserialisieren des Objekts:", err)
-				return nil
-			}
-
-			// Gib die Eigenschaften des Objekts aus
-			for key, value := range inputObj {
-				fmt.Println(key, "=", value)
-			}
-	*/
 	err = yaml.Unmarshal([]byte(inputs[0].String()), &modelInput)
 	var businessCriticality model.Criticality
 	switch modelInput.Business_criticality {
@@ -5494,6 +5496,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 			checkTechnicalAssetExists(commLink.TargetId, "communication link '"+commLink.Title+"' of technical asset '"+technicalAsset.Title+"'", false)
 		}
 	}
+	// A boolean if an error happens, return !!:Error:!!: error, and in the js code check if the word !!:Error:!! is present
 	CalculateRAA()
 	jsonBytes, err := json.Marshal(model.ParsedModelRoot)
 	if err != nil {
