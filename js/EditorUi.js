@@ -866,9 +866,11 @@ EditorUi = function (editor, container, lightbox) {
 
     // Makes sure the current layer is visible when cells are added
     graph.addListener(mxEvent.CELLS_ADDED, function (sender, evt) {
+      // TODO: In EditorUI CELLS_ADDED: First if first check what kind of element, if Trust Boundary..., technical ASset..
+      // ..Create threagile.yaml
       var cells = evt.getProperty("cells");
       var parent = evt.getProperty("parent");
-
+      console.log("HEY");
       if (
         graph.getModel().isLayer(parent) &&
         !graph.isCellVisible(parent) &&
@@ -877,6 +879,34 @@ EditorUi = function (editor, container, lightbox) {
       ) {
         graph.getModel().setVisible(parent, true);
       }
+
+      
+      if (cells != null && cells.length > 0) {
+        var cell = cells[0]; // Assuming you want to check only the first or the only newly added cell
+        var cellStyle = graph.getModel().getStyle(cell);
+
+        // Determine the shape from the style and execute corresponding logic
+        if (cellStyle) {
+          if (cellStyle.includes('ellipse')) {
+              console.log('An ellipse was added.');
+              // Additional logic for Ellipse
+          } else if (cellStyle.includes('hexagon')) {
+              console.log('A hexagon was added.');
+              // Additional logic for Hexagon
+          } else if (cellStyle.includes('cylinder')) {
+              console.log('A cylinder was added.');
+              // Additional logic for Cylinder
+          }  else if (cellStyle.includes('rounded=0') && cellStyle.includes('fillColor=none')) {
+            console.log('A rectangle was added.');
+            // Handle other shapes or provide a default action
+          }
+          else{
+            console.log('A different shape or style was added: ' + cellStyle);
+
+          }
+        }
+    }
+    
     });
 
     // Global handler to hide the current menu
