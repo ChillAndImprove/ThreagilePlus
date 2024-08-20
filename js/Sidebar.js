@@ -1169,7 +1169,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "square"
     ),
-    */
+    
     this.createVertexTemplateEntry(
       "ellipse;whiteSpace=wrap;html=1;aspect=fixed;",
       80,
@@ -1180,6 +1180,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "circle"
     ),
+    */
     /*
     this.createVertexTemplateEntry(
       "shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;",
@@ -1191,8 +1192,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "process task"
     ),
-    */
-    this.createVertexTemplateEntry(
+   is.createVertexTemplateEntry(
       "rhombus;whiteSpace=wrap;html=1;",
       80,
       80,
@@ -1202,6 +1202,8 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "diamond rhombus if condition decision conditional question test"
     ),
+   
+    
     this.createVertexTemplateEntry(
       "shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;",
       120,
@@ -1209,6 +1211,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       "",
       "Parallelogram"
     ),
+      */
     this.createVertexTemplateEntry(
       "shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;",
       120,
@@ -7122,7 +7125,7 @@ Sidebar.prototype.addImagePalette = function (
       120,
       60,
       "",
-      "network-on-prem",
+      "Trust Boundary",
       null,
       null,
       "rect rectangle box"
