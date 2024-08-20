@@ -92,32 +92,36 @@ function Sidebar(editorUi, container) {
  */
 Sidebar.prototype.init = function () {
   var dir = STENCIL_PATH;
-
+/*
   this.addSearchPalette(true);
+  */
   this.addGeneralPalette(true);
-  this.addMiscPalette(false);
-  this.addAdvancedPalette(false);
-  this.addBasicPalette(dir);
+  //this.addMiscPalette(false);
+  //this.addAdvancedPalette(false);
+  //this.addBasicPalette(dir);
 
-  this.setCurrentSearchEntryLibrary("arrows");
+  //this.setCurrentSearchEntryLibrary("arrows");
+  /*
   this.addStencilPalette(
     "arrows",
     mxResources.get("arrows"),
     dir + "/arrows.xml",
     ";whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2"
   );
+  */
   this.setCurrentSearchEntryLibrary();
 
-  this.addUmlPalette(false);
-  this.addBpmnPalette(dir, false);
+  //this.addUmlPalette(false);
+  //this.addBpmnPalette(dir, false);
 
   this.setCurrentSearchEntryLibrary("flowchart");
-  this.addStencilPalette(
+  /*this.addStencilPalette(
     "flowchart",
     "Flowchart",
     dir + "/flowchart.xml",
     ";whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2"
   );
+  */
   this.setCurrentSearchEntryLibrary();
 
   this.setCurrentSearchEntryLibrary("clipart");
@@ -169,6 +173,7 @@ Sidebar.prototype.init = function () {
       Router_Icon: "router switch",
     }
   );
+  
   this.setCurrentSearchEntryLibrary();
 };
 
@@ -1101,7 +1106,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
   this.setCurrentSearchEntryLibrary("general", "general");
 
   var fns = [
-    this.createVertexTemplateEntry(
+  /*  this.createVertexTemplateEntry(
       "rounded=0;whiteSpace=wrap;html=1;",
       120,
       60,
@@ -1142,6 +1147,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "text textbox textarea"
     ),
+     */
     this.createVertexTemplateEntry(
       "ellipse;whiteSpace=wrap;html=1;",
       120,
@@ -1152,6 +1158,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "oval ellipse state"
     ),
+   /*
     this.createVertexTemplateEntry(
       "whiteSpace=wrap;html=1;aspect=fixed;",
       80,
@@ -1162,6 +1169,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "square"
     ),
+    */
     this.createVertexTemplateEntry(
       "ellipse;whiteSpace=wrap;html=1;aspect=fixed;",
       80,
@@ -1172,6 +1180,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "circle"
     ),
+    /*
     this.createVertexTemplateEntry(
       "shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;",
       120,
@@ -1182,6 +1191,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "process task"
     ),
+    */
     this.createVertexTemplateEntry(
       "rhombus;whiteSpace=wrap;html=1;",
       80,
@@ -1209,6 +1219,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "hexagon preparation"
     ),
+    /*
     this.createVertexTemplateEntry(
       "triangle;whiteSpace=wrap;html=1;",
       60,
@@ -1219,6 +1230,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "triangle logic inverter buffer"
     ),
+    */
     this.createVertexTemplateEntry(
       "shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;",
       60,
@@ -1228,7 +1240,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       null,
       "cylinder data database"
-    ),
+    ),/*
     this.createVertexTemplateEntry(
       "ellipse;shape=cloud;whiteSpace=wrap;html=1;",
       120,
@@ -1239,6 +1251,8 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       "cloud network"
     ),
+    */
+   /*
     this.createVertexTemplateEntry(
       "shape=document;whiteSpace=wrap;html=1;boundedLbl=1;",
       120,
@@ -1342,6 +1356,8 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       "",
       "Data Storage"
     ),
+    */
+/*
     this.addEntry(
       "curve",
       mxUtils.bind(this, function () {
@@ -1436,6 +1452,8 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       null,
       lineTags + "link"
     ),
+    */
+   /*
     this.addEntry(
       lineTags + "edge title",
       mxUtils.bind(this, function () {
@@ -1590,11 +1608,12 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
         );
       })
     ),
-  ];
+*/
+    ];
 
   this.addPaletteFunctions(
     "general",
-    mxResources.get("general"),
+    "Technical Asset",
     expand != null ? expand : true,
     fns
   );
@@ -2088,6 +2107,7 @@ Sidebar.prototype.addAdvancedPalette = function (expand) {
  */
 Sidebar.prototype.addBasicPalette = function (dir) {
   this.setCurrentSearchEntryLibrary("basic");
+  /*
   this.addStencilPalette(
     "basic",
     mxResources.get("basic"),
@@ -2099,6 +2119,7 @@ Sidebar.prototype.addBasicPalette = function (dir) {
     null,
     []
   );
+  */
   this.setCurrentSearchEntryLibrary();
 };
 
@@ -7107,7 +7128,7 @@ Sidebar.prototype.addImagePalette = function (
       "rect rectangle box"
     )
   );
-
+/*
   fns.push(
     this.createVertexTemplateEntry(
       "rounded=0;whiteSpace=wrap;html=1;fillColor=none;",
@@ -7185,6 +7206,7 @@ Sidebar.prototype.addImagePalette = function (
       "rect rectangle box"
     )
   );
+  */
 
   this.addPaletteFunctions(id, title, false, fns);
 };
