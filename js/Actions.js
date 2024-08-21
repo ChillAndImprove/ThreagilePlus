@@ -219,9 +219,9 @@ Actions.prototype.init = function () {
                         clusterStyle
                       );
                       clusterVertex.setConnectable(false);
-			if (titleCluster.textContent) {
-			    clusterVertex.trust_boundaries = titleCluster.textContent;
-			}	
+                    if (titleCluster.textContent) {
+                        clusterVertex.trust_boundaries = titleCluster.textContent;
+                    }	
 
                     }
                   }
@@ -598,7 +598,7 @@ Actions.prototype.init = function () {
                         }
                       }
                     }
-		  
+               
 		graph.getModel().endUpdate();
 		graph.fit();
                   

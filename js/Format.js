@@ -8,8 +8,46 @@ Format = function (editorUi, container) {
   let threagileInit = `
 threagile_version: 1.0.0
 business_criticality: important # values: archive, operational, important, critical, mission-critical
+
 technical_assets:
-ata_assets:
+ __DELETE_ME__:
+    id: backend-admin-client
+    #diagram_tweak_order: 0 # affects left to right positioning (only within a trust boundary)
+    description: Backend admin client
+    type: external-entity # values: external-entity, process, datastore
+    usage: devops # values: business, devops
+    used_as_client_by_human: true
+    out_of_scope: true
+    justification_out_of_scope: Owned and managed by ops provider
+    size: component # values: system, service, application, component
+    technology: browser # values: see help
+    tags:
+    internet: false
+    machine: physical # values: physical, virtual, container, serverless
+    encryption: none # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
+    owner: Company XYZ
+    confidentiality: internal # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: operational # values: archive, operational, important, critical, mission-critical
+    availability: operational # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating: >
+      The client used by Company XYZ to administer the system.
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: false
+data_assets:
+  Database Customizing and Dumps:
+    id: db-dumps
+    description: Data for customizing of the DB system, which might include full database dumps.
+    usage: devops # values: business, devops
+    tags:
+    origin: Company XYZ
+    owner: Company XYZ
+    quantity: very-few # values: very-few, few, many, very-many
+    confidentiality: strictly-confidential # values: public, internal, restricted, confidential, strictly-confidential
+    integrity: critical # values: archive, operational, important, critical, mission-critical
+    availability: critical # values: archive, operational, important, critical, mission-critical
+    justification_cia_rating: >
+      Data for customizing of the DB system, which might include full database dumps.
 `;
 
   let wow = YAML.parse(threagileInit);
@@ -8083,31 +8121,40 @@ if (
   this.container.appendChild(generalHeader);
 
   var addButton = mxUtils.button(
-    "Data Assets:",
+    "Add Data Asset", // Changed from "+" to more descriptive text
     mxUtils.bind(this, function (evt) {
-      this.editorUi.actions
-        .get("addDataAssets")
-        .funct(list, this.addDataMenu(this.createPanel()));
+        this.editorUi.actions
+            .get("addDataAssets")
+            .funct(list, this.addDataMenu(this.createPanel()));
     })
-  );
-  addButton.textContent = "+";
-  addButton.style.margin = "0 auto"; // Zentriert den Button horizontal
-  addButton.style.display = "block"; // Setzt den Button als Blockelement
-  addButton.style.marginTop = "8px";
-  addButton.style.padding = "5px 10px";
-  addButton.style.backgroundColor = "#999"; // Dunklerer Grauton
-  addButton.style.color = "#fff";
-  addButton.style.border = "none";
-  addButton.style.cursor = "pointer";
-  addButton.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.3)"; // Fügt einen Schatten hinzu
-  // Hover-Effekt
-  addButton.addEventListener("mouseenter", function () {
-    addButton.style.backgroundColor = "#777"; // Hintergrundfarbe ändern beim Hovern (noch dunkleres Grau)
-  });
-  addButton.addEventListener("mouseleave", function () {
-    addButton.style.backgroundColor = "#999"; // Hintergrundfarbe zurücksetzen
-  });
+);
+addButton.innerHTML = `
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-database-fill" viewBox="0 0 16 16">
+  <path d="M3 2a7 7 0 0 0 10 0v1c0 .542-.229 1.04-.61 1.465C11.105 5.352 9.342 6 8 6c-1.342 0-3.105-.648-4.39-1.535A2.877 2.877 0 0 1 3 3V2zm0 3c0 .542.229 1.04.61 1.465C4.895 7.352 6.658 8 8 8c1.342 0 3.105-.648 4.39-1.535A2.877 2.877 0 0 0 13 5V4c-1.285.887-3.048 1.535-4.39 1.535C7.658 5.535 5.895 4.887 4.61 4A2.877 2.877 0 0 1 3 4v1zm0 2c0 .542.229 1.04.61 1.465C4.895 9.352 6.658 10 8 10c1.342 0 3.105-.648 4.39-1.535A2.877 2.877 0 0 0 13 8V7c-1.285.887-3.048 1.535-4.39 1.535C7.658 8.535 5.895 7.887 4.61 7A2.877 2.877 0 0 1 3 7v1zm0 2c0 .542.229 1.04.61 1.465C4.895 11.352 6.658 12 8 12c1.342 0 3.105-.648 4.39-1.535A2.877 2.877 0 0 0 13 10V9c-1.285.887-3.048 1.535-4.39 1.535C7.658 10.535 5.895 9.887 4.61 9A2.877 2.877 0 0 1 3 9v1zm0 2c0 .542.229 1.04.61 1.465C4.895 13.352 6.658 14 8 14c1.342 0 3.105-.648 4.39-1.535A2.877 2.877 0 0 0 13 12v1a7 7 0 0 1-10 0v-1z"/>
+</svg> Add Data Asset`;
+addButton.style.cssText = `
+    margin: 0 auto;
+    display: block;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: #4CAF50; // More vibrant color
+    color: #fff;
+    border: none;
+    border-radius: 5px; // Rounded corners
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); // Subtle shadow
+    transition: background-color 0.3s; // Smooth transition for hover effect
+`;
+addButton.setAttribute("aria-label", "Add data assets"); // Accessibility improvement
 
+// Adding hover effect
+addButton.onmouseover = function() {
+    this.style.backgroundColor = "#45a049"; // Darker shade on hover
+};
+addButton.onmouseout = function() {
+    this.style.backgroundColor = "#4CAF50"; // Original color on mouse out
+};
+  
   // Elemente zum Listenelement hinzufügen
   listContainer.appendChild(list);
   listContainer.appendChild(addButton);
@@ -8666,7 +8713,7 @@ mxUtils.extend(InspectionFormatPanel, BaseFormatPanel);
 function generateUniqueId(graph) {
   var newId;
   do {
-      newId = 'ta_' + Math.random().toString(36).substr(2, 9); // Generate a random ID
+      newId = 'ta-' + Math.random().toString(36).substr(2, 9); // Generate a random ID
   } while (checkIdExists(graph, newId)); // Ensure it's unique
   return newId;
 }
@@ -8706,36 +8753,45 @@ InspectionFormatPanel.prototype.init = function () {
 if (undefinedAsset)
 {
     const path = ['technical_assets', technicalAssetId];
+    
+    if (!graph.model.threagile.hasIn(path)) {
+      const assetDetails = {
+            id: technicalAssetId,
+            description: "Tech Asset",
+            type: 'external-entity', // Fixed values: 'external-entity', 'process', 'datastore'
+            usage: 'business', // Fixed values: 'business', 'devops'
+            used_as_client_by_human: true,
+            out_of_scope: true,
+            justification_out_of_scope: 'Owned and managed by enduser customer',
+            size: 'component', // Fixed values: 'system', 'service', 'application', 'component'
+            technology: 'browser', // Example: 'browser', 'server', 'mobile app'
+            machine: 'physical', // Fixed values: 'physical', 'virtual', 'container', 'serverless'
+            encryption: 'none', // Fixed values: 'none', 'transparent', 'data-with-symmetric-shared-key', etc.
+            owner: 'Customer',
+            confidentiality: 'internal', // Fixed values: 'public', 'internal', 'restricted', etc.
+            integrity: 'operational', // Fixed values: 'archive', 'operational', 'important', etc.
+            availability: 'operational', // Fixed values: 'archive', 'operational', 'important', etc.
+            justification_cia_rating: 'The client used by the customer to access the system.',
+            multi_tenant: false,
+            redundant: false,
+            custom_developed_parts: false
+        
+    };
+    graph.model.threagile.setIn(path, assetDetails);
+ 
+    let cells = self.editorUi.editor.graph.getSelectionCells();
+    let cell = cells && cells.length > 0 ? cells[0] : null;
+    
+    if (!cell.technicalAsset) { // Check if technicalAsset does not exist
+      cell.technicalAsset = {}; // Initialize it as an empty object
+     }
+     
+     cell.technicalAsset["id"] = technicalAssetId;
 
-  if (!graph.model.threagile.hasIn(['technical_assets'])) {
-      graph.model.threagile.setIn(['technical_assets'], new Map()); // Initialize as a new map
-  } 
-  if (!graph.model.threagile.hasIn(path)) {
-    graph.model.threagile.setIn(path, new Map()); // Initialize as a new map
-
-  }
-
-  
-  graph.model.threagile.setIn([...path, 'id'], technicalAssetId);
-  graph.model.threagile.setIn([...path, 'description'], 'Your description here');
-  graph.model.threagile.setIn([...path, 'type'], 'external-entity'); // Fixed values: 'external-entity', 'process', 'datastore'
-  graph.model.threagile.setIn([...path, 'usage'], 'devops'); // Fixed values: 'business', 'devops'
-  graph.model.threagile.setIn([...path, 'used_as_client_by_human'], true);
-  graph.model.threagile.setIn([...path, 'out_of_scope'], true);
-  graph.model.threagile.setIn([...path, 'justification_out_of_scope'], 'Managed by an external provider');
-  graph.model.threagile.setIn([...path, 'size'], 'component'); // Fixed values: 'system', 'service', 'application', 'component'
-  graph.model.threagile.setIn([...path, 'technology'], 'browser'); // Example: 'browser', 'server', 'mobile app'
-  graph.model.threagile.setIn([...path, 'tags', 'internet'], false);
-  graph.model.threagile.setIn([...path, 'tags', 'machine'], 'virtual'); // Fixed values: 'physical', 'virtual', 'container', 'serverless'
-  graph.model.threagile.setIn([...path, 'encryption'], 'none'); // Fixed values: 'none', 'transparent', 'data-with-symmetric-shared-key', etc.
-  graph.model.threagile.setIn([...path, 'owner'], 'Default Owner');
-  graph.model.threagile.setIn([...path, 'confidentiality'], 'internal'); // Fixed values: 'public', 'internal', 'restricted', etc.
-  graph.model.threagile.setIn([...path, 'integrity'], 'operational'); // Fixed values: 'archive', 'operational', 'important', etc.
-  graph.model.threagile.setIn([...path, 'availability'], 'operational'); // Fixed values: 'archive', 'operational', 'important', etc.
-  graph.model.threagile.setIn([...path, 'justification_cia_rating'], 'Standard operational ratings applied.');
-  graph.model.threagile.setIn([...path, 'multi_tenant'], false);
-  graph.model.threagile.setIn([...path, 'redundant'], false);
-  graph.model.threagile.setIn([...path, 'custom_developed_parts'], false);
+    }
+    if(graph.model.threagile.hasIn(['technical_assets','__DELETE_ME__',] )){
+      graph.model.threagile.deleteIn(['technical_assets','__DELETE_ME__'])
+    }
 }
         console.log('Assigned ID:', technicalAssetId);
 
@@ -8831,7 +8887,18 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
         gaugeElement.style.height = "130px";
 
         this.container.appendChild(gaugeElement);
-          let id = graph.model.threagile.getIn(['technical_assets', technicalAssetId, 'id']);
+        
+        if (typeof technicalAssetId === 'object' && technicalAssetId !== null) {
+          technicalAssetId = technicalAssetId.id;
+        }
+        
+
+        let id = graph.model.threagile.getIn(['technical_assets', technicalAssetId, 'id']);
+        if (id === undefined)
+        {
+          const technicalAsset = graph.model.threagile.getIn(['technical_assets', technicalAssetId]);
+           id = technicalAsset ? technicalAsset.id : undefined; 
+        }
         let gauge = new JustGage({
           id: "gaugeElement",
           value: jsonObj.TechnicalAssets[id].RAA,
