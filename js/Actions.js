@@ -4,6 +4,13 @@
  *
  * Constructs the actions object for the given UI.
  */
+
+
+
+
+
+
+
 function Actions(editorUi) {
   this.editorUi = editorUi;
   this.actions = new Object();
@@ -68,6 +75,7 @@ Actions.prototype.init = function () {
     ui.openFile();
   });
   this.addAction("import...", function () {
+    
     window.openNew = false;
     window.openKey = "import";
 
@@ -77,6 +85,76 @@ Actions.prototype.init = function () {
         ui.hideDialog();
       })
     );
+    function addStyles() {
+      const style = document.createElement('style');
+      style.textContent = `
+          .loading-bar-container {
+              position: fixed;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              width: 60%;
+              background: #fff;
+              padding: 20px;
+              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+              border-radius: 5px;
+              text-align: center;
+              z-index: 1000;
+          }
+  
+          .loading-bar {
+              width: 100%;
+              height: 20px;
+              background: #ddd;
+              margin-top: 10px;
+              border-radius: 5px;
+              overflow: hidden;
+          }
+  
+          .loading-bar-progress {
+              height: 100%;
+              width: 0%;
+              background: linear-gradient(to right, #4caf50, #81c784);
+              transition: width 0.4s ease;
+          }
+  
+          .loading-text {
+              font-size: 16px;
+              color: #333;
+          }
+      `;
+      document.head.appendChild(style);
+  }
+
+  function createLoadingBar() {
+    addStyles();  // Ensure styles are added
+
+    const container = document.createElement('div');
+    container.className = 'loading-bar-container';
+    container.innerHTML = `
+        <div class="loading-text">Initializing import...</div>
+        <div class="loading-bar">
+            <div class="loading-bar-progress"></div>
+        </div>
+    `;
+
+    document.body.appendChild(container);
+
+    const progressBar = container.querySelector('.loading-bar-progress');
+    const loadingText = container.querySelector('.loading-text');
+
+    function updateProgress(percent, message) {
+        progressBar.style.width = `${percent}%`;
+        loadingText.textContent = message;
+    }
+
+    function hideLoadingBar() {
+        document.body.removeChild(container);
+    }
+
+    return { updateProgress, hideLoadingBar };
+}
+
 
     window.openFile.setConsumer(
       mxUtils.bind(this, function (xml, filename) {
@@ -90,11 +168,12 @@ Actions.prototype.init = function () {
         try {
         // Turn off automatic rendering
          if (filename.endsWith(".yaml")) {
-
+          const loadingBar = createLoadingBar();
        const startTime = performance.now();
                 try {
                 graph.model.threagile = YAML.parseDocument(xml);
               } catch (error) {
+                setTimeout(loadingBar.hideLoadingBar, 500);
                 console.error("Can not parse: ", error);
               }
               let jsonObj;
@@ -102,6 +181,7 @@ Actions.prototype.init = function () {
                 let temp= window.parseModelViaString(xml);
                 if (temp.includes("$$__ERROR__$$")) {
                   
+                  setTimeout(loadingBar.hideLoadingBar, 500);
 
                   let errorMessage = temp.split("$$__ERROR__$$")[1];  // Extract the error message
 
@@ -152,7 +232,10 @@ Swal.fire({
                 jsonObj = JSON.parse(temp);
               } catch (error) {
                 console.error("Couldn't parse JSON-Object: ", error);
+                setTimeout(loadingBar.hideLoadingBar, 500);
+
                 alert("Error while parsing JSON-Object: " + error);
+                
                 return;
               }
               dot = window.printDataFlowDiagramGraphvizDOT();
@@ -166,7 +249,7 @@ Swal.fire({
               let cnt = 0;
               graph.getModel().diagramData = new Object();
               graph.getModel().diagramData.data_assets = new Map();
-
+              loadingBar.updateProgress(30, 'Loading data_assets...');
               let dataAssets = graph.model.threagile.getIn(["data_assets"]).items;
               dataAssets.forEach((item) => {
                   let key = item.key.value;  // Get the key of this data asset
@@ -506,6 +589,8 @@ Swal.fire({
                         );
         
                       }
+                      loadingBar.updateProgress(60, 'Loading technical_assets...');
+
 		if (graph.model.threagile.hasIn(["technical_assets", text])) {
 		    vertex.technicalAsset = text;
 		}
@@ -637,6 +722,8 @@ Swal.fire({
                     });
 		const endTime = performance.now();
 		console.log(`Call to doSomething took ${endTime - startTime} milliseconds.`);
+    loadingBar.updateProgress(100, 'Import complete.');
+    setTimeout(loadingBar.hideLoadingBar, 500);
 
 
                     let cells = graph.getModel().cells;
@@ -654,6 +741,7 @@ Swal.fire({
                   
                 })
                 .catch(function (error) {
+                  setTimeout(loadingBar.hideLoadingBar, 500);
                   console.error(error);
                 });
           } else {
