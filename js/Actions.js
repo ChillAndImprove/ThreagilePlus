@@ -99,7 +99,57 @@ Actions.prototype.init = function () {
               }
               let jsonObj;
               try {
-                jsonObj = JSON.parse(window.parseModelViaString(xml));
+                let temp= window.parseModelViaString(xml);
+                if (temp.includes("$$__ERROR__$$")) {
+                  
+
+                  let errorMessage = temp.split("$$__ERROR__$$")[1];  // Extract the error message
+
+Swal.fire({
+    title: '<span style="color: #333; font-family: Arial, sans-serif;">Error Detected!</span>',
+    html: `<span style="font-family: Arial, sans-serif;">An error occurred while parsing the JSON object:<br/><strong>Error:</strong> ${errorMessage}</span>`,
+    icon: 'error',
+    iconColor: '#555',
+    confirmButtonText: 'Close',
+    confirmButtonColor: '#aaa',
+    confirmButtonAriaLabel: 'Close the dialog',
+    buttonsStyling: false,
+    customClass: {
+        confirmButton: 'custom-confirm-button-style',
+        popup: 'custom-popup-style'
+    },
+    background: '#f0f0f0',  // Lighter background color
+    backdrop: 'rgba(50, 50, 50, 0.4)',  // Less intense backdrop color
+    didRender: function() {
+        // Create styles for the custom classes dynamically
+        const styleTag = document.createElement('style');
+        styleTag.innerHTML = `
+            .custom-confirm-button-style {
+                background-color: #aaa;  // More neutral button color
+                color: #fff;
+                border: none;
+                border-radius: 5px;
+                padding: 10px 20px;
+                font-size: 16px;
+                transition: background-color 0.3s ease;
+            }
+            .custom-confirm-button-style:hover {
+                background-color: #999;  // Darker hover effect
+            }
+            .custom-popup-style {
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+            }
+        `;
+        document.head.appendChild(styleTag);
+    }
+});
+
+                
+                
+                  return;
+              }
+                jsonObj = JSON.parse(temp);
               } catch (error) {
                 console.error("Couldn't parse JSON-Object: ", error);
                 alert("Error while parsing JSON-Object: " + error);

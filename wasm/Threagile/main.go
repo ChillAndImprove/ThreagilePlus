@@ -4463,23 +4463,7 @@ func copyFile(src, dst string) (int64, error) {
 
 func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 	model.Init()
-	/*
-		defer func() {
-			if r := recover(); r != nil {
-				// Prepare a panic response with a custom identifier
-				panicResponse := map[string]string{
-					"error": fmt.Sprintf("::panic:: %v", r),
-				}
-				jsonPanic, err := json.Marshal(panicResponse)
-				if err != nil {
-					// If marshaling the panic fails, return a simple error message
-					this.Set("result", `{"error":"::panic:: Failed to marshal panic response"}`)
-					return
-				}
-				this.Set("result", string(jsonPanic))
-			}
-		}()
-	*/
+
 	modelYaml := inputs[0].String()
 	modelBytes := []byte(modelYaml)
 
@@ -4500,7 +4484,8 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 	case model.MissionCritical.String():
 		businessCriticality = model.MissionCritical
 	default:
-		panic(errors.New("unknown 'business_criticality' value of application: " + modelInput.Business_criticality))
+		return fmt.Sprintf("$$__ERROR__$$: unknown 'business_criticality' value of application: %s", modelInput.Business_criticality)
+
 	}
 
 	//reportDate := time.Now()
@@ -4549,7 +4534,8 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.DevOps.String():
 			usage = model.DevOps
 		default:
-			panic(errors.New("unknown 'usage' value of data asset '" + title + "': " + asset.Usage))
+
+			return "$$__ERROR__$$: unknown 'usage' value of data asset '" + title + "': " + asset.Usage
 		}
 
 		var quantity model.Quantity
@@ -4563,7 +4549,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.VeryMany.String():
 			quantity = model.VeryMany
 		default:
-			panic(errors.New("unknown 'quantity' value of data asset '" + title + "': " + asset.Quantity))
+			return "$$__ERROR__$$: unknown 'quantity' value of data asset '" + title + "': " + asset.Quantity
 		}
 
 		var confidentiality model.Confidentiality
@@ -4579,7 +4565,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.StrictlyConfidential.String():
 			confidentiality = model.StrictlyConfidential
 		default:
-			panic(errors.New("unknown 'confidentiality' value of data asset '" + title + "': " + asset.Confidentiality))
+			return "$$__ERROR__$$: unknown 'confidentiality' value of data asset '" + title + "': " + asset.Confidentiality
 		}
 
 		var integrity model.Criticality
@@ -4595,7 +4581,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.MissionCritical.String():
 			integrity = model.MissionCritical
 		default:
-			panic(errors.New("unknown 'integrity' value of data asset '" + title + "': " + asset.Integrity))
+			return "$$__ERROR__$$: unknown 'integrity' value of data asset '" + title + "': " + asset.Integrity
 		}
 
 		var availability model.Criticality
@@ -4611,12 +4597,21 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.MissionCritical.String():
 			availability = model.MissionCritical
 		default:
-			panic(errors.New("unknown 'availability' value of data asset '" + title + "': " + asset.Availability))
+			return "$$__ERROR__$$: unknown 'availability' value of data asset '" + title + "': " + asset.Availability
 		}
 
-		checkIdSyntax(id)
+		if !validIdSyntax.MatchString(id) {
+			return "$$__ERROR__$$: invalid id syntax used (only letters, numbers, and hyphen allowed): " + id
+		}
+
 		if _, exists := model.ParsedModelRoot.DataAssets[id]; exists {
-			panic(errors.New("duplicate id used: " + id))
+			return "$$__ERROR__$$: duplicate id used: " + id
+		}
+		results := checkTagsPrint(lowerCaseAndTrim(asset.Tags), "data asset '"+title+"'")
+		for _, result := range results {
+			if strings.Contains(result, "$$__ERROR__$$") {
+				return result
+			}
 		}
 		model.ParsedModelRoot.DataAssets[id] = model.DataAsset{
 			Id:                     id,
@@ -4646,7 +4641,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.DevOps.String():
 			usage = model.DevOps
 		default:
-			panic(errors.New("unknown 'usage' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Usage)))
+			return "$$__ERROR__$$: unknown 'usage' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Usage)
 		}
 
 		var dataAssetsProcessed = make([]string, 0)
@@ -4654,7 +4649,10 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 			dataAssetsProcessed = make([]string, len(asset.Data_assets_processed))
 			for i, parsedProcessedAsset := range asset.Data_assets_processed {
 				referencedAsset := fmt.Sprintf("%v", parsedProcessedAsset)
-				checkDataAssetTargetExists(referencedAsset, "technical asset '"+title+"'")
+				if _, ok := model.ParsedModelRoot.DataAssets[referencedAsset]; !ok {
+					return "$$__ERROR__$$: missing referenced data asset target at " + "technical asset '" + title + "'" + ": " + referencedAsset
+				}
+
 				dataAssetsProcessed[i] = referencedAsset
 			}
 		}
@@ -4664,7 +4662,9 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 			dataAssetsStored = make([]string, len(asset.Data_assets_stored))
 			for i, parsedStoredAssets := range asset.Data_assets_stored {
 				referencedAsset := fmt.Sprintf("%v", parsedStoredAssets)
-				checkDataAssetTargetExists(referencedAsset, "technical asset '"+title+"'")
+				if _, ok := model.ParsedModelRoot.DataAssets[referencedAsset]; !ok {
+					return "$$__ERROR__$$: missing referenced data asset target at " + "technical asset '" + title + "'" + ": " + referencedAsset
+				}
 				dataAssetsStored[i] = referencedAsset
 			}
 		}
@@ -4678,7 +4678,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.Datastore.String():
 			technicalAssetType = model.Datastore
 		default:
-			panic(errors.New("unknown 'type' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Type)))
+			return "$$__ERROR__$$: unknown 'type' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Type)
 		}
 
 		var technicalAssetSize model.TechnicalAssetSize
@@ -4692,7 +4692,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.Component.String():
 			technicalAssetSize = model.Component
 		default:
-			panic(errors.New("unknown 'size' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Size)))
+			return "$$__ERROR__$$: unknown 'size' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Size)
 		}
 
 		var technicalAssetTechnology model.TechnicalAssetTechnology
@@ -4812,7 +4812,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.Library.String():
 			technicalAssetTechnology = model.Library
 		default:
-			panic(errors.New("unknown 'technology' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Technology)))
+			return "$$__ERROR__$$: unknown 'technology' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Technology)
 		}
 
 		var encryption model.EncryptionStyle
@@ -4828,7 +4828,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.DataWithEnduserIndividualKey.String():
 			encryption = model.DataWithEnduserIndividualKey
 		default:
-			panic(errors.New("unknown 'encryption' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Encryption)))
+			return "$$__ERROR__$$: unknown 'encryption' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Encryption)
 		}
 
 		var technicalAssetMachine model.TechnicalAssetMachine
@@ -4842,7 +4842,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.Serverless.String():
 			technicalAssetMachine = model.Serverless
 		default:
-			panic(errors.New("unknown 'machine' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Machine)))
+			return "$$__ERROR__$$: unknown 'machine' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Machine)
 		}
 
 		var confidentiality model.Confidentiality
@@ -4858,7 +4858,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.StrictlyConfidential.String():
 			confidentiality = model.StrictlyConfidential
 		default:
-			panic(errors.New("unknown 'confidentiality' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Confidentiality)))
+			return "$$__ERROR__$$: unknown 'confidentiality' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Confidentiality)
 		}
 
 		var integrity model.Criticality
@@ -4874,7 +4874,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.MissionCritical.String():
 			integrity = model.MissionCritical
 		default:
-			panic(errors.New("unknown 'integrity' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Integrity)))
+			return "$$__ERROR__$$: unknown 'integrity' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Integrity)
 		}
 
 		var availability model.Criticality
@@ -4890,7 +4890,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.MissionCritical.String():
 			availability = model.MissionCritical
 		default:
-			panic(errors.New("unknown 'availability' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Availability)))
+			return "$$__ERROR__$$: unknown 'availability' value of technical asset '" + title + "': " + fmt.Sprintf("%v", asset.Availability)
 		}
 
 		dataFormatsAccepted := make([]model.DataFormat, 0)
@@ -4908,7 +4908,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				case model.CSV.String():
 					dataFormatsAccepted = append(dataFormatsAccepted, model.CSV)
 				default:
-					panic(errors.New("unknown 'data_formats_accepted' value of technical asset '" + title + "': " + fmt.Sprintf("%v", dataFormatName)))
+					return "$$__ERROR__$$: unknown 'data_formats_accepted' value of technical asset '" + title + "': " + fmt.Sprintf("%v", dataFormatName)
 				}
 			}
 		}
@@ -4942,7 +4942,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				case model.Externalized.String():
 					authentication = model.Externalized
 				default:
-					panic(errors.New("unknown 'authentication' value of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Authentication)))
+					return "$$__ERROR__$$: unknown 'authentication' value of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Authentication)
 				}
 
 				switch commLink.Authorization {
@@ -4953,7 +4953,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				case model.EnduserIdentityPropagation.String():
 					authorization = model.EnduserIdentityPropagation
 				default:
-					panic(errors.New("unknown 'authorization' value of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Authorization)))
+					return "$$__ERROR__$$: unknown 'authorization' value of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Authorization)
 				}
 
 				switch commLink.Usage {
@@ -4962,7 +4962,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				case model.DevOps.String():
 					usage = model.DevOps
 				default:
-					panic(errors.New("unknown 'usage' value of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Usage)))
+					return "$$__ERROR__$$: unknown 'usage' value of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Usage)
 				}
 
 				switch commLink.Protocol {
@@ -5057,13 +5057,15 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				case model.ContainerSpawning.String():
 					protocol = model.ContainerSpawning
 				default:
-					panic(errors.New("unknown 'protocol' of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Protocol)))
+					return "$$__ERROR__$$: unknown 'protocol' of technical asset '" + title + "' communication link '" + commLinkTitle + "': " + fmt.Sprintf("%v", commLink.Protocol)
 				}
 
 				if commLink.Data_assets_sent != nil {
 					for _, dataAssetSent := range commLink.Data_assets_sent {
 						referencedAsset := fmt.Sprintf("%v", dataAssetSent)
-						checkDataAssetTargetExists(referencedAsset, "communication link '"+commLinkTitle+"' of technical asset '"+title+"'")
+						if _, ok := model.ParsedModelRoot.DataAssets[referencedAsset]; !ok {
+							return "$$__ERROR__$$: missing referenced data asset target at " + "communication link '" + commLinkTitle + "' of technical asset '" + title + "'" + ": " + referencedAsset
+						}
 						dataAssetsSent = append(dataAssetsSent, referencedAsset)
 					}
 				}
@@ -5071,7 +5073,9 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				if commLink.Data_assets_received != nil {
 					for _, dataAssetReceived := range commLink.Data_assets_received {
 						referencedAsset := fmt.Sprintf("%v", dataAssetReceived)
-						checkDataAssetTargetExists(referencedAsset, "communication link '"+commLinkTitle+"' of technical asset '"+title+"'")
+						if _, ok := model.ParsedModelRoot.DataAssets[referencedAsset]; !ok {
+							return "$$__ERROR__$$:  missing referenced data asset target at " + "communication link '" + commLinkTitle + "' of technical asset '" + title + "'" + ": " + referencedAsset
+						}
 						dataAssetsReceived = append(dataAssetsReceived, referencedAsset)
 					}
 				}
@@ -5082,8 +5086,17 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 
 				constraint = !commLink.Diagram_tweak_constraint
 
+				if err != nil {
+					return "$$__ERROR__$$:" + err.Error()
+				}
 				checkErr(err)
 
+				results := checkTagsPrint(lowerCaseAndTrim(commLink.Tags), "communication link '"+commLinkTitle+"' of technical asset '"+title+"'")
+				for _, result := range results {
+					if strings.Contains(result, "$$__ERROR__$$") {
+						return result
+					}
+				}
 				dataFlowTitle := fmt.Sprintf("%v", commLinkTitle)
 				commLink := model.CommunicationLink{
 					Id:                     createDataFlowId(id, dataFlowTitle),
@@ -5113,9 +5126,18 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 			}
 		}
 
+		if !validIdSyntax.MatchString(id) {
+			return "$$__ERROR__$$: invalid id syntax used (only letters, numbers, and hyphen allowed): " + id
+		}
 		checkIdSyntax(id)
 		if _, exists := model.ParsedModelRoot.TechnicalAssets[id]; exists {
-			panic(errors.New("duplicate id used: " + id))
+			return "$$__ERROR__$$: duplicate id used: " + id
+		}
+		results := checkTagsPrint(lowerCaseAndTrim(asset.Tags), "technical asset '"+title+"'")
+		for _, result := range results {
+			if strings.Contains(result, "$$__ERROR__$$") {
+				return result
+			}
 		}
 		model.ParsedModelRoot.TechnicalAssets[id] = model.TechnicalAsset{
 			Id:                      id,
@@ -5162,10 +5184,10 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				technicalAssetsInside[i] = fmt.Sprintf("%v", parsedInsideAsset)
 				_, found := model.ParsedModelRoot.TechnicalAssets[technicalAssetsInside[i]]
 				if !found {
-					panic(errors.New("missing referenced technical asset " + technicalAssetsInside[i] + " at trust boundary '" + title + "'"))
+					return "$$__ERROR__$$: missing referenced technical asset " + technicalAssetsInside[i] + " at trust boundary '" + title + "'"
 				}
 				if checklistToAvoidAssetBeingModeledInMultipleTrustBoundaries[technicalAssetsInside[i]] == true {
-					panic(errors.New("referenced technical asset " + technicalAssetsInside[i] + " at trust boundary '" + title + "' is modeled in multiple trust boundaries"))
+					return "$$__ERROR__$$: referenced technical asset " + technicalAssetsInside[i] + " at trust boundary '" + title + "' is modeled in multiple trust boundaries"
 				}
 				checklistToAvoidAssetBeingModeledInMultipleTrustBoundaries[technicalAssetsInside[i]] = true
 				//fmt.Println("asset "+technicalAssetsInside[i]+" at i="+strconv.Itoa(i))
@@ -5198,9 +5220,14 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.ExecutionEnvironment.String():
 			trustBoundaryType = model.ExecutionEnvironment
 		default:
-			panic(errors.New("unknown 'type' of trust boundary '" + title + "': " + fmt.Sprintf("%v", boundary.Type)))
+			return "$$__ERROR__$$: unknown 'type' of trust boundary '" + title + "': " + fmt.Sprintf("%v", boundary.Type)
 		}
-
+		results := checkTagsPrint(lowerCaseAndTrim(boundary.Tags), "trust boundary '"+title+"'")
+		for _, result := range results {
+			if strings.Contains(result, "$$__ERROR__$$") {
+				return result
+			}
+		}
 		trustBoundary := model.TrustBoundary{
 			Id:                    id,
 			Title:                 title, //fmt.Sprintf("%v", boundary["title"]),
@@ -5210,14 +5237,24 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 			TechnicalAssetsInside: technicalAssetsInside,
 			TrustBoundariesNested: trustBoundariesNested,
 		}
+		if !validIdSyntax.MatchString(id) {
+			return "$$__ERROR__$$: invalid id syntax used (only letters, numbers, and hyphen allowed): " + id
+		}
 		checkIdSyntax(id)
 		if _, exists := model.ParsedModelRoot.TrustBoundaries[id]; exists {
-			panic(errors.New("duplicate id used: " + id))
+			return "$$__ERROR__$$: duplicate id used: " + id
 		}
 		model.ParsedModelRoot.TrustBoundaries[id] = trustBoundary
 		for _, technicalAsset := range trustBoundary.TechnicalAssetsInside {
 			model.DirectContainingTrustBoundaryMappedByTechnicalAssetId[technicalAsset] = trustBoundary
 			//fmt.Println("Asset "+technicalAsset+" is directly in trust boundary "+trustBoundary.Id)
+		}
+	}
+	for _, trustBoundary := range model.ParsedModelRoot.TrustBoundaries {
+		for _, nestedId := range trustBoundary.TrustBoundariesNested {
+			if _, ok := model.ParsedModelRoot.TrustBoundaries[nestedId]; !ok {
+				return "$$__ERROR__$$: missing referenced nested trust boundary: " + nestedId
+			}
 		}
 	}
 	checkNestedTrustBoundariesExisting()
@@ -5233,11 +5270,20 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 			technicalAssetsRunning = make([]string, len(parsedRunningAssets))
 			for i, parsedRunningAsset := range parsedRunningAssets {
 				assetId := fmt.Sprintf("%v", parsedRunningAsset)
-				checkTechnicalAssetExists(assetId, "shared runtime '"+title+"'", false)
+
+				if _, ok := model.ParsedModelRoot.TechnicalAssets[assetId]; !ok {
+					suffix := ""
+					return "$$__ERROR__$$: missing referenced technical asset target" + suffix + " at " + "shared runtime '" + title + "'" + ": " + assetId
+				}
 				technicalAssetsRunning[i] = assetId
 			}
 		}
-
+		results := checkTagsPrint((runtime.Tags), "shared runtime '"+title+"'")
+		for _, result := range results {
+			if strings.Contains(result, "$$__ERROR__$$") {
+				return result
+			}
+		}
 		sharedRuntime := model.SharedRuntime{
 			Id:                     id,
 			Title:                  title, //fmt.Sprintf("%v", boundary["title"]),
@@ -5245,9 +5291,12 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 			Tags:                   checkTags((runtime.Tags), "shared runtime '"+title+"'"),
 			TechnicalAssetsRunning: technicalAssetsRunning,
 		}
+		if !validIdSyntax.MatchString(id) {
+			return "$$__ERROR__$$: invalid id syntax used (only letters, numbers, and hyphen allowed): " + id
+		}
 		checkIdSyntax(id)
 		if _, exists := model.ParsedModelRoot.SharedRuntimes[id]; exists {
-			panic(errors.New("duplicate id used: " + id))
+			return "$$__ERROR__$$: duplicate id used: " + id
 		}
 		model.ParsedModelRoot.SharedRuntimes[id] = sharedRuntime
 		for _, technicalAssetId := range sharedRuntime.TechnicalAssetsRunning {
@@ -5271,7 +5320,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.Operations.String():
 			function = model.Operations
 		default:
-			panic(errors.New("unknown 'function' value of individual risk category '" + title + "': " + fmt.Sprintf("%v", indivCat.Function)))
+			return "$$__ERROR__$$: unknown 'function' value of individual risk category '" + title + "': " + fmt.Sprintf("%v", indivCat.Function)
 		}
 
 		var stride model.STRIDE
@@ -5289,7 +5338,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.ElevationOfPrivilege.String():
 			stride = model.ElevationOfPrivilege
 		default:
-			panic(errors.New("unknown 'stride' value of individual risk category '" + title + "': " + fmt.Sprintf("%v", indivCat.STRIDE)))
+			return "$$__ERROR__$$: unknown 'stride' value of individual risk category '" + title + "': " + fmt.Sprintf("%v", indivCat.STRIDE)
 		}
 
 		cat := model.RiskCategory{
@@ -5310,9 +5359,12 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 			ModelFailurePossibleReason: indivCat.Model_failure_possible_reason,
 			CWE:                        indivCat.CWE,
 		}
+		if !validIdSyntax.MatchString(id) {
+			return "$$__ERROR__$$: invalid id syntax used (only letters, numbers, and hyphen allowed): " + id
+		}
 		checkIdSyntax(id)
 		if _, exists := model.ParsedModelRoot.IndividualRiskCategories[id]; exists {
-			panic(errors.New("duplicate id used: " + id))
+			return "$$__ERROR__$$: duplicate id used: " + id
 		}
 		model.ParsedModelRoot.IndividualRiskCategories[id] = cat
 
@@ -5341,7 +5393,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				case "": // added default
 					severity = model.MediumSeverity
 				default:
-					panic(errors.New("unknown 'severity' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Severity)))
+					return "$$__ERROR__$$: unknown 'severity' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Severity)
 				}
 
 				switch indivRiskInstance.Exploitation_likelihood {
@@ -5356,7 +5408,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				case "": // added default
 					exploitationLikelihood = model.Likely
 				default:
-					panic(errors.New("unknown 'exploitation_likelihood' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Exploitation_likelihood)))
+					return "$$__ERROR__$$: unknown 'exploitation_likelihood' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Exploitation_likelihood)
 				}
 
 				switch indivRiskInstance.Exploitation_impact {
@@ -5371,32 +5423,44 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				case "": // added default
 					exploitationImpact = model.MediumImpact
 				default:
-					panic(errors.New("unknown 'exploitation_impact' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Exploitation_impact)))
+					return "$$__ERROR__$$: unknown 'exploitation_impact' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Exploitation_impact)
 				}
 
 				if len(indivRiskInstance.Most_relevant_data_asset) > 0 {
 					mostRelevantDataAssetId = fmt.Sprintf("%v", indivRiskInstance.Most_relevant_data_asset)
-					checkDataAssetTargetExists(mostRelevantDataAssetId, "individual risk '"+title+"'")
+					if _, ok := model.ParsedModelRoot.DataAssets[mostRelevantDataAssetId]; !ok {
+						return "$$__ERROR__$$: missing referenced data asset target at " + "individual risk '" + title + "'" + ": " + mostRelevantDataAssetId
+					}
 				}
 
 				if len(indivRiskInstance.Most_relevant_technical_asset) > 0 {
 					mostRelevantTechnicalAssetId = fmt.Sprintf("%v", indivRiskInstance.Most_relevant_technical_asset)
-					checkTechnicalAssetExists(mostRelevantTechnicalAssetId, "individual risk '"+title+"'", false)
+					if _, ok := model.ParsedModelRoot.TechnicalAssets[mostRelevantTechnicalAssetId]; !ok {
+						suffix := ""
+
+						return "$$__ERROR__$$: missing referenced technical asset target" + suffix + " at " + "individual risk '" + title + "'" + ": " + mostRelevantTechnicalAssetId
+					}
 				}
 
 				if len(indivRiskInstance.Most_relevant_communication_link) > 0 {
 					mostRelevantCommunicationLinkId = fmt.Sprintf("%v", indivRiskInstance.Most_relevant_communication_link)
-					checkCommunicationLinkExists(mostRelevantCommunicationLinkId, "individual risk '"+title+"'")
+					if _, ok := model.CommunicationLinks[mostRelevantCommunicationLinkId]; !ok {
+						return "$$__ERROR__$$: missing referenced communication link at " + "individual risk '" + title + "'" + ": " + mostRelevantCommunicationLinkId
+					}
 				}
 
 				if len(indivRiskInstance.Most_relevant_trust_boundary) > 0 {
 					mostRelevantTrustBoundaryId = fmt.Sprintf("%v", indivRiskInstance.Most_relevant_trust_boundary)
-					checkTrustBoundaryExists(mostRelevantTrustBoundaryId, "individual risk '"+title+"'")
+					if _, ok := model.ParsedModelRoot.TrustBoundaries[mostRelevantTrustBoundaryId]; !ok {
+						return "$$__ERROR__$$: missing referenced trust boundary at " + "individual risk '" + title + "'" + ": " + mostRelevantTrustBoundaryId
+					}
 				}
 
 				if len(indivRiskInstance.Most_relevant_shared_runtime) > 0 {
 					mostRelevantSharedRuntimeId = fmt.Sprintf("%v", indivRiskInstance.Most_relevant_shared_runtime)
-					checkSharedRuntimeExists(mostRelevantSharedRuntimeId, "individual risk '"+title+"'")
+					if _, ok := model.ParsedModelRoot.SharedRuntimes[mostRelevantSharedRuntimeId]; !ok {
+						return "$$__ERROR__$$: missing referenced shared runtime at " + "individual risk '" + title + "'" + ": " + mostRelevantSharedRuntimeId
+					}
 				}
 
 				switch indivRiskInstance.Data_breach_probability {
@@ -5409,18 +5473,24 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 				case "": // added default
 					dataBreachProbability = model.Possible
 				default:
-					panic(errors.New("unknown 'data_breach_probability' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Data_breach_probability)))
+					return "$$__ERROR__$$: unknown 'data_breach_probability' value of individual risk instance '" + title + "': " + fmt.Sprintf("%v", indivRiskInstance.Data_breach_probability)
 				}
 
 				if indivRiskInstance.Data_breach_technical_assets != nil {
 					dataBreachTechnicalAssetIDs = make([]string, len(indivRiskInstance.Data_breach_technical_assets))
 					for i, parsedReferencedAsset := range indivRiskInstance.Data_breach_technical_assets {
 						assetId := fmt.Sprintf("%v", parsedReferencedAsset)
-						checkTechnicalAssetExists(assetId, "data breach technical assets of individual risk '"+title+"'", false)
+						if _, ok := model.ParsedModelRoot.TechnicalAssets[assetId]; !ok {
+							suffix := ""
+							return "$$__ERROR__$$: missing referenced technical asset target" + suffix + " at " + "data breach technical assets of individual risk '" + title + "'" + ": " + assetId
+						}
 						dataBreachTechnicalAssetIDs[i] = assetId
 					}
 				}
 
+				if err != nil {
+					return "$$__ERROR__$$: " + err.Error()
+				}
 				checkErr(err)
 
 				indivRiskInstance := model.Risk{
@@ -5453,7 +5523,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		if len(riskTracking.Date) > 0 {
 			date, err = time.Parse("2006-01-02", riskTracking.Date)
 			if err != nil {
-				panic(errors.New("unable to parse 'date' of risk tracking '" + syntheticRiskId + "': " + riskTracking.Date))
+				return "$$__ERROR__$$:  to parse 'date' of risk tracking '" + syntheticRiskId + "': " + riskTracking.Date
 			}
 		}
 
@@ -5472,7 +5542,7 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 		case model.FalsePositive.String():
 			status = model.FalsePositive
 		default:
-			panic(errors.New("unknown 'status' value of risk tracking '" + syntheticRiskId + "': " + riskTracking.Status))
+			return "$$__ERROR__$$: unknown 'status' value of risk tracking '" + syntheticRiskId + "': " + riskTracking.Status
 		}
 
 		tracking := model.RiskTracking{
@@ -5493,7 +5563,10 @@ func parseModelViaString(this js.Value, inputs []js.Value) interface{} {
 	// ====================== model consistency check (linking)
 	for _, technicalAsset := range model.ParsedModelRoot.TechnicalAssets {
 		for _, commLink := range technicalAsset.CommunicationLinks {
-			checkTechnicalAssetExists(commLink.TargetId, "communication link '"+commLink.Title+"' of technical asset '"+technicalAsset.Title+"'", false)
+			if _, ok := model.ParsedModelRoot.TechnicalAssets[commLink.TargetId]; !ok {
+				suffix := ""
+				return "$$__ERROR__$$: missing referenced technical asset target" + suffix + " at " + "communication link '" + commLink.Title + "' of technical asset '" + technicalAsset.Title + "'" + ": " + commLink.TargetId
+			}
 		}
 	}
 	// A boolean if an error happens, return !!:Error:!!: error, and in the js code check if the word !!:Error:!! is present
@@ -6538,12 +6611,30 @@ func lowerCaseAndTrim(tags []string) []string {
 	return tags
 }
 
+func checkTagsPrint(tags []string, where string) []string {
+	var tagsUsed = make([]string, 0)
+	if tags != nil {
+		tagsUsed = make([]string, len(tags))
+		for i, parsedEntry := range tags {
+			referencedTag := fmt.Sprintf("%v", parsedEntry)
+			checker := checkTagExistsPrint(referencedTag, where)
+			if strings.Contains(checker, "$$__ERROR__$$") {
+				return []string{checker}
+			}
+
+			tagsUsed[i] = referencedTag
+		}
+	}
+	return tagsUsed
+}
+
 func checkTags(tags []string, where string) []string {
 	var tagsUsed = make([]string, 0)
 	if tags != nil {
 		tagsUsed = make([]string, len(tags))
 		for i, parsedEntry := range tags {
 			referencedTag := fmt.Sprintf("%v", parsedEntry)
+
 			checkTagExists(referencedTag, where)
 			tagsUsed[i] = referencedTag
 		}
@@ -6631,7 +6722,12 @@ func createSyntheticId(categoryId string,
 	}
 	return result
 }
-
+func checkTagExistsPrint(referencedTag, where string) string {
+	if !model.Contains(model.ParsedModelRoot.TagsAvailable, referencedTag) {
+		return "$$__ERROR__$$: missing referenced tag in overall tag list at " + where + ": " + referencedTag
+	}
+	return ""
+}
 func checkTagExists(referencedTag, where string) {
 	if !model.Contains(model.ParsedModelRoot.TagsAvailable, referencedTag) {
 		panic(errors.New("missing referenced tag in overall tag list at " + where + ": " + referencedTag))
