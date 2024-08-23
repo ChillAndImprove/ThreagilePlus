@@ -8040,6 +8040,7 @@ if (
         textContainer.style.display = "flex";
         textContainer.style.alignItems = "center";
         textContainer.style.marginBottom = "8px";
+        textContainer.style.color = "black";  // Assuming white text for contrast
         let arrowIcon = document.createElement("img");
         arrowIcon.src =
           " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
@@ -8876,15 +8877,15 @@ if(parsedString.includes("$$__ERROR__$$"))
       }
   });
 }
-// Convert the parsed string to JSON
-let jsonObj = JSON.parse(parsedString);
+      // Convert the parsed string to JSON
+      let jsonObj = JSON.parse(parsedString);
 
-// End timing and calculate the duration
-end = performance.now();
-console.log('JSON.parse() time: ' + (end - start) + ' ms');
+      // End timing and calculate the duration
+      end = performance.now();
+      console.log('JSON.parse() time: ' + (end - start) + ' ms');
       window.applyRAAJS();
       yaml = JSON.parse(window.applyRiskGenerationJS());
-     // let jsonObj = JSON.parse(applyRiskGenerationJS());
+      // let jsonObj = JSON.parse(applyRiskGenerationJS());
 
       let span = document.createElement("span");
       span.innerHTML = "<b>Relative Attacker Attractivness:</b> ";
@@ -8919,6 +8920,46 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
 
         list.appendChild(listItem);
       }
+      function interpolateColorForRisks(minColor, maxColor, minVal, maxVal, val) {
+        function interpolate(start, end, step) {
+            return start + (end - start) * step;
+        }
+    
+        var step = (val - minVal) / (maxVal - minVal);
+        var red = interpolate(minColor[0], maxColor[0], step);
+        var green = interpolate(minColor[1], maxColor[1], step);
+        var blue = interpolate(minColor[2], maxColor[2], step);
+    
+        if (step > 0.5) { 
+            green *= (1 - step); 
+        }
+    
+        return `rgb(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)})`;
+    }
+    
+      function mapRiskLevel(value) {
+        const mapping = {
+            'low': 1,
+            'medium': 2,
+            'elevated': 3,
+            'high': 4,
+            'critical': 5,
+            'unlikely': 1,
+            'likely': 3,
+            'very-likely': 4,
+            'frequent': 5,
+            'improbable': 1,
+            'possible': 2,
+            'probable': 3,
+            'very-high': 5
+        };
+        return mapping[value.toLowerCase().replace('-', '')] || 0; // Normalize the input to handle hyphenated entries
+    }
+    
+
+      const lowRiskColor = [0, 255, 0]; // Green
+      const highRiskColor = [255, 0, 0]; // Red
+      
       if (
         yaml != "" &&
         technicalAssetId != "" &&
@@ -8960,7 +9001,12 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
         }
         for (let jsonData in filteredArray) {
           let value = filteredArray[jsonData];
+          let riskScore = 0;
 
+          riskScore += value.severity ? mapRiskLevel(value.severity) : 0;
+          riskScore += value.exploitation_impact ? mapRiskLevel(value.exploitation_impact) : 0;
+          riskScore += value.exploitation_likelihood ? mapRiskLevel(value.exploitation_likelihood) : 0;
+          riskScore += value.data_breach_probability ? mapRiskLevel(value.data_breach_probability) : 0;
           let regex = /<b>(.*?)<\/b>/i;
           let match = regex.exec(filteredArray[jsonData].title);
           let property = "";
@@ -8977,13 +9023,14 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
           listItem.style.flexDirection = "column";
           listItem.style.padding = "8px";
           listItem.style.borderBottom = "1px solid #ccc";
+          let initialColor = interpolateColorForRisks(lowRiskColor, highRiskColor, 0, 25, riskScore);
+          listItem.style.backgroundColor = initialColor;
+          listItem.dataset.initialColor = initialColor;
+          
           let parentNode = clonedMenu.childNodes[0];
           for (var key in value) {
             if (value.hasOwnProperty(key)) {
-          
               var childNode = value[key];
-              
-
               for (var i = 0; i < parentNode.childNodes.length; i++) {
                     var currentChildNode = parentNode.childNodes[i];
         
@@ -9024,6 +9071,8 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
           textContainer.style.alignItems = "center";
           textContainer.style.marginBottom = "8px";
           let arrowIcon = document.createElement("img");
+          textContainer.style.color = "black";  // Assuming white text for contrast
+          textContainer.style.fontWeight = "bold";  // Make the font bold
           arrowIcon.src =
             " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
           arrowIcon.style.width = "15px";
@@ -9038,16 +9087,21 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
 
           textContainer.appendChild(dataText);
           let current = false;
+          /*
           if (current["visible"] === undefined) {
             current["visible"] = true;
           }
-          let state = current["visible"];
+          
+          */
+          let state = current;
+          
+          
           if (state) {
             listItem.style.backgroundColor = "";
             arrowIcon.style.transform = "rotate(270deg)";
             clonedMenu.style.display = "block";
           } else {
-            listItem.style.backgroundColor = "lightgray";
+            listItem.style.backgroundColor =  listItem.dataset.initialColor;
             arrowIcon.style.transform = "rotate(90deg)";
             clonedMenu.style.display = "none";
           }
@@ -9055,14 +9109,19 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
           listItem.appendChild(textContainer);
           listItem.appendChild(clonedMenu);
           function toggleContent() {
-            let state = current["visible"];
-            current["visible"] = !current["visible"];
+            current.visible = !current.visible;  // Toggle the visibility state
+
+            console.log('Current visibility:', current.visible); // Check the toggle action
             if (!state) {
-              listItem.style.backgroundColor = "";
+              console.log('Expanding: Removing background color');
+              listItem.style.backgroundColor = "";  // Restore initial color
               arrowIcon.style.transform = "rotate(270deg)";
               clonedMenu.style.display = "block";
             } else {
-              listItem.style.backgroundColor = "lightgray";
+              console.log('Collapsing: Setting background color to', listItem.dataset.initialColor);
+              listItem.style.backgroundColor = listItem.dataset.initialColor;  // Restore initial color
+              
+              //listItem.style.backgroundColor = "lightgray";
               arrowIcon.style.transform = "rotate(90deg)";
               clonedMenu.style.display = "none";
             }
@@ -9186,10 +9245,12 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
 
           textContainer.appendChild(dataText);
           let current = false;
+          /*
           if (current["visible"] === undefined) {
             current["visible"] = true;
           }
-          let state = current["visible"];
+            */
+          let state = current;
           if (state) {
             listItem.style.backgroundColor = "";
             arrowIcon.style.transform = "rotate(270deg)";
@@ -9203,8 +9264,8 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
           listItem.appendChild(textContainer);
           listItem.appendChild(clonedMenu);
           function toggleContent() {
-            let state = current["visible"];
-            current["visible"] = !current["visible"];
+            let state = current;
+            current = !current;
             if (!state) {
               listItem.style.backgroundColor = "";
               arrowIcon.style.transform = "rotate(270deg)";
@@ -9496,6 +9557,7 @@ InspectionFormatPanel.prototype.addInspectionFormatMenuDynamic = function (
   return container;
 };
 mxUtils.extend(BoundaryFormatPanel, BaseFormatPanel);
+/*
 InspectionFormatPanel.prototype.addInspectionMenu2 = function (
   container,
   value
@@ -9676,6 +9738,9 @@ InspectionFormatPanel.prototype.addInspectionMenu2 = function (
   }
   return container;
 };
+
+*/
+
 InspectionFormatPanel.prototype.addInspectionMenu = function (
   container,
   value
