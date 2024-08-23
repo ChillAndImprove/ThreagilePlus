@@ -8980,31 +8980,45 @@ console.log('JSON.parse() time: ' + (end - start) + ' ms');
           let parentNode = clonedMenu.childNodes[0];
           for (var key in value) {
             if (value.hasOwnProperty(key)) {
+          
               var childNode = value[key];
+              
 
               for (var i = 0; i < parentNode.childNodes.length; i++) {
-                var currentChildNode = parentNode.childNodes[i];
+                    var currentChildNode = parentNode.childNodes[i];
+        
+                    if (currentChildNode.nodeType === Node.ELEMENT_NODE) {
+                        // Check if the ID of the current element starts with 'exploitation_'
+                        if (currentChildNode.id && currentChildNode.id.startsWith("exploitation_")) {
+                            console.log('Original ID:', currentChildNode.id); // Optional: log original ID
+                            // Remove the 'exploitation_' prefix from the ID
+                            currentChildNode.id = currentChildNode.id.substring("exploitation_".length);
+                            console.log('Updated ID:', currentChildNode.id); // Optional: log updated ID
+                        }
+                        if (currentChildNode.children.length > 0){
+                        let exploit_prefix= "exploitation_"+ currentChildNode.children[0].textContent;
+                        let data_breach_prefix= "data_breach_"+ currentChildNode.children[0].textContent;
 
-                if (
-                  currentChildNode.nodeType === Node.ELEMENT_NODE &&
-                  currentChildNode.children.length > 0 &&
-                  currentChildNode.children[0].textContent === key
-                ) {
-                  if (
-                    currentChildNode.children.length > 1 &&
-                    currentChildNode.childNodes.length > 0
-                  ) {
-                    let nextChildNode =
-                      currentChildNode.children[1].children[0];
-
-                    if (nextChildNode.nodeName === "SELECT") {
-                      nextChildNode.selectedIndex = childNode;
+                         if (currentChildNode.children[0].textContent === key ||  exploit_prefix === key || data_breach_prefix == key) {
+                            if (currentChildNode.children.length > 1 && currentChildNode.childNodes.length > 0) {
+                                let nextChildNode = currentChildNode.children[1].children[0];
+        
+                                for (let i = 0; i < nextChildNode.options.length; i++) {
+                                  // Check if the current option's value matches the childNode value
+                                  if (nextChildNode.options[i].value === childNode) {
+                                      // Set the selectedIndex to the current index if there is a match
+                                      nextChildNode.selectedIndex = i;
+                                      break; // Exit the loop once the match is found and set
+                                  }
+                              }
+                              }
+                              }
+                        }
                     }
-                  }
                 }
-              }
             }
-          }
+        }
+        
           let textContainer = document.createElement("div");
           textContainer.style.display = "flex";
           textContainer.style.alignItems = "center";
@@ -9903,6 +9917,7 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
       tooltip: "Provide a brief description of the trust boundary. ",
       defaultValue: "",
     },
+    /*
     title: {
       description: "Type",
       type: "button",
@@ -9910,6 +9925,7 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
       tooltip: "Your Title",
       defaultValue: "<Your Title>",
     },
+    */
     type: {
       description: "Type",
       type: "select",
@@ -9978,10 +9994,11 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
       let cell = self.editorUi.editor.graph.getSelectionCell();
       if (
         cell &&
-        cell.TrustBoundaries &&
-        cell.TrustBoundaries[propertySelect]
+        cell.trust_boundaries &&
+        self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundaries, propertySelect])
       ) {
-        selectDropdown.selectedIndex = cell.TrustBoundaries[propertySelect];
+        //selectDropdown.selectedIndex = cell.TrustBoundaries[propertySelect];
+        selectDropdown.value= self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundaries, propertySelect])
       }
       let createChangeListener = function (selectDropdown, propertySelect) {
         return function (evt) {
@@ -9991,12 +10008,12 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
             var cells = self.editorUi.editor.graph.getSelectionCells();
             if (cells != null && cells.length > 0) {
               var cell = self.editorUi.editor.graph.getSelectionCell();
-              if (!cell.TrustBoundaries) {
-                cell.TrustBoundaries = {
+              if (!cell.trust_boundaries) {
+                cell.trust_boundaries = {
                   [propertySelect]: selectDropdown.selectedIndex,
                 };
               } else {
-                cell.TrustBoundaries[propertySelect] =
+                cell.trust_boundaries[propertySelect] =
                   selectDropdown.selectedIndex;
               }
             }
@@ -10029,8 +10046,9 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
           let cells = self.editorUi.editor.graph.getSelectionCells();
           let cell = cells && cells.length > 0 ? cells[0] : null;
           let dataValue =
-            cell && cell.TrustBoundaries && cell.TrustBoundaries[property]
-              ? cell.TrustBoundaries[property]
+            cell && cell.trust_boundaries &&         self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundaries, property])
+            
+              ? self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundaries, property])
               : typeProperties[property].defaultValue;
 
           var dlg = new TextareaDialog(
