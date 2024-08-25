@@ -8925,36 +8925,56 @@ if(parsedString.includes("$$__ERROR__$$"))
             return start + (end - start) * step;
         }
     
+        // Ensure the value is within the range defined by minVal and maxVal
         var step = (val - minVal) / (maxVal - minVal);
+        step = Math.max(0, Math.min(1, step)); // Clamp the step to the range [0, 1]
+    
         var red = interpolate(minColor[0], maxColor[0], step);
         var green = interpolate(minColor[1], maxColor[1], step);
         var blue = interpolate(minColor[2], maxColor[2], step);
     
+        // Modify green to decrease as risk increases, enhancing the red
         if (step > 0.5) { 
-            green *= (1 - step); 
+            green *= (1 - step * 2);  // Accelerate green reduction in the upper half of the range
         }
     
+        // Construct RGB color string
         return `rgb(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)})`;
     }
     
-      function mapRiskLevel(value) {
-        const mapping = {
-            'low': 1,
-            'medium': 2,
-            'elevated': 3,
-            'high': 4,
-            'critical': 5,
-            'unlikely': 1,
-            'likely': 3,
-            'very-likely': 4,
-            'frequent': 5,
-            'improbable': 1,
-            'possible': 2,
-            'probable': 3,
-            'very-high': 5
-        };
-        return mapping[value.toLowerCase().replace('-', '')] || 0; // Normalize the input to handle hyphenated entries
-    }
+    
+    function mapRiskLevel(value, category) {
+      const mappings = {
+          'severity': {
+              'low': 1,
+              'medium': 2,
+              'elevated': 3,
+              'high': 4,
+              'critical': 5
+          },
+          'impact': {
+              'low': 1,
+              'medium': 2,
+              'high': 3,
+              'very-high': 4
+          },
+          'likelihood': {
+              'unlikely': 1,
+              'likely': 3,
+              'very-likely': 4,
+              'frequent': 5
+          },
+          'probability': {
+              'improbable': 1,
+              'possible': 2,
+              'probable': 3
+          }
+      };
+  
+      // Normalize input, remove hyphens and lowercase, then find the value based on the category
+      return mappings[category][value.toLowerCase().replace('-', '')] || 0;
+  }
+  
     
 
       const lowRiskColor = [0, 255, 0]; // Green
@@ -9003,10 +9023,13 @@ if(parsedString.includes("$$__ERROR__$$"))
           let value = filteredArray[jsonData];
           let riskScore = 0;
 
-          riskScore += value.severity ? mapRiskLevel(value.severity) : 0;
-          riskScore += value.exploitation_impact ? mapRiskLevel(value.exploitation_impact) : 0;
-          riskScore += value.exploitation_likelihood ? mapRiskLevel(value.exploitation_likelihood) : 0;
-          riskScore += value.data_breach_probability ? mapRiskLevel(value.data_breach_probability) : 0;
+          riskScore += mapRiskLevel(value.severity, 'severity');
+          riskScore += mapRiskLevel(value.exploitation_impact, 'impact');
+          riskScore += mapRiskLevel(value.exploitation_likelihood, 'likelihood');
+          // Using multiplication to increase impact based on probability
+          riskScore *= mapRiskLevel(value.data_breach_probability, 'probability');
+          let maxRiskScore = (5 + 4 + 5) * 3; // Severity + Impact + Likelihood, multiplied by Probability
+      
           let regex = /<b>(.*?)<\/b>/i;
           let match = regex.exec(filteredArray[jsonData].title);
           let property = "";
