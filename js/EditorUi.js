@@ -863,13 +863,52 @@ EditorUi = function (editor, container, lightbox) {
       graph.getSelectionModel().addListener(mxEvent.CHANGE, update);
       graph.getModel().addListener(mxEvent.CHANGE, update);
     }
+    /*
+    const originalRemoveCells = graph.removeCells.bind(graph);
+    graph.removeCells = function(cells, includeEdges) {
+      // Perform actions before cells are removed
+      cells.forEach(cell => {
+          if (graph.getModel().isVertex(cell)) {
+              console.log('Vertex will be removed:', cell);
+              const edges = self.editorUi.editor.graph.model.getEdges(cell);
+               edges.forEach(edge => {
+                   graph.removeCells([edge], false); 
+               });
+          }
+      });
+      originalRemoveCells.apply(this, [cells, includeEdges]);
+  };
+  */
+    graph.addListener(mxEvent.REMOVE_CELLS, function(sender, evt) {
+      console.log("wow");
+      const cells = evt.getProperty('cells'); 
+      cells.forEach(cell => {
+          if (graph.getModel().isEdge(cell)) {
+              console.log('An edge was deleted:', cell);
+              if(self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.id])){
+              if (self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.id]).communication_link){
+               self.editorUi.editor.graph.model.threagile.deleteIn(["technical_assets", cell.source.technicalAsset.id, communication_link])
+            }
+          }
+            } else if (graph.getModel().isVertex(cell)) {
+              console.log('An node was deleted:', cell);
 
-    // Makes sure the current layer is visible when cells are added
+              self.editorUi.editor.graph.model.threagile.deleteIn(["technical_assets", cell.technicalAsset.id]);
+
+               
+            }
+      });
+    });
     graph.addListener(mxEvent.CELLS_ADDED, function (sender, evt) {
       // TODO: In EditorUI CELLS_ADDED: First if first check what kind of element, if Trust Boundary..., technical ASset..
       // ..Create threagile.yaml
       var cells = evt.getProperty("cells");
       var parent = evt.getProperty("parent");
+      if (graph.getModel().isVertex(cells[0])) {
+        cells[0].bkcells= cells[0].edges;
+      
+      }
+
       console.log("HEY");
       if (
         graph.getModel().isLayer(parent) &&

@@ -2444,6 +2444,7 @@ Swal.fire({
   this.addAction(
     "addDataAssets",
     mxUtils.bind(this, function (list, menu) {
+    /*
       if (typeof graph.model.diagramData === "undefined") {
         graph.model.diagramData = new Map();
         graph.model.diagramData.DataAssets = new Map();
@@ -2457,6 +2458,7 @@ Swal.fire({
       } else {
         console.error("diagramData is not a Map");
       }
+        */
       var listItem = document.createElement("li");
       listItem.style.display = "flex";
       listItem.style.flexDirection = "column";

@@ -9129,7 +9129,7 @@ if (typeof mxVertexHandler != "undefined") {
      */
     Graph.prototype.deleteCells = function (cells, includeEdges) {
       var select = null;
-
+      includeEdges= true;
       if (cells != null && cells.length > 0) {
         this.model.beginUpdate();
         try {

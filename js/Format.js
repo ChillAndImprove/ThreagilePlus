@@ -12,15 +12,14 @@ business_criticality: important # values: archive, operational, important, criti
 technical_assets:
  __DELETE_ME__:
     id: backend-admin-client
-    #diagram_tweak_order: 0 # affects left to right positioning (only within a trust boundary)
     description: Backend admin client
-    type: external-entity # values: external-entity, process, datastore
-    usage: devops # values: business, devops
-    used_as_client_by_human: true
-    out_of_scope: true
+    type: external-entity 
+    usage: devops 
+    used_as_client_by_human: false
+    out_of_scope: false
     justification_out_of_scope: Owned and managed by ops provider
-    size: component # values: system, service, application, component
-    technology: browser # values: see help
+    size: component 
+    technology: browser 
     tags:
     internet: false
     machine: physical # values: physical, virtual, container, serverless
@@ -62,14 +61,32 @@ data_assets:
 });
 */
 // Instantiate WebAssembly Module
-const go = new Go();
+/*
 WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
   go.run(result.instance);
 
   window.editorUi.editor.graph.model.wasmInstance = result.instance;
 
 });
+*/
+instantiateWasm();
 };
+
+
+function restartWasm() {
+  // Reset or create a new Go instance if needed
+  go = new Go();
+  instantiateWasm();
+}
+
+var go = new Go();
+
+function instantiateWasm() {
+  WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+      go.run(result.instance);
+      window.editorUi.editor.graph.model.wasmInstance = result.instance;
+  }).catch(err => console.error("Wasm instantiation failed:", err));
+}
 
 /**
  * Returns information about the current selection.
@@ -8719,6 +8736,14 @@ function generateUniqueId(graph) {
   return newId;
 }
 
+function generateUniquekey(graph) {
+  var newId;
+  do {
+      newId = 'key-' + Math.random().toString(36).substr(2, 9); // Generate a random ID
+  } while (checkIdExists(graph, newId)); // Ensure it's unique
+  return newId;
+}
+
 
 // Function to check if an ID already exists in the graph's model
 function checkIdExists(graph, id) {
@@ -8748,21 +8773,21 @@ InspectionFormatPanel.prototype.init = function () {
   
   var technicalAssetId = !undefinedAsset
                                ? cellsBegin[0].technicalAsset 
-                               : generateUniqueId(graph);
+                               : generateUniquekey(graph);
 
 
 if (undefinedAsset)
 {
     const path = ['technical_assets', technicalAssetId];
-    
+    const uniqueID = generateUniqueId(graph);
     if (!graph.model.threagile.hasIn(path)) {
       const assetDetails = {
-            id: technicalAssetId,
+            id: uniqueID ,
             description: "Tech Asset",
             type: 'external-entity', // Fixed values: 'external-entity', 'process', 'datastore'
             usage: 'business', // Fixed values: 'business', 'devops'
-            used_as_client_by_human: true,
-            out_of_scope: true,
+            used_as_client_by_human: false,
+            out_of_scope: false,
             justification_out_of_scope: 'Owned and managed by enduser customer',
             size: 'component', // Fixed values: 'system', 'service', 'application', 'component'
             technology: 'browser', // Example: 'browser', 'server', 'mobile app'
@@ -8787,7 +8812,8 @@ if (undefinedAsset)
       cell.technicalAsset = {}; // Initialize it as an empty object
      }
      
-     cell.technicalAsset["id"] = technicalAssetId;
+     cell.technicalAsset["id"] = uniqueID ;
+     cell.technicalAsset["key"] = technicalAssetId;
 
     }
     if(graph.model.threagile.hasIn(['technical_assets','__DELETE_ME__',] )){
@@ -8796,18 +8822,7 @@ if (undefinedAsset)
 }
         console.log('Assigned ID:', technicalAssetId);
 
-
-  /*let technicalAssetId =
-    cellBegin && cellBegin.technicalAsset 
-      ? cellBegin.technicalAsset
-      : null;
-*/
-     //let exportYaml = exportToYaml(graph, false);
-      
-      //let jsonObj = JSON.parse(parseModelViaString(exportYaml));
-	// TODO: We could instead of returning the entire json, write a go method that simply returns the raa value
-      //let jsonObj = JSON.parse(parseModelViaString(graph.model.threagile.toString()));
-       let start, end;
+let start, end;
 
 // Start timing
 start = performance.now();
@@ -8995,15 +9010,15 @@ if(parsedString.includes("$$__ERROR__$$"))
         this.container.appendChild(gaugeElement);
         
         if (typeof technicalAssetId === 'object' && technicalAssetId !== null) {
-          technicalAssetId = technicalAssetId.id;
+          technicalAssetId = technicalAssetId.key;
         }
         
 
-        let id = graph.model.threagile.getIn(['technical_assets', technicalAssetId, 'id']);
+        let id = graph.model.threagile.getIn(['technical_assets', technicalAssetId])["id"];
         if (id === undefined)
         {
           const technicalAsset = graph.model.threagile.getIn(['technical_assets', technicalAssetId]);
-           id = technicalAsset ? technicalAsset.id : undefined; 
+           id = technicalAsset ? technicalAsset.tittle : undefined; 
         }
         let gauge = new JustGage({
           id: "gaugeElement",
@@ -9580,7 +9595,7 @@ InspectionFormatPanel.prototype.addInspectionFormatMenuDynamic = function (
   return container;
 };
 mxUtils.extend(BoundaryFormatPanel, BaseFormatPanel);
-/*
+
 InspectionFormatPanel.prototype.addInspectionMenu2 = function (
   container,
   value
@@ -9761,8 +9776,6 @@ InspectionFormatPanel.prototype.addInspectionMenu2 = function (
   }
   return container;
 };
-
-*/
 
 InspectionFormatPanel.prototype.addInspectionMenu = function (
   container,
@@ -10400,11 +10413,11 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       section: "Properties",
     },
     */
-    id: {
-      description: "Id",
+    target: {
+      description: "target",
       type: "button",
       section: "General",
-      tooltip: "All id attribute values must be unique ",
+      tooltip: "",
       defaultValue: "<Your ID>",
     },
 
@@ -10584,8 +10597,37 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
     },
   };
   {
+
+
     let cell = self.editorUi.editor.graph.getSelectionCell();
+    cell.source = self.editorUi.editor.graph.model.getTerminal(cell,true);
+    cell.target = self.editorUi.editor.graph.model.getTerminal(cell,false);
+    let idtarget =  self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.target.technicalAsset.key])
+
+    if (  !cell.communicationAsset)
+    {
+      if(!self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key]).communication_link)
+      {
+        self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key]).communication_link = 
+        {
+          target: idtarget.id,
+          description: "your description",
+          protocol: "https",
+          authentication: "token",
+          authorization: "enduser-identity-propagation",
+          tags: [],
+          vpn: false,
+          ip_filtered: false,
+          readonly: false,
+          usage: "business",
+          data_assets_sent: [],
+          data_assets_received: [],
+      };
+      cell.communicationAsset = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key]).communication_link;
+      }
+      }
     for (let property in typeProperties) {
+      
       if (typeProperties.hasOwnProperty(property)) {
         let propertyValue = typeProperties[property];
 
@@ -11295,9 +11337,9 @@ CommunicationFormatPanel.prototype.addCommunicationeMenu2 = function (
   // Redundant
   usageSection.appendChild(
     this.createOption(
-      "Redudant",
-      createCustomOption(self, "Redudant"),
-      setCustomOption(self, "Redudant"),
+      "redundant",
+      createCustomOption(self, "redundant"),
+      setCustomOption(self, "redundant"),
       customListener
     )
   );
@@ -11413,11 +11455,15 @@ function createCustomOption(self, parameter) {
     if (cells != null && cells.length > 0) {
       // Selecting the current cell
       var cell = self.editorUi.editor.graph.getSelectionCell();
+      if(cell.technicalAsset=== undefined)
+      {
+        return undefined
+      }
+      else{
+        return self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.technicalAsset.key])[parameter];
       
-      // Checking if the 'technicalAsset' property exists in the cell, otherwise create a new instance with the given parameter
-      var customValue = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.technicalAsset, parameter]);
       
-      return customValue;
+      }
     }
     return false;
   };
@@ -11432,8 +11478,18 @@ function setCustomOption(self, parameter) {
       // Selecting the current cell
       var cell = self.editorUi.editor.graph.getSelectionCell();
       
-      // Checking if the 'technicalAsset' property exists in the cell, otherwise create a new instance with the given parameter
-      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.technicalAsset, parameter], checked);
+      const path = ["technical_assets", cell.technicalAsset.key];
+
+      // Check if the path exists
+      const currentValue = self.editorUi.editor.graph.model.threagile.getIn(path)[parameter];
+      
+      if (currentValue !== undefined) {
+          // If the path exists, set the value directly
+          self.editorUi.editor.graph.model.threagile.getIn(path)[parameter] = checked;
+      } else {
+         self.editorUi.editor.graph.model.threagile.getIn(path)[parameter]=  checked;
+      }
+    
     }
   };
 }
@@ -11449,6 +11505,12 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
   container.appendChild(propertiesSection);
 
   var typeProperties = {
+    key: {
+      description: "key",
+      type: "button",
+      tooltip: "The identifier for the yaml element",
+      defaultValue: "<Your title>",
+    },
     id: {
       description: "ID",
       type: "button",
@@ -11677,25 +11739,34 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
 
   return container;
 };
+
 AssetFormatPanel.prototype.addThreagileMenu = function (container) {
   let self = this;
 
   let main = document.createElement("div");
   var typeProperties = {
-    description: {
-      description: "Description",
+    key: {
+      description: "key",
       type: "button",
       section: "General",
-      tooltip: "Provide a brief description of the technology asset. ",
-      defaultValue:
-        "<This technology asset is responsible for managing the secure transmission of data between client applications and the server infrastructure.>",
+      tooltip: " ",
+      defaultValue: "<Your Title>",
     },
+    
     id: {
       description: "Id",
       type: "button",
       section: "General",
       tooltip: "All id attribute values must be unique ",
       defaultValue: "<Your ID>",
+    },
+    description: {
+      description: "Description",
+      type: "button",
+      section: "General",
+      tooltip: "Provide a brief description of the technology asset. ",
+      defaultValue:
+        "Tech Asset",
     },
     type: {
       description: "Type",
@@ -11987,9 +12058,9 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       tooltip:
         "Check this if the resource is designed to serve multiple users in a multi-tenant environment.",
     },
-    redudant: {
+    redundant: {
       defaultValue: "false",
-      description: "Redudant",
+      description: "redundant",
       type: "checkbox",
       section: "Utilization",
       tooltip:
@@ -12071,12 +12142,18 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
         }
         selectDropdown.appendChild(optgroup);
       }
-     let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
-let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
 
-if (assetInAst && self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId, propertySelect])) {
-    selectDropdown.value = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId, propertySelect]);
-}
+
+      if(self.editorUi.editor.graph.getSelectionCell().technicalAsset !== undefined)
+     {
+      let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset.key;
+      let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
+
+      if (assetInAst && self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId][propertySelect])) {
+          selectDropdown.value = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId])[propertySelect];
+      } 
+     } 
+    
 
 let createChangeListener = function (selectDropdown, propertySelect) {
     return function (evt) {
@@ -12085,8 +12162,8 @@ let createChangeListener = function (selectDropdown, propertySelect) {
         if (vals != null) {
             var assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
             if (assetId) {
-                let assetPath = ["technical_assets", assetId, propertySelect];
-                self.editorUi.editor.graph.model.threagile.setIn(assetPath, selectDropdown.selectedIndex);
+                let assetPath = ["technical_assets", assetId.key];
+                self.editorUi.editor.graph.model.threagile.getIn(assetPath)[propertySelect] = selectDropdown.value;
             }
         }
         mxEvent.consume(evt);
@@ -12114,12 +12191,18 @@ let createChangeListener = function (selectDropdown, propertySelect) {
 let button = mxUtils.button(
     property,
     mxUtils.bind(this, function (evt) {
-        let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
-        let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
-	let assetInAstValue = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId, property]);
+       
+      let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
+      let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId.key]);
+      let assetInAstValue = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId.key])[property];
 
-        let dataValue = assetInAst && assetInAstValue ? assetInAstValue : typeProperties[property].defaultValue;
+      let dataValue = assetInAst && assetInAstValue ? assetInAstValue : typeProperties[property].defaultValue;
 
+      if (property == "key")
+        {
+        dataValue = self.editorUi.editor.graph.getSelectionCell().technicalAsset.key;          
+        }
+       
         var dlg = new TextareaDialog(
             this.editorUi,
             property + ":",
@@ -12127,25 +12210,45 @@ let button = mxUtils.button(
             function (newValue) {
                 if (newValue != null) {
                     if (assetId) {
-                        if (property === "id") {
                             var adjustedValue = newValue.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                             let model = self.editorUi.editor.graph.model;
                             model.beginUpdate();
-                            try {
-                                let assetPath = ["technical_assets", assetId, property];
-                                self.editorUi.editor.graph.model.threagile.setIn(assetPath, adjustedValue);
+                            let cell = self.editorUi.editor.graph.getSelectionCell();
 
+                            try {
+                              if (property === 'id') {
+                                var validIdSyntax = /^[a-zA-Z0-9\-]+$/;
+                                if (!validIdSyntax.test(newValue)) {
+                                    alert('Invalid ID format. Only alphanumeric characters and dashes are allowed.');
+                                    return;
+                                  }
+                                  
+
+                            }
+                            else if(property== "key")
+                              {
+                                restartWasm();
+                                let oldassetPath = ["technical_assets", assetId.key];
+                                let cell = self.editorUi.editor.graph.getSelectionCell();
+                                let object = JSON.parse(JSON.stringify(self.editorUi.editor.graph.model.threagile.getIn(oldassetPath)));
+                                self.editorUi.editor.graph.model.threagile.deleteIn(oldassetPath);
+                                cell.technicalAsset.key=adjustedValue;
+
+                                let newassetPath = ["technical_assets", assetId.key];
+                                self.editorUi.editor.graph.model.threagile.setIn(newassetPath, object);
+                                cell.value= adjustedValue;
+
+                              }else{
+                                let assetPath = ["technical_assets", assetId.key];
+                                self.editorUi.editor.graph.model.threagile.getIn(assetPath)[property]= adjustedValue;
+                              }
+                              
                                 self.editorUi.editor.graph.refresh(cell);
 
                                 self.editorUi.editor.graph.refresh();
                             } finally {
                                 model.endUpdate();
                             }
-                        }
-                        else {
-                            let assetPath = ["technical_assets", assetId, property];
-                            self.editorUi.editor.graph.model.threagile.setIn(assetPath, newValue);
-                        }
                     }
                 }
             },
