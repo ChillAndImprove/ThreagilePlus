@@ -2444,21 +2444,7 @@ Swal.fire({
   this.addAction(
     "addDataAssets",
     mxUtils.bind(this, function (list, menu) {
-    /*
-      if (typeof graph.model.diagramData === "undefined") {
-        graph.model.diagramData = new Map();
-        graph.model.diagramData.DataAssets = new Map();
-      }
-      if (graph.model.diagramData.DataAssets instanceof Map) {
-        var menuId = "menu_" + list.childElementCount;
-        graph.model.diagramData.DataAssets.set(menuId, {
-          descriptionMenu: "Data" + list.childElementCount + ":",
-        });
-        menu.id = menuId;
-      } else {
-        console.error("diagramData is not a Map");
-      }
-        */
+      
       var listItem = document.createElement("li");
       listItem.style.display = "flex";
       listItem.style.flexDirection = "column";
@@ -2482,7 +2468,20 @@ Swal.fire({
       var dataText = document.createElement("div");
       dataText.textContent = "Data " + list.childElementCount + ":";
       //dataText.textContent = graph.model.diagramData.get(menu.id).id;
-
+      const data = {
+        id: generateUniquedataId(graph),
+        description: "Data blabla.",
+        usage: "devops", // values: business, devops
+        tags: [],
+        origin: "Company XYZ",
+        owner: "Company XYZ",
+        quantity: "very-few", // values: very-few, few, many, very-many
+        confidentiality: "strictly-confidential", // values: public, internal, restricted, confidential, strictly-confidential
+        integrity: "critical", // values: archive, operational, important, critical, mission-critical
+        availability: "critical", // values: archive, operational, important, critical, mission-critical
+        justification_cia_rating: "justify"
+    };
+      graph.model.threagile.setIn(["data_assets","Data " + list.childElementCount], data);
       var xButton = document.createElement("button");
       xButton.innerHTML =
         '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEV7mr3///+wksspAAAAAnRSTlP/AOW3MEoAAAAdSURBVAgdY9jXwCDDwNDRwHCwgeExmASygSL7GgB12QiqNHZZIwAAAABJRU5ErkJggg==" alt="X">';

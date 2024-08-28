@@ -9,67 +9,15 @@ Format = function (editorUi, container) {
 threagile_version: 1.0.0
 business_criticality: important # values: archive, operational, important, critical, mission-critical
 
-technical_assets:
- __DELETE_ME__:
-    id: backend-admin-client
-    description: Backend admin client
-    type: external-entity 
-    usage: devops 
-    used_as_client_by_human: false
-    out_of_scope: false
-    justification_out_of_scope: Owned and managed by ops provider
-    size: component 
-    technology: browser 
-    tags:
-    internet: false
-    machine: physical # values: physical, virtual, container, serverless
-    encryption: none # values: none, transparent, data-with-symmetric-shared-key, data-with-asymmetric-shared-key, data-with-enduser-individual-key
-    owner: Company XYZ
-    confidentiality: internal # values: public, internal, restricted, confidential, strictly-confidential
-    integrity: operational # values: archive, operational, important, critical, mission-critical
-    availability: operational # values: archive, operational, important, critical, mission-critical
-    justification_cia_rating: >
-      The client used by Company XYZ to administer the system.
-    multi_tenant: false
-    redundant: false
-    custom_developed_parts: false
-data_assets:
-  Database Customizing and Dumps:
-    id: db-dumps
-    description: Data for customizing of the DB system, which might include full database dumps.
-    usage: devops # values: business, devops
-    tags:
-    origin: Company XYZ
-    owner: Company XYZ
-    quantity: very-few # values: very-few, few, many, very-many
-    confidentiality: strictly-confidential # values: public, internal, restricted, confidential, strictly-confidential
-    integrity: critical # values: archive, operational, important, critical, mission-critical
-    availability: critical # values: archive, operational, important, critical, mission-critical
-    justification_cia_rating: >
-      Data for customizing of the DB system, which might include full database dumps.
+
 `;
 
   let wow = YAML.parse(threagileInit);
   let wow2 = YAML.parseDocument(threagileInit);
   this.editorUi.editor.graph.model.threagile =
     YAML.parseDocument(threagileInit);
-	/*
-  editorUi.editor.graph.addListener(mxEvent.CELL_CONNECTED, function(sender, evt) {
-    var edge = evt.getProperty('edge');
-    var source = evt.getProperty('source');
-    var terminal = evt.getProperty('terminal');
-});
-*/
-// Instantiate WebAssembly Module
-/*
-WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
-  go.run(result.instance);
 
-  window.editorUi.editor.graph.model.wasmInstance = result.instance;
-
-});
-*/
-instantiateWasm();
+  instantiateWasm();
 };
 
 
@@ -8003,21 +7951,22 @@ DiagramFormatPanel.prototype.init = function () {
   }
 
 if (
-    typeof graph.model.diagramData !== "undefined" &&
-    typeof this.editorUi.editor.graph.model.diagramData.data_assets !==
+    typeof graph.model.threagile.getIn(["data_assets"]) !== "undefined" &&
+    typeof this.editorUi.editor.graph.model.threagile.getIn(["data_assets"]) !==
       "undefined"
   ) {
-    let data_assets_map = graph.model.diagramData.data_assets;
-    data_assets_map.forEach(
-      function (value, property) {
-       let data_asset = this.editorUi.editor.graph.model.threagile.getIn(["data_assets", property]);
+    let data_assets_map = graph.model.threagile.getIn(["data_assets"]).toJSON();
+    Object.entries(data_assets_map).forEach(([property, value]) => {
+      let data_asset = this.editorUi.editor.graph.model.threagile.getIn(["data_assets", property]);
        var clonedMenu = this.addDataMenu(this.createPanel());
+        property = property +":";
         clonedMenu.id = property;
         var listItem = document.createElement("li");
         listItem.style.display = "flex";
         listItem.style.flexDirection = "column";
         listItem.style.padding = "8px";
         listItem.style.borderBottom = "1px solid #ccc";
+        listItem.dataset.visible = "false"; 
         var parentNode = clonedMenu.childNodes[0];
         for (var key in value) {
           if (value.hasOwnProperty(key)) {
@@ -8038,13 +7987,10 @@ if (
                   let nextChildNode = currentChildNode.children[1].children[0];
 
                   if (nextChildNode.nodeName === "SELECT") {
-                    // Loop through all the options in the select element
                     for (let i = 0; i < nextChildNode.options.length; i++) {
-                        // Check if the current option's value matches the childNode value
                         if (nextChildNode.options[i].value === childNode) {
-                            // Set the selectedIndex to the current index if there is a match
                             nextChildNode.selectedIndex = i;
-                            break; // Exit the loop once the match is found and set
+                            break; 
                         }
                     }
                 }
@@ -8057,7 +8003,7 @@ if (
         textContainer.style.display = "flex";
         textContainer.style.alignItems = "center";
         textContainer.style.marginBottom = "8px";
-        textContainer.style.color = "black";  // Assuming white text for contrast
+        textContainer.style.color = "black";  
         let arrowIcon = document.createElement("img");
         arrowIcon.src =
           " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
@@ -8088,12 +8034,9 @@ if (
 
         textContainer.appendChild(dataText);
         textContainer.appendChild(xButton);
-        let current = graph.model.diagramData.data_assets.get(clonedMenu.id);
-        if (current["visible"] === undefined) {
-          current["visible"] = true;
-        }
-        let state = current["visible"];
-        if (state) {
+    
+     
+        if (listItem.dataset.visible === "true") {
           listItem.style.backgroundColor = "";
           arrowIcon.style.transform = "rotate(270deg)";
           xButton.style.display = "inline-block";
@@ -8108,26 +8051,26 @@ if (
         listItem.appendChild(textContainer);
         listItem.appendChild(clonedMenu);
         function toggleContent() {
-          let state = current["visible"];
-          current["visible"] = !current["visible"];
-          if (!state) {
-            listItem.style.backgroundColor = "";
-            arrowIcon.style.transform = "rotate(270deg)";
-            xButton.style.display = "inline-block";
-            clonedMenu.style.display = "block";
+          let isVisible = listItem.dataset.visible === "true";
+          listItem.dataset.visible = !isVisible; 
+          if (!isVisible) {
+              listItem.style.backgroundColor = "";
+              arrowIcon.style.transform = "rotate(270deg)";
+              xButton.style.display = "inline-block";
+              clonedMenu.style.display = "block";
           } else {
-            listItem.style.backgroundColor = "lightgray";
-            arrowIcon.style.transform = "rotate(90deg)";
-            xButton.style.display = "none";
-            clonedMenu.style.display = "none";
+              listItem.style.backgroundColor = "lightgray";
+              arrowIcon.style.transform = "rotate(90deg)";
+              xButton.style.display = "none";
+              clonedMenu.style.display = "none";
           }
-        }
+      }
         arrowIcon.addEventListener("click", toggleContent);
         dataText.addEventListener("click", toggleContent);
 
         list.appendChild(listItem);
-      }.bind(this)
-    );
+      }
+      );
   }
   var generalHeader = document.createElement("div");
   generalHeader.innerHTML = "Data:";
@@ -8727,6 +8670,13 @@ InspectionFormatPanel = function (format, editorUi, container) {
 };
 mxUtils.extend(InspectionFormatPanel, BaseFormatPanel);
 
+function generateUniquedataId(graph) {
+  var newId;
+  do {
+      newId = 'da-' + Math.random().toString(36).substr(2, 9); // Generate a random ID
+  } while (checkIdExists(graph, newId)); // Ensure it's unique
+  return newId;
+}
 // Function to generate a unique ID
 function generateUniqueId(graph) {
   var newId;
@@ -9018,7 +8968,13 @@ if(parsedString.includes("$$__ERROR__$$"))
         if (id === undefined)
         {
           const technicalAsset = graph.model.threagile.getIn(['technical_assets', technicalAssetId]);
-           id = technicalAsset ? technicalAsset.tittle : undefined; 
+          if(graph.model.threagile.getIn(['technical_assets', technicalAssetId]).id === undefined)
+          {
+            id = graph.model.threagile.getIn(['technical_assets', technicalAssetId]).toJSON().id;
+          }
+          else {
+            id = technicalAsset ? technicalAsset.title : undefined; 
+          }
         }
         let gauge = new JustGage({
           id: "gaugeElement",
@@ -9509,12 +9465,12 @@ InspectionFormatPanel.prototype.addInspectionFormatMenuDynamic = function (
       var createChangeListener = function (selectDropdown, property) {
         var self = this.editorUi;
         return function (evt) {
-          var menuId =
-            evt.target.parentNode.parentNode.parentNode.parentNode.id;
+          var dataAssetId =
+          evt.target.parentNode.parentNode.parentNode.parentNode.textContent.split(':')[0];
+          let dataAsset = graph.model.threagile.getIn(["data_assets",dataAssetId]);
+          let current = dataAsset;
           var newValue = selectDropdown.value;
           currentValue = newValue;
-
-          let current = self.editor.graph.model.diagramData.get(menuId);
           if (!current[property]) {
             current[property] = "";
           }
@@ -9547,11 +9503,11 @@ InspectionFormatPanel.prototype.addInspectionFormatMenuDynamic = function (
       let button = mxUtils.button(
         property,
         mxUtils.bind(this, function (evt) {
-          var menuId = evt.target.parentNode.parentNode.parentNode.id;
-          current =
-            this.editorUi.editor.graph.model.diagramData.data_assets.get(
-              menuId
-            );
+          var dataAssetId =
+          evt.target.parentNode.parentNode.parentNode.parentNode.textContent.split(':')[0];
+
+          let current = graph.model.threagile.getIn(["data_assets",dataAssetId]);
+
 
           if (!current[property]) {
             current[property] = typeProperties[property].defaultValue;
@@ -9702,12 +9658,14 @@ InspectionFormatPanel.prototype.addInspectionMenu2 = function (
       var createChangeListener = function (selectDropdown, property) {
         var self = this.editorUi;
         return function (evt) {
-          var menuId =
-            evt.target.parentNode.parentNode.parentNode.parentNode.id;
+          
+          let str = evt.target.parentNode.parentNode.parentNode.parentNode.textContent;
+          str = str.slice(0, str.indexOf(":"));
+          
           var newValue = selectDropdown.value;
           currentValue = newValue;
 
-          let current = value;
+          let current = self.graph.model.threagile.getIn(["data_assets", str]);
           if (!current[property]) {
             current[property] = "";
           }
@@ -11460,7 +11418,7 @@ function createCustomOption(self, parameter) {
         return undefined
       }
       else{
-        return self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.technicalAsset.key])[parameter];
+        return self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.technicalAsset.key,parameter]);
       
       
       }
@@ -11478,16 +11436,16 @@ function setCustomOption(self, parameter) {
       // Selecting the current cell
       var cell = self.editorUi.editor.graph.getSelectionCell();
       
-      const path = ["technical_assets", cell.technicalAsset.key];
+      const path = ["technical_assets", cell.technicalAsset.key, parameter];
 
       // Check if the path exists
-      const currentValue = self.editorUi.editor.graph.model.threagile.getIn(path)[parameter];
+      const currentValue = self.editorUi.editor.graph.model.threagile.getIn(path);
       
       if (currentValue !== undefined) {
           // If the path exists, set the value directly
-          self.editorUi.editor.graph.model.threagile.getIn(path)[parameter] = checked;
+          self.editorUi.editor.graph.model.threagile.getIn(path) = checked;
       } else {
-         self.editorUi.editor.graph.model.threagile.getIn(path)[parameter]=  checked;
+         self.editorUi.editor.graph.model.threagile.getIn(path)=  checked;
       }
     
     }
@@ -11654,12 +11612,12 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
       var createChangeListener = function (selectDropdown, property) {
         var self = this.editorUi;
         return function (evt) {
-          var menuId =
-            evt.target.parentNode.parentNode.parentNode.parentNode.id;
+          let textContentData = evt.target.parentNode.parentNode.parentNode.parentNode.parentNode.textContent;
+          let dataAssetName = textContentData.substring(0, textContentData.indexOf(":"));
           var newValue = selectDropdown.value;
           currentValue = newValue;
 
-          let current = self.editor.graph.model.diagramData.get(menuId);
+          let current = self.editor.graph.model.threagile.getIn(["data_assets",dataAssetName]);
           if (!current[property]) {
             current[property] = "";
           }
@@ -11692,25 +11650,71 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
       let button = mxUtils.button(
         property,
         mxUtils.bind(this, function (evt) {
-          var menuId = evt.target.parentNode.parentNode.parentNode.id;
-          current =
-            this.editorUi.editor.graph.model.diagramData.data_assets.get(
-              menuId
-            );
-
+          let str = evt.target.parentNode.parentNode.parentNode.parentNode.textContent;
+          str = str.slice(0, str.indexOf(":"));
+          let current = self.graph.model.threagile.getIn(["data_assets", str]);
+          if(current.description == undefined)
+          {
+            current = self.graph.model.threagile.getIn(["data_assets", str]).toJSON();
+          }
           if (!current[property]) {
             current[property] = typeProperties[property].defaultValue;
           }
 
           var dataValue = current[property];
-
+          if(property== "key")
+          {
+              dataValue = str;
+          }
           var dlg = new TextareaDialog(
             this.editorUi,
             property + ":",
             dataValue,
             function (newValue) {
               if (newValue != null) {
-                current[property] = newValue;
+              
+                if(property == "key")
+                {
+                  function updateTextBeforeColon(element, newValue) {
+                    const findTextNodeWithColon = (node) => {
+                        for (let child of node.childNodes) {
+                            if (child.nodeType === Node.TEXT_NODE && child.textContent.includes(':')) {
+                                return child; 
+                            } else if (child.nodeType === Node.ELEMENT_NODE) {
+                                let found = findTextNodeWithColon(child);
+                                if (found) return found;
+                            }
+                        }
+                        return null;
+                    };
+                    let textNode = findTextNodeWithColon(element);
+                    if (textNode) {
+                        let parts = textNode.textContent.split(':');
+                        if (parts.length > 1) {
+                            textNode.textContent = newValue + ': ' + parts.slice(1).join(':');
+                        }
+                    } else {
+                        console.log('No text containing ":" found within the element.');
+                    }
+                }
+
+                
+                  let element = evt.target.parentNode.parentNode.parentNode.parentNode;
+                  updateTextBeforeColon(element, newValue);
+                  restartWasm();
+                  let oldassetPath = ["data_assets", str];
+                  let object = JSON.parse(JSON.stringify(self.editorUi.editor.graph.model.threagile.getIn(oldassetPath)));
+                  self.editorUi.editor.graph.model.threagile.deleteIn(oldassetPath);
+                  let newassetPath = ["data_assets", newValue];
+                  self.editorUi.editor.graph.model.threagile.setIn(newassetPath, object);
+                  let restoreIntegrity = self.editorUi.editor.graph.model.threagile.toString();
+                  self.editorUi.editor.graph.model.threagile =  YAML.parseDocument(restoreIntegrity);
+
+                }
+                else
+                {
+                  self.graph.model.threagile.setIn(["data_assets", str,property], newValue);
+                }
               }
             },
             null,
@@ -12237,6 +12241,8 @@ let button = mxUtils.button(
                                 let newassetPath = ["technical_assets", assetId.key];
                                 self.editorUi.editor.graph.model.threagile.setIn(newassetPath, object);
                                 cell.value= adjustedValue;
+                                let restoreIntegrity = self.editorUi.editor.graph.model.threagile.toString();
+                                self.editorUi.editor.graph.model.threagile =  YAML.parseDocument(restoreIntegrity);
 
                               }else{
                                 let assetPath = ["technical_assets", assetId.key];
