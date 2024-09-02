@@ -9,7 +9,20 @@ Format = function (editorUi, container) {
 threagile_version: 1.0.0
 business_criticality: important # values: archive, operational, important, critical, mission-critical
 
-
+tags_available:
+  - linux
+  - apache
+  - mysql
+  - jboss
+  - keycloak
+  - jenkins
+  - git
+  - oracle
+  - some-erp
+  - vmware
+  - aws
+  - aws:ec2
+  - aws:s3
 `;
 
   let wow = YAML.parse(threagileInit);
@@ -7958,10 +7971,11 @@ if (
     let data_assets_map = graph.model.threagile.getIn(["data_assets"]).toJSON();
     Object.entries(data_assets_map).forEach(([property, value]) => {
       let data_asset = this.editorUi.editor.graph.model.threagile.getIn(["data_assets", property]);
-       var clonedMenu = this.addDataMenu(this.createPanel());
+       var clonedMenu = this.addDataMenu(this.createPanel(), property);
+        let orginalProperty = property; 
         property = property +":";
         clonedMenu.id = property;
-        var listItem = document.createElement("li");
+        var listItem = document.createElement("li");  
         listItem.style.display = "flex";
         listItem.style.flexDirection = "column";
         listItem.style.padding = "8px";
@@ -7971,15 +7985,23 @@ if (
         for (var key in value) {
           if (value.hasOwnProperty(key)) {
             var childNode = value[key];
-
+            
             for (var i = 0; i < parentNode.childNodes.length; i++) {
               var currentChildNode = parentNode.childNodes[i];
-
+              if (currentChildNode.nodeName === "INPUT") {
+                // Check if the input is possibly enhanced by Tagify
+                if ('__tagify' in currentChildNode) {
+                  let tags = graph.model.threagile.getIn(["data_assets", orginalProperty , "tags"]) || [];
+                  //currentChildNode.__tagify.addTags(Array.from(tags));
+                }
+              }
+              else{
               if (
                 currentChildNode.nodeType === Node.ELEMENT_NODE &&
                 currentChildNode.children.length > 0 &&
                 currentChildNode.children[0].textContent === key
               ) {
+                
                 if (
                   currentChildNode.children.length > 1 &&
                   currentChildNode.childNodes.length > 0
@@ -7994,6 +8016,10 @@ if (
                         }
                     }
                 }
+               
+
+                
+              }
                 }
               }
             }
@@ -8670,10 +8696,25 @@ InspectionFormatPanel = function (format, editorUi, container) {
 };
 mxUtils.extend(InspectionFormatPanel, BaseFormatPanel);
 
+function generateRandomId(prefix, totalLength) {
+  let randomPart = '';
+  while (randomPart.length + prefix.length < totalLength) {
+    randomPart += Math.random().toString(36).substr(2);
+  }
+  return prefix + randomPart.substring(0, totalLength - prefix.length);
+}
+
+function generateUniquekeyData(graph) {
+  var newId;
+  do {
+      newId = generateRandomId('DATA-' ,10); // Generate a random ID
+  } while (checkIdExists(graph, newId)); // Ensure it's unique
+  return newId;
+}
 function generateUniquedataId(graph) {
   var newId;
   do {
-      newId = 'da-' + Math.random().toString(36).substr(2, 9); // Generate a random ID
+      newId = generateRandomId('da-' ,25); // Generate a random ID
   } while (checkIdExists(graph, newId)); // Ensure it's unique
   return newId;
 }
@@ -8681,7 +8722,7 @@ function generateUniquedataId(graph) {
 function generateUniqueId(graph) {
   var newId;
   do {
-      newId = 'ta-' + Math.random().toString(36).substr(2, 9); // Generate a random ID
+    newId = generateRandomId('ta-' ,25); // Generate a random ID
   } while (checkIdExists(graph, newId)); // Ensure it's unique
   return newId;
 }
@@ -8689,7 +8730,7 @@ function generateUniqueId(graph) {
 function generateUniquekey(graph) {
   var newId;
   do {
-      newId = 'key-' + Math.random().toString(36).substr(2, 9); // Generate a random ID
+    newId = generateRandomId('key-' ,15); // Generate a random ID
   } while (checkIdExists(graph, newId)); // Ensure it's unique
   return newId;
 }
@@ -8731,29 +8772,31 @@ if (undefinedAsset)
     const path = ['technical_assets', technicalAssetId];
     const uniqueID = generateUniqueId(graph);
     if (!graph.model.threagile.hasIn(path)) {
-      const assetDetails = {
-            id: uniqueID ,
-            description: "Tech Asset",
-            type: 'external-entity', // Fixed values: 'external-entity', 'process', 'datastore'
-            usage: 'business', // Fixed values: 'business', 'devops'
-            used_as_client_by_human: false,
-            out_of_scope: false,
-            justification_out_of_scope: 'Owned and managed by enduser customer',
-            size: 'component', // Fixed values: 'system', 'service', 'application', 'component'
-            technology: 'browser', // Example: 'browser', 'server', 'mobile app'
-            machine: 'physical', // Fixed values: 'physical', 'virtual', 'container', 'serverless'
-            encryption: 'none', // Fixed values: 'none', 'transparent', 'data-with-symmetric-shared-key', etc.
-            owner: 'Customer',
-            confidentiality: 'internal', // Fixed values: 'public', 'internal', 'restricted', etc.
-            integrity: 'operational', // Fixed values: 'archive', 'operational', 'important', etc.
-            availability: 'operational', // Fixed values: 'archive', 'operational', 'important', etc.
-            justification_cia_rating: 'The client used by the customer to access the system.',
-            multi_tenant: false,
-            redundant: false,
-            custom_developed_parts: false
-        
+      const assetProperties = {
+        id: uniqueID,
+        description: "Tech Asset",
+        type: 'external-entity',
+        usage: 'business',
+        used_as_client_by_human: false,
+        out_of_scope: false,
+        justification_out_of_scope: 'Owned and managed by enduser customer',
+        size: 'component',
+        technology: 'browser',
+        machine: 'physical',
+        encryption: 'none',
+        owner: 'Customer',
+        confidentiality: 'internal',
+        integrity: 'operational',
+        availability: 'operational',
+        justification_cia_rating: 'The client used by the customer to access the system.',
+        multi_tenant: false,
+        redundant: false,
+        custom_developed_parts: false
     };
-    graph.model.threagile.setIn(path, assetDetails);
+    Object.keys(assetProperties).forEach(property => {
+      graph.model.threagile.setIn([...path, property], assetProperties[property]);
+  });
+    //graph.model.threagile.setIn(path, assetDetails);
  
     let cells = self.editorUi.editor.graph.getSelectionCells();
     let cell = cells && cells.length > 0 ? cells[0] : null;
@@ -8964,11 +9007,11 @@ if(parsedString.includes("$$__ERROR__$$"))
         }
         
 
-        let id = graph.model.threagile.getIn(['technical_assets', technicalAssetId])["id"];
+        let id = graph.model.threagile.getIn(['technical_assets', technicalAssetId, "id"]);
         if (id === undefined)
         {
           const technicalAsset = graph.model.threagile.getIn(['technical_assets', technicalAssetId]);
-          if(graph.model.threagile.getIn(['technical_assets', technicalAssetId]).id === undefined)
+          if(graph.model.threagile.getIn(['technical_assets', technicalAssetId, "id"]) === undefined)
           {
             id = graph.model.threagile.getIn(['technical_assets', technicalAssetId]).toJSON().id;
           }
@@ -9540,14 +9583,12 @@ InspectionFormatPanel.prototype.addInspectionFormatMenuDynamic = function (
     }
     propertiesSection.appendChild(typeItem);
   }
-  // Create a new input element
+  /*
   let inputElement = document.createElement("input");
   inputElement.placeholder = "Enter your tags and press Enter";
-  // Append it to body (or any other container)
   propertiesSection.appendChild(inputElement);
   var tagify = new Tagify(inputElement);
-  //
-
+  */
   return container;
 };
 mxUtils.extend(BoundaryFormatPanel, BaseFormatPanel);
@@ -9666,11 +9707,12 @@ InspectionFormatPanel.prototype.addInspectionMenu2 = function (
           currentValue = newValue;
 
           let current = self.graph.model.threagile.getIn(["data_assets", str]);
-          if (!current[property]) {
-            current[property] = "";
+          if (!current) {
+            self.graph.model.threagile.setIn(["data_assets", str, property], "")
+            
           }
           if (newValue != null) {
-            current[property] = newValue;
+            self.graph.model.threagile.setIn(["data_assets", str, property], newValue)
           }
         };
       }.bind(this);
@@ -9936,6 +9978,7 @@ InspectionFormatPanel.prototype.addInspectionMenu = function (
     }
     propertiesSection.appendChild(typeItem);
   }
+  /*
   // Create a new input element
   let inputElement = document.createElement("input");
   inputElement.placeholder = "Enter your tags and press Enter";
@@ -9943,7 +9986,7 @@ InspectionFormatPanel.prototype.addInspectionMenu = function (
   propertiesSection.appendChild(inputElement);
   var tagify = new Tagify(inputElement);
   //
-
+*/
   return container;
 };
 BoundaryFormatPanel.prototype.init = function () {
@@ -10560,15 +10603,15 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
     let cell = self.editorUi.editor.graph.getSelectionCell();
     cell.source = self.editorUi.editor.graph.model.getTerminal(cell,true);
     cell.target = self.editorUi.editor.graph.model.getTerminal(cell,false);
-    let idtarget =  self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.target.technicalAsset.key])
+    let idtarget =  self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.target.technicalAsset.key,"id"]);
 
     if (  !cell.communicationAsset)
     {
-      if(!self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key]).communication_link)
+      if(!self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key, "communication_link"]))
       {
-        self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key]).communication_link = 
-        {
-          target: idtarget.id,
+        const communicationLinkProperties = {
+        
+          target: idtarget,
           description: "your description",
           protocol: "https",
           authentication: "token",
@@ -10581,7 +10624,11 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
           data_assets_sent: [],
           data_assets_received: [],
       };
-      cell.communicationAsset = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key]).communication_link;
+      const path = ['technical_assets', cell.source.technicalAsset.key, 'communication_link'];
+       Object.keys(communicationLinkProperties).forEach(property => {
+        self.editorUi.editor.graph.model.threagile.setIn([...path, property], communicationLinkProperties[property]);
+    });
+      cell.communicationAsset = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link"]);
       }
       }
     for (let property in typeProperties) {
@@ -10591,7 +10638,7 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
 
         if (
           !cell.communicationAsset ||
-          cell.communicationAsset[property] === undefined
+          self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link"],property) === undefined
         ) {
           if (propertyValue.hasOwnProperty("defaultValue")) {
             cell.communicationAsset = cell.communicationAsset || {};
@@ -11419,8 +11466,6 @@ function createCustomOption(self, parameter) {
       }
       else{
         return self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.technicalAsset.key,parameter]);
-      
-      
       }
     }
     return false;
@@ -11437,16 +11482,9 @@ function setCustomOption(self, parameter) {
       var cell = self.editorUi.editor.graph.getSelectionCell();
       
       const path = ["technical_assets", cell.technicalAsset.key, parameter];
-
-      // Check if the path exists
-      const currentValue = self.editorUi.editor.graph.model.threagile.getIn(path);
-      
-      if (currentValue !== undefined) {
-          // If the path exists, set the value directly
-          self.editorUi.editor.graph.model.threagile.getIn(path) = checked;
-      } else {
-         self.editorUi.editor.graph.model.threagile.getIn(path)=  checked;
-      }
+ 
+      self.editorUi.editor.graph.model.threagile.setIn(path, checked);
+     
     
     }
   };
@@ -11454,9 +11492,16 @@ function setCustomOption(self, parameter) {
 
 
 
-DiagramFormatPanel.prototype.addDataMenu = function (container) {
+DiagramFormatPanel.prototype.addDataMenu = function (container,UUID = undefined) {
   var self = this;
-
+  let uniqueID;
+  if(UUID == undefined){
+    uniqueID= generateUniquekeyData(self.editorUi.editor.graph);
+  }
+  else{
+    uniqueID=UUID;
+  }
+    container.setAttribute('data-info', uniqueID);
   // Add line break
   // Add Properties section
   var propertiesSection = createSection("Properties");
@@ -11572,177 +11617,275 @@ DiagramFormatPanel.prototype.addDataMenu = function (container) {
     destroy: function () {},
   };
 
-  var self = this;
+    var self = this;
 
-  var typePropertiesMap = {};
-  for (let property in typeProperties) {
-    var typeItem = document.createElement("li");
-    typeItem.style.display = "flex";
-    typeItem.style.alignItems = "baseline";
-    typeItem.style.marginBottom = "8px";
+    var typePropertiesMap = {};
+    for (let property in typeProperties) {
+      var typeItem = document.createElement("li");
+      typeItem.style.display = "flex";
+      typeItem.style.alignItems = "baseline";
+      typeItem.style.marginBottom = "8px";
 
-    var propertyName = document.createElement("span");
-    propertyName.innerHTML = property;
-    propertyName.style.width = "100px";
-    propertyName.style.marginRight = "10px";
+      var propertyName = document.createElement("span");
+      propertyName.innerHTML = property;
+      propertyName.style.width = "100px";
+      propertyName.style.marginRight = "10px";
 
-    var propertyType = typeProperties[property].type;
+      var propertyType = typeProperties[property].type;
 
-    if (propertyType === "select") {
-      const propertySelect = property;
-      typeItem.appendChild(propertyName);
-      var selectContainer = document.createElement("div");
-      selectContainer.style.display = "flex";
-      selectContainer.style.alignItems = "center";
-      selectContainer.style.marginLeft = "auto";
+      if (propertyType === "select") {
+        const propertySelect = property;
+        typeItem.appendChild(propertyName);
+        var selectContainer = document.createElement("div");
+        selectContainer.style.display = "flex";
+        selectContainer.style.alignItems = "center";
+        selectContainer.style.marginLeft = "auto";
 
-      var selectDropdown = document.createElement("select");
-      selectDropdown.style.width = "100px";
-      selectDropdown.title = typeProperties[property].tooltip;
-      selectContainer.appendChild(selectDropdown);
+        var selectDropdown = document.createElement("select");
+        selectDropdown.style.width = "100px";
+        selectDropdown.title = typeProperties[property].tooltip;
+        selectContainer.appendChild(selectDropdown);
 
-      var options = typeProperties[property].options;
-      for (var i = 0; i < options.length; i++) {
-        var option = document.createElement("option");
-        option.value = options[i];
-        option.text = options[i];
-        selectDropdown.appendChild(option);
-      }
+        var options = typeProperties[property].options;
+        for (var i = 0; i < options.length; i++) {
+          var option = document.createElement("option");
+          option.value = options[i];
+          option.text = options[i];
+          selectDropdown.appendChild(option);
+        }
 
-      var createChangeListener = function (selectDropdown, property) {
-        var self = this.editorUi;
-        return function (evt) {
-          let textContentData = evt.target.parentNode.parentNode.parentNode.parentNode.parentNode.textContent;
-          let dataAssetName = textContentData.substring(0, textContentData.indexOf(":"));
-          var newValue = selectDropdown.value;
-          currentValue = newValue;
+        var createChangeListener = function (selectDropdown, property) {
+          var self = this.editorUi;
+          return function (evt) {
+            let textContentData = evt.target.parentNode.parentNode.parentNode.parentNode.parentNode.textContent;
+            let dataAssetName = textContentData.substring(0, textContentData.indexOf(":"));
+            var newValue = selectDropdown.value;
+            currentValue = newValue;
 
-          let current = self.editor.graph.model.threagile.getIn(["data_assets",dataAssetName]);
-          if (!current[property]) {
-            current[property] = "";
-          }
-          if (newValue != null) {
-            current[property] = newValue;
-          }
-        };
-      }.bind(this);
+            self.editor.graph.model.threagile.setIn(["data_assets",dataAssetName, property],newValue);
+          };
+        }.bind(this);
 
-      mxEvent.addListener(
-        selectDropdown,
-        "change",
-        createChangeListener(selectDropdown, property)
-      );
+        mxEvent.addListener(
+          selectDropdown,
+          "change",
+          createChangeListener(selectDropdown, property)
+        );
 
-      typeItem.appendChild(selectContainer);
-    } else if (propertyType === "checkbox") {
-      let optionElement = this.createOption(
-        property,
-        createCustomOption(self, property),
-        setCustomOption(self, property),
-        customListener
-      );
-      optionElement.querySelector('input[type="checkbox"]').title =
-        typeProperties[property].tooltip;
-      container.appendChild(optionElement);
-    } else if (propertyType === "button") {
-      let functionName =
-        "editData" + property.charAt(0).toUpperCase() + property.slice(1);
-      let button = mxUtils.button(
-        property,
-        mxUtils.bind(this, function (evt) {
-          let str = evt.target.parentNode.parentNode.parentNode.parentNode.textContent;
-          str = str.slice(0, str.indexOf(":"));
-          let current = self.graph.model.threagile.getIn(["data_assets", str]);
-          if(current.description == undefined)
-          {
-            current = self.graph.model.threagile.getIn(["data_assets", str]).toJSON();
-          }
-          if (!current[property]) {
-            current[property] = typeProperties[property].defaultValue;
-          }
+        typeItem.appendChild(selectContainer);
+      } else if (propertyType === "checkbox") {
+        let optionElement = this.createOption(
+          property,
+          createCustomOption(self, property),
+          setCustomOption(self, property),
+          customListener
+        );
+        optionElement.querySelector('input[type="checkbox"]').title =
+          typeProperties[property].tooltip;
+        container.appendChild(optionElement);
+      } else if (propertyType === "button") {
 
-          var dataValue = current[property];
-          if(property== "key")
-          {
-              dataValue = str;
-          }
-          var dlg = new TextareaDialog(
-            this.editorUi,
-            property + ":",
-            dataValue,
-            function (newValue) {
-              if (newValue != null) {
+      
+
+
+
+
+
+        let functionName =
+          "editData" + property.charAt(0).toUpperCase() + property.slice(1);
+      
+        let button = mxUtils.button(
+          property,
+          mxUtils.bind(this, (function(p) { // p captures the current property
+            return function(evt) {
+              let str = evt.target.parentNode.parentNode.parentNode.parentNode.textContent;
+              str = str.slice(0, str.indexOf(":"));
+              let current = self.graph.model.threagile.getIn(["data_assets", str, p]);
               
-                if(property == "key")
-                {
-                  function updateTextBeforeColon(element, newValue) {
-                    const findTextNodeWithColon = (node) => {
-                        for (let child of node.childNodes) {
-                            if (child.nodeType === Node.TEXT_NODE && child.textContent.includes(':')) {
-                                return child; 
-                            } else if (child.nodeType === Node.ELEMENT_NODE) {
-                                let found = findTextNodeWithColon(child);
-                                if (found) return found;
-                            }
-                        }
-                        return null;
-                    };
-                    let textNode = findTextNodeWithColon(element);
-                    if (textNode) {
-                        let parts = textNode.textContent.split(':');
-                        if (parts.length > 1) {
-                            textNode.textContent = newValue + ': ' + parts.slice(1).join(':');
-                        }
-                    } else {
-                        console.log('No text containing ":" found within the element.');
-                    }
+              var dataValue;
+              if (p === "key") {
+                dataValue = str;
+              } else {  
+                if (!current) {
+                  self.graph.model.threagile.setIn(["data_assets", str, p], typeProperties[p].defaultValue);
                 }
-
-                
-                  let element = evt.target.parentNode.parentNode.parentNode.parentNode;
-                  updateTextBeforeColon(element, newValue);
-                  restartWasm();
-                  let oldassetPath = ["data_assets", str];
-                  let object = JSON.parse(JSON.stringify(self.editorUi.editor.graph.model.threagile.getIn(oldassetPath)));
-                  self.editorUi.editor.graph.model.threagile.deleteIn(oldassetPath);
-                  let newassetPath = ["data_assets", newValue];
-                  self.editorUi.editor.graph.model.threagile.setIn(newassetPath, object);
-                  let restoreIntegrity = self.editorUi.editor.graph.model.threagile.toString();
-                  self.editorUi.editor.graph.model.threagile =  YAML.parseDocument(restoreIntegrity);
-
-                }
-                else
-                {
-                  self.graph.model.threagile.setIn(["data_assets", str,property], newValue);
-                }
+                dataValue = current ? self.graph.model.threagile.getIn(["data_assets", str, p]) : undefined; // Ensure you use the correct reference
               }
-            },
-            null,
-            null,
-            400,
-            220
-          );
-          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
-
-          dlg.init();
-        })
-      );
-      button.title = typeProperties[property].tooltip;
-      button.style.width = "200px";
-      typeItem.appendChild(button);
+          
+              var dlg = new TextareaDialog(
+                this.editorUi,
+                p + ":",
+                dataValue,
+                function (newValue) {
+                  if (newValue != null) {
+                    if (p === "key") {
+                    } else {
+                      self.graph.model.threagile.setIn(["data_assets", str, p], newValue);
+                    }
+                  }
+                },
+                null,
+                null,
+                400,
+                220
+              );
+              this.editorUi.showDialog(dlg.container, 420, 300, true, true);
+              dlg.init();
+            };
+          })(property)) // Pass the current property to the IIFE
+        );
+      
+        button.title = typeProperties[property].tooltip;
+        button.style.width = "200px";
+        typeItem.appendChild(button);
+      }
+      propertiesSection.appendChild(typeItem);
+      
     }
-    propertiesSection.appendChild(typeItem);
-  }
-  // Create a new input element
-  let inputElement = document.createElement("input");
-  inputElement.placeholder = "Enter your tags and press Enter";
-  // Append it to body (or any other container)
-  propertiesSection.appendChild(inputElement);
-  var tagify = new Tagify(inputElement);
-  //
+    let inputElement = document.createElement("input");
 
-  return container;
-};
+    inputElement.value = "";
+    
+    inputElement.placeholder = "Enter your tags and press Enter";
+    propertiesSection.appendChild(inputElement);
+    
+    let tags =self.editorUi.editor.graph.model.threagile.getIn(["tags"]); 
+    let t_available;
+    let threagileData = self.editorUi.editor.graph.model.threagile.getIn(["tags_available"]);
+    
+    if (typeof threagileData.toJSON === 'function') {
+        t_available = threagileData.toJSON();
+    } else {
+        t_available = Array.from(threagileData);
+    }
+    let tagsAsset = self.editorUi.editor.graph.model.threagile.getIn(["data_assets", uniqueID, "tags"]);
+  
+    inputElement.value =tagsAsset != undefined ? Array.from(tagsAsset): [];   
+    let t = new Tagify(inputElement, {
+      whitelist: typeof self.editorUi.editor.graph.model.threagile.getIn(["tags_available"]).toJSON === 'function' 
+      ? Array.from(self.editorUi.editor.graph.model.threagile.getIn(["tags_available"]).toJSON()) 
+      :  Array.from(self.editorUi.editor.graph.model.threagile.getIn(["tags_available"])),      
+      editTags: false,
+      dropdown: {
+        maxItems: 100, 
+        classname: "tags-look", 
+        enabled: 0, 
+        closeOnSelect: true, 
+      },
+    });
+    
+    t.on('add', onAddThreagileTag) 
+    .on('remove', onRemoveThreagileTag);
+  
+    function onAddThreagileTag(e){
+      const model = self.editorUi.editor.graph.model.threagile;
+      let str;
+      if(e.detail.tagify.DOM.input.parentNode.parentNode.parentNode.parentNode== null)
+      { 
+        str = e.detail.tagify.DOM.input.parentNode.parentNode.parentNode.id
+      }
+      else{
+        str = e.detail.tagify.DOM.input.parentNode.parentNode.parentNode.parentNode.textContent;
+      }
+       str = str.slice(0, str.indexOf(":"));
+      let threagileTags;
+      let threagileData = self.editorUi.editor.graph.model.threagile.getIn(["tags_available"]);
+      if (typeof threagileData.toJSON === 'function') {
+        threagileTags = threagileData.toJSON();
+      } else {
+        threagileTags = Array.from(threagileData);
+      }
+      
+      if (!(threagileTags instanceof Set)) {
+        if (threagileTags) {
+          threagileTagsSet = new Set();
+          if (Array.isArray(threagileTags)) {
+            for (const tag of threagileTags) {
+              threagileTagsSet.add(tag);
+            }
+          } else {
+            threagileTagsSet = new Set([threagileTags]);
+          }
+        } else {
+          threagileTagsSet = new Set();
+        }
+      }
+      let old = threagileTagsSet.size;
+      threagileTagsSet.add(e.detail.data.value);
+      if(old != threagileTagsSet.size)
+      {                                
+        restartWasm();
+      }
+      model.setIn(["tags_available"], threagileTagsSet);
+      let dataAssetTags = new Set(model.getIn(["data_assets", str, "tags"]));
+     
+      if (!(dataAssetTags instanceof Set)) {
+        let tempSet;
+        
+        if (dataAssetTags) {
+          tempSet = new Set();
+          
+          if (Array.isArray(dataAssetTags)) {
+            for (const tag of dataAssetTags) {
+              tempSet.add(tag);
+            }
+          } else {
+            tempSet.add(dataAssetTags);
+          }
+          
+          dataAssetTags = tempSet;
+        } else {
+          dataAssetTags = new Set();
+        }
+
+      }
+      dataAssetTags.add(e.detail.data.value);
+
+
+      model.setIn(["data_assets", str, "tags"], dataAssetTags);
+      
+    }
+
+    
+    
+      function onRemoveThreagileTag(e){
+        const model = self.editorUi.editor.graph.model.threagile;
+        let threagileTags = model.getIn(["tags_available"]);
+        let str = e.detail.tagify.DOM.input.parentNode.parentNode.parentNode.parentNode.textContent;
+        str = str.slice(0, str.indexOf(":"));
+        
+        let dataAssetTag = model.getIn(["data_assets",str, "tags"]) || [];
+        if (!(dataAssetTag instanceof Set)) {
+          let tempSet;
+          
+          if (dataAssetTag) {
+            tempSet = new Set();
+            
+            if (Array.isArray(dataAssetTag)) {
+              for (const tag of dataAssetTag) {
+                tempSet.add(tag);
+              }
+            } else {
+              tempSet.add(dataAssetTag);
+            }
+            
+            dataAssetTag = tempSet;
+          } else {
+            dataAssetTag = new Set();
+          }
+  
+        }
+
+        dataAssetTag.delete(e.detail.data.value);
+        model.setIn(["data_assets",str, dataAssetTag]);
+        //model.setIn(["tags_available"], threagileTags);
+    }
+
+     
+          
+
+    return container;
+  };
 
 AssetFormatPanel.prototype.addThreagileMenu = function (container) {
   let self = this;
@@ -12153,8 +12296,8 @@ AssetFormatPanel.prototype.addThreagileMenu = function (container) {
       let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset.key;
       let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
 
-      if (assetInAst && self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId][propertySelect])) {
-          selectDropdown.value = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId])[propertySelect];
+      if (assetInAst && self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId,propertySelect])) {
+          selectDropdown.value = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId,propertySelect]);
       } 
      } 
     
@@ -12166,8 +12309,8 @@ let createChangeListener = function (selectDropdown, propertySelect) {
         if (vals != null) {
             var assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
             if (assetId) {
-                let assetPath = ["technical_assets", assetId.key];
-                self.editorUi.editor.graph.model.threagile.getIn(assetPath)[propertySelect] = selectDropdown.value;
+                let assetPath = ["technical_assets", assetId.key, propertySelect];
+                self.editorUi.editor.graph.model.threagile.setIn(assetPath, selectDropdown.value);
             }
         }
         mxEvent.consume(evt);
@@ -12198,7 +12341,7 @@ let button = mxUtils.button(
        
       let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
       let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId.key]);
-      let assetInAstValue = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId.key])[property];
+      let assetInAstValue = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId.key,property]);
 
       let dataValue = assetInAst && assetInAstValue ? assetInAstValue : typeProperties[property].defaultValue;
 
@@ -12245,8 +12388,8 @@ let button = mxUtils.button(
                                 self.editorUi.editor.graph.model.threagile =  YAML.parseDocument(restoreIntegrity);
 
                               }else{
-                                let assetPath = ["technical_assets", assetId.key];
-                                self.editorUi.editor.graph.model.threagile.getIn(assetPath)[property]= adjustedValue;
+                                let assetPath = ["technical_assets", assetId.key,property];
+                                self.editorUi.editor.graph.model.threagile.setIn(assetPath, adjustedValue);
                               }
                               
                                 self.editorUi.editor.graph.refresh(cell);
@@ -12378,38 +12521,58 @@ let button = mxUtils.button(
 
   idsData = [];
   // Iterate over the Map and create table rows
-  let diagramData = this.editorUi.editor.graph.model.diagramData;
-  if (diagramData && diagramData.data_assets) {
-    diagramData.data_assets.forEach(function (value, property) {
-      idsData.push(property);
-    });
+  let diagramData = self.editorUi.editor.graph.model.threagile.getIn(["data_assets"]);
+  
+  if (diagramData) {
+    diagramData = self.editorUi.editor.graph.model.threagile.getIn([ "data_assets"]).toJSON();
+    Object.keys(diagramData).forEach(function(key) {
+      idsData.push(key); 
+  });
   }
 
 let assetId = self.editorUi.editor.graph.getSelectionCell().technicalAsset;
 
-let assetInAst = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId]);
-
+console.log(assetId);
 let inputElement = document.createElement("input");
 inputElement.placeholder = "Data Processed";
 
 let sentSection = createSection("Data Processed:");
 
 sentSection.appendChild(document.createElement("br"));
-if (assetInAst && assetInAst.get("data_assets_stored")) {
-  inputElement.value = assetInAst.get("data_assets_stored");
-} 
+
+if(assetId)
+{
+  let arr = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId.key, "data_assets_processed"]);
+  // diagramData has multiple objects those have ids, arr is an arry of ids find the keys of diagramData from the arr ids
+  if(arr)
+    {
+    let matchingKeys = Object.keys(diagramData)
+    .filter(key => arr.includes(diagramData[key].id))  // Filter keys where their object's id is in arr
+    .map(key => key);  // Map to the keys themselves
+    inputElement.value = matchingKeys;
+  }
+}
+
+
+//
 sentSection.appendChild(inputElement);
 
-console.log('idsData:', idsData); // Log the value of idsData
+console.log('idsData:', idsData); 
 let tagify = new Tagify(inputElement, {
   whitelist: idsData,
+  editTags: false,
+  enforceWhitelist: true,
   dropdown: {
-    maxItems: 20, 
+    maxItems: 100, 
     classname: "tags-look", 
     enabled: 0, 
-    closeOnSelect: false, 
+    closeOnSelect: true, 
   },
 });
+
+
+tagify.on('add', onAddTagPro)
+      .on('remove', onRemoveTagPro);
 main.appendChild(sentSection);
 
 let inputElement2 = document.createElement("input");
@@ -12417,21 +12580,103 @@ let inputElement2 = document.createElement("input");
 let receivedSecion = createSection("Data Stored:");
 
 receivedSecion.appendChild(document.createElement("br"));
-if (assetInAst && assetInAst.get("data_assets_processed")) {
-  inputElement2.value = assetInAst.get("data_assets_processed");
+
+if(assetId)
+  {
+    let arr = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId.key, "data_assets_stored"]);
+    // diagramData has multiple objects those have ids, arr is an arry of ids find the keys of diagramData from the arr ids
+    if(arr)
+      {
+      let matchingKeys = Object.keys(diagramData)
+      .filter(key => arr.includes(diagramData[key].id))  // Filter keys where their object's id is in arr
+      .map(key => key);  // Map to the keys themselves
+      inputElement2.value = matchingKeys;
+    }
+  }
+
   console.log('inputElement2.value:', inputElement2.value); // Log the value of inputElement2.value
-} 
+
 receivedSecion.appendChild(inputElement2);
 
 let tagify2 = new Tagify(inputElement2, {
   whitelist: idsData,
+  enforceWhitelist: true,
+  editTags: false,
+
   dropdown: {
-    maxItems: 20, 
+    maxItems: 100, 
     classname: "tags-look", 
     enabled: 0, 
-    closeOnSelect: false, 
+    closeOnSelect: true, 
   },
 });
+tagify2.on('add', onAddTagStored)      .on('focus', onTagifyFocusBlur)
+
+      .on('remove', onRemoveTagStored);
+
+//Tagify      
+function onAddTagPro(e){
+  let proAssetID = self.editorUi.editor.graph.getSelectionCell().technicalAsset;;
+  const model = self.editorUi.editor.graph.model.threagile;
+  let dataId = model.getIn(["data_assets", e.detail.data.value, "id"]);
+  let dataAssetsProcessed = model.getIn(["technical_assets", proAssetID.key, "data_assets_processed"]) || [];
+  if (!Array.isArray(dataAssetsProcessed)) {
+    dataAssetsProcessed = dataAssetsProcessed ? [dataAssetsProcessed] : [];
+  }
+  dataAssetsProcessed.push(dataId);
+  model.setIn(["technical_assets", proAssetID.key, "data_assets_processed"], dataAssetsProcessed);
+}
+//Tagify
+function onRemoveTagPro(e){
+  let proassetKey = self.editorUi.editor.graph.getSelectionCell().technicalAsset;;
+
+  const model = self.editorUi.editor.graph.model.threagile;
+  let dataId = model.getIn(["data_assets", e.detail.data.value, "id"]);
+  let dataAssetsProcessed = model.getIn(["technical_assets", proassetKey.key, "data_assets_processed"]) || [];
+  if (!Array.isArray(dataAssetsProcessed)) {
+    dataAssetsProcessed = dataAssetsProcessed ? [dataAssetsProcessed] : [];
+  }
+  const index = dataAssetsProcessed.indexOf(dataId);
+  if (index > -1) {
+    dataAssetsProcessed.splice(index, 1);
+  }
+  model.setIn(["technical_assets", proassetKey, "data_assets_processed"], dataAssetsProcessed);
+}
+//Tagify2
+function onRemoveTagStored(e) {
+  let id = self.editorUi.editor.graph.getSelectionCell().technicalAsset;;
+
+  const model = self.editorUi.editor.graph.model.threagile;
+  let dataId = model.getIn(["data_assets", e.detail.data.value, "id"]);
+  let dataAssetsStored = model.getIn(["technical_assets", id.key, "data_assets_stored"]) || [];
+  if (!Array.isArray(dataAssetsStored)) {
+    dataAssetsStored = dataAssetsStored ? [dataAssetsStored] : [];
+  }
+  const index = dataAssetsStored.indexOf(dataId);
+  if (index > -1) {
+    dataAssetsStored.splice(index, 1);
+  }
+  model.setIn(["technical_assets", id.key, "data_assets_stored"], dataAssetsStored);
+}
+
+
+//Tagify2
+function onAddTagStored(e) {
+  let id = self.editorUi.editor.graph.getSelectionCell().technicalAsset;;
+
+  const model = self.editorUi.editor.graph.model.threagile;
+  let dataId = model.getIn(["data_assets", e.detail.data.value, "id"]);
+  let dataAssetsStored = model.getIn(["technical_assets", id.key, "data_assets_stored"]) || [];
+  if (!Array.isArray(dataAssetsStored)) {
+    dataAssetsStored = dataAssetsStored ? [dataAssetsStored] : [];
+  }
+  dataAssetsStored.push(dataId);
+  model.setIn(["technical_assets", id.key, "data_assets_stored"], dataAssetsStored);
+}
+function onTagifyFocusBlur(e){
+  console.log(e.type, "event fired")
+}
+
 main.appendChild(receivedSecion);
 container.appendChild(main);
 

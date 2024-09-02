@@ -2466,8 +2466,9 @@ Swal.fire({
       textContainer.insertBefore(arrowIcon, dataText);
 
       var dataText = document.createElement("div");
-      dataText.textContent = "Data " + list.childElementCount + ":";
-      //dataText.textContent = graph.model.diagramData.get(menu.id).id;
+      const dataUnique = menu.getAttribute("data-info");
+      dataText.textContent = dataUnique+ ":";
+      //item.setAttribute('data-id', dataUnique);
       const data = {
         id: generateUniquedataId(graph),
         description: "Data blabla.",
@@ -2481,7 +2482,14 @@ Swal.fire({
         availability: "critical", // values: archive, operational, important, critical, mission-critical
         justification_cia_rating: "justify"
     };
-      graph.model.threagile.setIn(["data_assets","Data " + list.childElementCount], data);
+    
+    const basePath = ["data_assets", dataUnique];
+    
+  
+    Object.entries(data).forEach(([key, value]) => {
+        graph.model.threagile.setIn([...basePath, key], value);
+    });
+    
       var xButton = document.createElement("button");
       xButton.innerHTML =
         '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAABlBMVEV7mr3///+wksspAAAAAnRSTlP/AOW3MEoAAAAdSURBVAgdY9jXwCDDwNDRwHCwgeExmASygSL7GgB12QiqNHZZIwAAAABJRU5ErkJggg==" alt="X">';
