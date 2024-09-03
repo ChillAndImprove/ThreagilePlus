@@ -880,22 +880,25 @@ EditorUi = function (editor, container, lightbox) {
   };
   */
     graph.addListener(mxEvent.REMOVE_CELLS, function(sender, evt) {
-      console.log("wow");
       const cells = evt.getProperty('cells'); 
       cells.forEach(cell => {
           if (graph.getModel().isEdge(cell)) {
               console.log('An edge was deleted:', cell);
-              if(self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.id])){
-              if (self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.id]).communication_link){
-               self.editorUi.editor.graph.model.threagile.deleteIn(["technical_assets", cell.source.technicalAsset.id, communication_link])
-            }
+              if(self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key ])){
+                let asset=self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key ]);
+                if(typeof asset.toJSON === 'function') {
+                  asset= asset.toJSON();
+                  }
+              if (asset.communication_link){
+               self.editorUi.editor.graph.model.threagile.deleteIn(["technical_assets", cell.source.technicalAsset.key , "communication_link", cell.communicationAssetKey])
+                cell.communicationAssetKey = undefined;
+                cell.communicationAsset = undefined;
+              }
           }
             } else if (graph.getModel().isVertex(cell)) {
               console.log('An node was deleted:', cell);
 
-              self.editorUi.editor.graph.model.threagile.deleteIn(["technical_assets", cell.technicalAsset.id]);
-
-               
+              self.editorUi.editor.graph.model.threagile.deleteIn(["technical_assets", cell.source.technicalAsset.key]);
             }
       });
     });
@@ -909,7 +912,6 @@ EditorUi = function (editor, container, lightbox) {
       
       }
 
-      console.log("HEY");
       if (
         graph.getModel().isLayer(parent) &&
         !graph.isCellVisible(parent) &&

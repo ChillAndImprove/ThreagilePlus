@@ -8703,7 +8703,13 @@ function generateRandomId(prefix, totalLength) {
   }
   return prefix + randomPart.substring(0, totalLength - prefix.length);
 }
-
+function generateUniqueCommkeyData(graph) {
+  var newId;
+  do {
+      newId = generateRandomId('Com-' ,10); // Generate a random ID
+  } while (checkIdExists(graph, newId)); // Ensure it's unique
+  return newId;
+}
 function generateUniquekeyData(graph) {
   var newId;
   do {
@@ -8813,7 +8819,6 @@ if (undefinedAsset)
       graph.model.threagile.deleteIn(['technical_assets','__DELETE_ME__'])
     }
 }
-        console.log('Assigned ID:', technicalAssetId);
 
 let start, end;
 
@@ -10403,17 +10408,16 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   container
 ) {
   let self = this;
-
   // Add Type properties
   var typeProperties = {
-    /*
-    // Das müsste man auch noch ändern
-    Target: {
-      description: "Target",
+    key: {
+      description: "key",
       type: "button",
-      section: "Properties",
+      tooltip: "The identifier for the yaml element",
+      defaultValue: "<Your title>",
+      section: "General",
+
     },
-    */
     target: {
       description: "target",
       type: "button",
@@ -10605,17 +10609,18 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
     cell.target = self.editorUi.editor.graph.model.getTerminal(cell,false);
     let idtarget =  self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.target.technicalAsset.key,"id"]);
 
-    if (  !cell.communicationAsset)
+    if (!cell.communicationAsset)
     {
-      if(!self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key, "communication_link"]))
       {
+        let comId = generateUniqueCommkeyData(self.editorUi.editor.graph);
+
         const communicationLinkProperties = {
         
           target: idtarget,
           description: "your description",
-          protocol: "https",
-          authentication: "token",
-          authorization: "enduser-identity-propagation",
+          protocol: "http",
+          authentication: "none",
+          authorization: "none",
           tags: [],
           vpn: false,
           ip_filtered: false,
@@ -10624,29 +10629,14 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
           data_assets_sent: [],
           data_assets_received: [],
       };
-      const path = ['technical_assets', cell.source.technicalAsset.key, 'communication_link'];
+      const path = ['technical_assets', cell.source.technicalAsset.key, 'communication_link',comId];
        Object.keys(communicationLinkProperties).forEach(property => {
         self.editorUi.editor.graph.model.threagile.setIn([...path, property], communicationLinkProperties[property]);
     });
-      cell.communicationAsset = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link"]);
-      }
-      }
-    for (let property in typeProperties) {
-      
-      if (typeProperties.hasOwnProperty(property)) {
-        let propertyValue = typeProperties[property];
-
-        if (
-          !cell.communicationAsset ||
-          self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link"],property) === undefined
-        ) {
-          if (propertyValue.hasOwnProperty("defaultValue")) {
-            cell.communicationAsset = cell.communicationAsset || {};
-            cell.communicationAsset[property] = propertyValue.defaultValue;
-          }
-        }
-      }
+      cell.communicationAsset = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link",comId]);
+      cell.communicationAssetKey = comId;
     }
+      }
   }
 
   var customListener = {
@@ -10700,30 +10690,22 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
         selectDropdown.appendChild(optgroup);
       }
       let cell = self.editorUi.editor.graph.getSelectionCell();
+      let commAsset;
+      if (typeof cell.communicationAsset.toJSON === 'function') {
+        commAsset = cell.communicationAsset.toJSON();
+    } else {
+      commAsset = cell.communicationAsset;
+    }
       if (
-        cell &&
-        cell.communicationAsset &&
-        cell.communicationAsset[propertySelect]
+        commAsset[propertySelect]
       ) {
-        selectDropdown.selectedIndex = cell.communicationAsset[propertySelect];
+        selectDropdown.value = commAsset[propertySelect];
       }
       let createChangeListener = function (selectDropdown, propertySelect) {
         return function (evt) {
-          var vals = selectDropdown.selectedIndex;
-
+          var vals = selectDropdown.value;
           if (vals != null) {
-            var cells = self.editorUi.editor.graph.getSelectionCells();
-            if (cells != null && cells.length > 0) {
-              var cell = self.editorUi.editor.graph.getSelectionCell();
-              if (!cell.communicationAsset) {
-                cell.communicationAsset = {
-                  [propertySelect]: selectDropdown.selectedIndex,
-                };
-              } else {
-                cell.communicationAsset[propertySelect] =
-                  selectDropdown.selectedIndex;
-              }
-            }
+               self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.source.technicalAsset.key,"communication_link", cell.communicationAssetKey, propertySelect], selectDropdown.value);
           }
           mxEvent.consume(evt);
         };
@@ -10736,10 +10718,39 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
       typeItem.appendChild(selectContainer);
       sections[sectionName].appendChild(typeItem);
     } else if (propertyType === "checkbox") {
+      
+      
+      function createCustomOptionCommunicationLink(self, parameter) {
+        return function () {
+          var cells = self.editorUi.editor.graph.getSelectionCells();
+          if (cells != null && cells.length > 0) {  
+            let cell = self.editorUi.editor.graph.getSelectionCell();
+            return self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link",cell.communicationAssetKey, parameter]);
+          }
+
+        };
+      }
+                                                       
+      // Function to set a custom option
+      function setCustomOptionCommunicationLink(self, parameter) {
+        return function (checked) {
+          
+          var cells = self.editorUi.editor.graph.getSelectionCells();
+          if (cells != null && cells.length > 0) {
+            let cell = self.editorUi.editor.graph.getSelectionCell();
+          self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.source.technicalAsset.key,"communication_link", cell.communicationAssetKey, parameter],checked);
+          }
+          
+          
+        };
+      }
+
+      
+
       let optionElement = this.createOption(
         property,
-        createCustomOption(self, property),
-        setCustomOption(self, property),
+        createCustomOptionCommunicationLink(self, property),
+        setCustomOptionCommunicationLink(self, property),
         customListener
       );
       optionElement.querySelector('input[type="checkbox"]').title =
@@ -10747,16 +10758,27 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
 
       sections[sectionName].appendChild(optionElement);
     } else if (propertyType === "button") {
+
+       
+
       let button = mxUtils.button(
         property,
         mxUtils.bind(this, function (evt) {
-          let cells = self.editorUi.editor.graph.getSelectionCells();
-          let cell = cells && cells.length > 0 ? cells[0] : null;
-          let dataValue =
-            cell && cell.communicationAsset && cell.communicationAsset[property]
-              ? cell.communicationAsset[property]
-              : typeProperties[property].defaultValue;
+          
+          let cell = self.editorUi.editor.graph.getSelectionCell();
+          let commAsset =self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link",cell.communicationAssetKey]);
+            if (typeof cell.communicationAsset.toJSON === 'function') {
+              commAsset = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link",cell.communicationAssetKey]).toJSON();
+            }
 
+          let dataValue =
+            cell && commAsset[property]
+              ? commAsset[property]
+              : typeProperties[property].defaultValue;
+            if(property=="key")
+            {
+              dataValue = cell.communicationAssetKey;
+            }
           var dlg = new TextareaDialog(
             this.editorUi,
             property + ":",
@@ -10780,14 +10802,23 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
                       model.endUpdate();
                     }
                   }
-                  if (!cell.communcationAsset) {
-                    cell.communicationAsset = {
-                      [property]: newValue,
-                    };
-                  } else {
-                    cell.communicationAsset[property] = newValue;
+                    if(property == "key")
+                    {
+                      restartWasm();
+                      let oldassetPath = ["technical_assets", cell.source.technicalAsset.key,"communication_link",cell.communicationAssetKey];
+                      let object = JSON.parse(JSON.stringify(self.editorUi.editor.graph.model.threagile.getIn(oldassetPath)));
+                      self.editorUi.editor.graph.model.threagile.deleteIn(oldassetPath);
+                      cell.communicationAssetKey=newValue;
+
+                      let newassetPath        = ["technical_assets", cell.source.technicalAsset.key,"communication_link", cell.communicationAssetKey];
+                      self.editorUi.editor.graph.model.threagile.setIn(newassetPath, object);
+                      cell.communicationAsset = self.editorUi.editor.graph.model.threagile.getIn(newassetPath);
+                      let restoreIntegrity    = self.editorUi.editor.graph.model.threagile.toString();
+                      self.editorUi.editor.graph.model.threagile =  YAML.parseDocument(restoreIntegrity);
+                    }else{
+                     self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.source.technicalAsset.key,"communication_link",cell.communicationAssetKey, property], newValue);
                   }
-                }
+                   }
               }
             },
             null,
@@ -10797,6 +10828,13 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
           );
           this.editorUi.showDialog(dlg.container, 420, 300, true, true);
           dlg.init();
+          if(property == "target")
+          {
+          dlg.textarea.readOnly = true;
+          dlg.textarea.style.backgroundColor = "#f3f3f3"; // Light grey background
+          dlg.textarea.style.color = "#686868"; // Dimmed text color
+          dlg.textarea.style.border = "1px solid #ccc"; // Less pronounced border
+        }
         })
       );
       button.title = typeProperties[property].tooltip;
@@ -10808,18 +10846,17 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   for (let sectionName in sections) {
     container.appendChild(sections[sectionName]);
   }
-  if (typeof this.editorUi.editor.graph.model.diagramData === "undefined") {
-    this.editorUi.editor.graph.model.diagramData = new Map();
-  }
-  var diagramData = this.editorUi.editor.graph.model.diagramData.data_assets;
-
+  let tmpData = self.editorUi.editor.graph.model.threagile.getIn(["data_assets"]);
+  var diagramData = tmpData===  undefined ?[]: tmpData;
+  if(typeof diagramData.toJSON === 'function') {
+    diagramData= diagramData.toJSON();
+    }
+   
   idsData = [];
-  // Iterate over the Map and create table rows
-  if (diagramData !== undefined) {
-    diagramData.forEach(function (value, property) {
+  Object.keys(diagramData).forEach(function (property) {
       idsData.push(property);
     });
-  }
+  
 
   let inputElement = document.createElement("input");
   inputElement.placeholder = "Data sent";
@@ -10829,25 +10866,55 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   let sentSection = createSection("Data Sent:");
 
   sentSection.appendChild(document.createElement("br"));
+  let commAsset =cell.communicationAsset;
+                  if (typeof cell.communicationAsset.toJSON === 'function') {
+                commAsset = cell.communicationAsset.toJSON();
+  }
   if (
     cell &&
-    cell.communicationAsset &&
-    cell.communicationAsset.data_assets_sent
+    commAsset.data_assets_sent
   ) {
-    inputElement.value = cell.communicationAsset.data_assets_sent;
+    let matches = [];
+    inputElement.value = commAsset.data_assets_sent;
+    for (let key in diagramData) {
+      if (diagramData.hasOwnProperty(key)) {
+        let item = diagramData[key];
+        for (let id of commAsset.data_assets_sent) {
+          if (item.id === id) {
+            matches.push(key);  
+            break; 
+          }
+        }
+      }
+    }
+      inputElement.value = matches;
   } // Append it to body (or any other container)
   sentSection.appendChild(inputElement);
-  let tinput = document.querySelector('input[name="input-custom-dropdown"]'),
+  
+  let tinput = document.querySelector('input[name="input-custom-dropdown"]');
     // init Tagify script on the above inputs
-    tagify = new Tagify(inputElement, {
+  let tagify1 = new Tagify(inputElement, {
       whitelist: idsData,
       dropdown: {
-        maxItems: 20, // <- mixumum allowed rendered suggestions
+        maxItems: 100, 
         classname: "tags-look", // <- custom classname for this dropdown, so it could be targeted
         enabled: 0, // <- show suggestions on focus
         closeOnSelect: false, // <- do not hide the suggestions dropdown once an item has been selected
       },
     });
+    function addComSent(e){
+      let dataId= diagramData[e.detail.data.value].id;
+      commAsset.data_assets_sent.push(dataId);
+      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_link",cell.communicationAssetKey, "data_assets_sent"],commAsset.data_assets_sent );
+
+    }
+    function removeComSent(e){
+      let dataId= diagramData[e.detail.data.value].id;
+      commAsset.data_assets_sent.remove(dataId);
+      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_link",cell.communicationAssetKey, "data_assets_sent"],commAsset.data_assets_sent );
+
+    }
+    tagify1.on("add", addComSent).on("remove", removeComSent);
   container.appendChild(sentSection);
   let inputElement2 = document.createElement("input");
 
@@ -10857,15 +10924,25 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   receivedSecion.appendChild(document.createElement("br"));
   if (
     cell &&
-    cell.communcationAsset &&
-    cell.communicationAsset.data_assets_received
+    commAsset.data_assets_received
   ) {
-    inputElement2.value = cell.communicationAsset.data_assets_received;
-  } // Append it to body (or any other container)
+    let matches = [];
+    for (let key in diagramData) {
+      if (diagramData.hasOwnProperty(key)) {
+        let item = diagramData[key];
+        for (let id of commAsset.data_assets_received) {
+          if (item.id === id) {
+            matches.push(key);  
+            break; 
+          }
+        }
+      }
+    }
+      inputElement2.value = matches;
+  } 
   receivedSecion.appendChild(inputElement2);
-  let tinput2 = document.querySelector('input[name="input-custom-dropdown"]'),
-    // init Tagify script on the above inputs
-    tagify2 = new Tagify(inputElement2, {
+  let tinput2 = document.querySelector('input[name="input-custom-dropdown"]');
+  let tagify2 = new Tagify(inputElement2, {
       whitelist: idsData,
       dropdown: {
         maxItems: 20, // <- mixumum allowed rendered suggestions
@@ -10874,11 +10951,23 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
         closeOnSelect: false, // <- do not hide the suggestions dropdown once an item has been selected
       },
     });
+    function addComReceived(e){
+      let dataId= diagramData[e.detail.data.value].id;
+      commAsset.data_assets_received.push(dataId);
+      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_link",cell.communicationAssetKey,"data_assets_received"],commAsset.data_assets_received );
+    }
+    function removeComReceived(e){
+      let dataId= diagramData[e.detail.data.value].id;
+      commAsset.data_assets_received.remove(dataId);
+      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_link",cell.communicationAssetKey,"data_assets_received"],commAsset.data_assets_received );
+
+    }
+  tagify2.on("add", addComReceived).on("remove", removeComReceived);
   container.appendChild(receivedSecion);
   return container;
 };
 /*
- */
+ 
 CommunicationFormatPanel.prototype.addCommunicationeMenu2 = function (
   container
 ) {
@@ -11085,6 +11174,7 @@ CommunicationFormatPanel.prototype.addCommunicationeMenu2 = function (
         mxUtils.bind(this, function (evt) {
           let cells = self.editorUi.editor.graph.getSelectionCells();
           let cell = cells && cells.length > 0 ? cells[0] : null;
+          
           let dataValue =
             cell && cell.technicalAsset && cell.technicalAsset[property]
               ? cell.technicalAsset[property]
@@ -11264,15 +11354,7 @@ CommunicationFormatPanel.prototype.addCommunicationeMenu2 = function (
   usageSection.appendChild(document.createElement("br"));
   container.appendChild(usageSection);
 
-  /*
-    Usage[X]
-    Used as client by human[X]
-    Justification of out of scope[X]
-    Multi tenant
-    Redundant
-    Custom developed parts
-    Out of scope
-  */
+
   var usageLabel = document.createElement("span");
   usageLabel.style.width = "100px";
   usageLabel.style.marginRight = "10px";
@@ -11371,6 +11453,8 @@ CommunicationFormatPanel.prototype.addCommunicationeMenu2 = function (
   usageSection.appendChild(justificationOutOfScope);
   return container;
 };
+
+*/
 AssetFormatPanel = function (format, editorUi, container) {
   BaseFormatPanel.call(this, format, editorUi, container);
   this.init();
@@ -11719,6 +11803,8 @@ DiagramFormatPanel.prototype.addDataMenu = function (container,UUID = undefined)
                 function (newValue) {
                   if (newValue != null) {
                     if (p === "key") {
+
+                      
                     } else {
                       self.graph.model.threagile.setIn(["data_assets", str, p], newValue);
                     }
@@ -11880,10 +11966,6 @@ DiagramFormatPanel.prototype.addDataMenu = function (container,UUID = undefined)
         model.setIn(["data_assets",str, dataAssetTag]);
         //model.setIn(["tags_available"], threagileTags);
     }
-
-     
-          
-
     return container;
   };
 
@@ -12408,6 +12490,13 @@ let button = mxUtils.button(
         );
         this.editorUi.showDialog(dlg.container, 420, 300, true, true);
         dlg.init();
+        if(property == "id")
+          {
+          dlg.textarea.readOnly = true;
+          dlg.textarea.style.backgroundColor = "#f3f3f3"; // Light grey background
+          dlg.textarea.style.color = "#686868"; // Dimmed text color
+          dlg.textarea.style.border = "1px solid #ccc"; // Less pronounced border
+        }
     })
 ); 
       button.title = typeProperties[property].tooltip;
@@ -12557,7 +12646,6 @@ if(assetId)
 //
 sentSection.appendChild(inputElement);
 
-console.log('idsData:', idsData); 
 let tagify = new Tagify(inputElement, {
   whitelist: idsData,
   editTags: false,
@@ -12594,7 +12682,6 @@ if(assetId)
     }
   }
 
-  console.log('inputElement2.value:', inputElement2.value); // Log the value of inputElement2.value
 
 receivedSecion.appendChild(inputElement2);
 
