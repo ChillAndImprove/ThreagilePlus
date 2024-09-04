@@ -897,8 +897,12 @@ EditorUi = function (editor, container, lightbox) {
           }
             } else if (graph.getModel().isVertex(cell)) {
               console.log('An node was deleted:', cell);
-
+              if(cell.source){
               self.editorUi.editor.graph.model.threagile.deleteIn(["technical_assets", cell.source.technicalAsset.key]);
+            }
+            else{
+              console.log("Removed without source");
+            }
             }
       });
     });

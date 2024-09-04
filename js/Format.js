@@ -7971,7 +7971,9 @@ if (
     let data_assets_map = graph.model.threagile.getIn(["data_assets"]).toJSON();
     Object.entries(data_assets_map).forEach(([property, value]) => {
       let data_asset = this.editorUi.editor.graph.model.threagile.getIn(["data_assets", property]);
-       var clonedMenu = this.addDataMenu(this.createPanel(), property);
+        
+        
+        var clonedMenu = this.addDataMenu(this.createPanel(), property);
         let orginalProperty = property; 
         property = property +":";
         clonedMenu.id = property;
@@ -11803,8 +11805,35 @@ DiagramFormatPanel.prototype.addDataMenu = function (container,UUID = undefined)
                 function (newValue) {
                   if (newValue != null) {
                     if (p === "key") {
+                        
+                        restartWasm();
+                        let oldassetPath = ["data_assets", uniqueID];
+                        let object = JSON.parse(JSON.stringify(self.editorUi.editor.graph.model.threagile.getIn(oldassetPath)));
+                        self.editorUi.editor.graph.model.threagile.deleteIn(oldassetPath);
+                        let newassetPath = ["data_assets", newValue];
+                        self.editorUi.editor.graph.model.threagile.setIn(newassetPath, object);
+                        let restoreIntegrity = self.editorUi.editor.graph.model.threagile.toString();
+                        self.editorUi.editor.graph.model.threagile =  YAML.parseDocument(restoreIntegrity);
+                        let targetElement = evt.target.parentNode.parentNode.parentNode.parentNode;
+                        const graphvar = self.editorUi.editor.graph;
+                        // Start a change transaction
+                        graphvar.model.beginUpdate();
+                        try {
+                            const v1 =        graphvar.insertVertex(      graphvar.getDefaultParent(),
+                              null,
+                              "",
+                              0,
+                              0,
+                              10,
+                              10,
+                              "s");
+                            
+                            graphvar.removeCells([v1]);
+                        } finally {
+                            graphvar.model.endUpdate();
+                        }
 
-                      
+                        graphvar.refresh(); 
                     } else {
                       self.graph.model.threagile.setIn(["data_assets", str, p], newValue);
                     }
