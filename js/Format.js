@@ -8705,6 +8705,13 @@ function generateRandomId(prefix, totalLength) {
   }
   return prefix + randomPart.substring(0, totalLength - prefix.length);
 }
+function generateUniqueTrustkeyData(graph) {
+  var newId;
+  do {
+      newId = generateRandomId('Trust-' ,10); // Generate a random ID
+  } while (checkIdExists(graph, newId)); // Ensure it's unique
+  return newId;
+}
 function generateUniqueCommkeyData(graph) {
   var newId;
   do {
@@ -8716,6 +8723,13 @@ function generateUniquekeyData(graph) {
   var newId;
   do {
       newId = generateRandomId('DATA-' ,10); // Generate a random ID
+  } while (checkIdExists(graph, newId)); // Ensure it's unique
+  return newId;
+}
+function generateUniqueTrustId(graph) {
+  var newId;
+  do {
+      newId = generateRandomId('tr-' ,25); // Generate a random ID
   } while (checkIdExists(graph, newId)); // Ensure it's unique
   return newId;
 }
@@ -8804,7 +8818,6 @@ if (undefinedAsset)
     Object.keys(assetProperties).forEach(property => {
       graph.model.threagile.setIn([...path, property], assetProperties[property]);
   });
-    //graph.model.threagile.setIn(path, assetDetails);
  
     let cells = self.editorUi.editor.graph.getSelectionCells();
     let cell = cells && cells.length > 0 ? cells[0] : null;
@@ -8820,6 +8833,19 @@ if (undefinedAsset)
     if(graph.model.threagile.hasIn(['technical_assets','__DELETE_ME__',] )){
       graph.model.threagile.deleteIn(['technical_assets','__DELETE_ME__'])
     }
+
+    let cells = self.editorUi.editor.graph.getSelectionCells();
+    let cell = cells && cells.length > 0 ? cells[0] : null;
+    let model = self.editorUi.editor.graph.model;
+    model.beginUpdate();
+      try {
+        model.setValue(cell, technicalAssetId);
+        self.editorUi.editor.graph.refresh(cell);
+        self.editorUi.editor.graph.refresh();
+      } finally {
+        model.endUpdate();
+      }
+    
 }
 
 let start, end;
@@ -10006,12 +10032,22 @@ BoundaryFormatPanel.prototype.init = function () {
     this.addBoundaryMenuDynamic(this.createPanel(), graph)
   );
 };
+
+
 BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
   container,
   graph
 ) {
   var self = this;
+  
   var typeProperties = {
+    key: {
+    description: "key",
+    type: "button",
+    tooltip: "The identifier for the yaml element",
+    defaultValue: "<Your title>",
+    section: "General"
+    },
     id: {
       description: "Id",
       type: "button",
@@ -10026,15 +10062,6 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
       tooltip: "Provide a brief description of the trust boundary. ",
       defaultValue: "",
     },
-    /*
-    title: {
-      description: "Type",
-      type: "button",
-      section: "Properties",
-      tooltip: "Your Title",
-      defaultValue: "<Your Title>",
-    },
-    */
     type: {
       description: "Type",
       type: "select",
@@ -10057,6 +10084,27 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
       tooltip: "",
     },
   };
+  let cell = self.editorUi.editor.graph.getSelectionCell();
+
+  if (
+    cell &&
+    !cell.trust_boundarieskey
+  ) {
+    
+    cell.trust_boundarieskey = generateUniqueTrustkeyData(self.editorUi.editor.graph);
+    const trustBoundary = {
+      id: generateUniqueTrustId(self.editorUi.editor.graph), 
+      description: "Boundary protecting critical internal services.",
+      type: "network-cloud-provider",
+      tags:[],
+      technical_assets_inside: [],
+      trust_boundaries_nested: []
+  };
+  const path = ['trust_boundaries', cell.trust_boundarieskey];
+  Object.keys(trustBoundary).forEach(property => {
+       self.editorUi.editor.graph.model.threagile.setIn([...path, property], trustBoundary[property]);
+    });
+  }
   let sections = {};
   for (let property in typeProperties) {
     let sectionName = typeProperties[property].section;
@@ -10100,32 +10148,19 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
         }
         selectDropdown.appendChild(optgroup);
       }
-      let cell = self.editorUi.editor.graph.getSelectionCell();
       if (
         cell &&
-        cell.trust_boundaries &&
-        self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundaries, propertySelect])
+        cell.trust_boundarieskey &&
+        self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundarieskey, propertySelect])
       ) {
-        //selectDropdown.selectedIndex = cell.TrustBoundaries[propertySelect];
-        selectDropdown.value= self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundaries, propertySelect])
+        selectDropdown.value= self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundarieskey, propertySelect])
       }
       let createChangeListener = function (selectDropdown, propertySelect) {
         return function (evt) {
           var vals = selectDropdown.value;
 
           if (vals != null) {
-            var cells = self.editorUi.editor.graph.getSelectionCells();
-            if (cells != null && cells.length > 0) {
-              var cell = self.editorUi.editor.graph.getSelectionCell();
-              if (!cell.trust_boundaries) {
-                cell.trust_boundaries = {
-                  [propertySelect]: selectDropdown.selectedIndex,
-                };
-              } else {
-                cell.trust_boundaries[propertySelect] =
-                  selectDropdown.selectedIndex;
-              }
-            }
+            self.editorUi.editor.graph.model.threagile.setIn(["trust_boundaries",cell.trust_boundarieskey, propertySelect], vals);
           }
           mxEvent.consume(evt);
         };
@@ -10138,10 +10173,31 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
       typeItem.appendChild(selectContainer);
       sections[sectionName].appendChild(typeItem);
     } else if (propertyType === "checkbox") {
+      function createCustomOptionTrust(self, parameter) {
+        return function () {
+          var cells = self.editorUi.editor.graph.getSelectionCells();
+          if (cells != null && cells.length > 0) {  
+            let cell = self.editorUi.editor.graph.getSelectionCell();
+            return self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries", cell.trust_boundarieskey,parameter]);
+          }
+        };
+      }
+                                                       
+      function setCustomOptionTrust(self, parameter) {
+        return function (checked) {
+      
+          var cells = self.editorUi.editor.graph.getSelectionCells();
+          if (cells != null && cells.length > 0) {
+            let cell = self.editorUi.editor.graph.getSelectionCell();
+          self.editorUi.editor.graph.model.threagile.setIn(["trust_boundaries", cell.trust_boundarieskey,parameter],checked);
+          }
+        };
+      }
+      
       let optionElement = this.createOption(
         property,
-        createCustomOption(self, property),
-        setCustomOption(self, property),
+        createCustomOptionTrust(self, property),
+        setCustomOptionTrust(self, property),
         customListener
       );
       optionElement.querySelector('input[type="checkbox"]').title =
@@ -10155,11 +10211,14 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
           let cells = self.editorUi.editor.graph.getSelectionCells();
           let cell = cells && cells.length > 0 ? cells[0] : null;
           let dataValue =
-            cell && cell.trust_boundaries &&         self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundaries, property])
+            cell && cell.trust_boundarieskey &&         self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundarieskey, property])
             
-              ? self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundaries, property])
+              ? self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cell.trust_boundarieskey, property])
               : typeProperties[property].defaultValue;
-
+          if(property == "key")
+          {
+            dataValue=cell.trust_boundarieskey;
+          }
           var dlg = new TextareaDialog(
             this.editorUi,
             property + ":",
@@ -10183,13 +10242,22 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
                       model.endUpdate();
                     }
                   }
-                  if (!cell.TrustBoundaries) {
-                    cell.TrustBoundaries = {
-                      [property]: newValue,
-                    };
-                  } else {
-                    cell.TrustBoundaries[property] = newValue;
+                  if(property== "key")
+                  {
+                    restartWasm();
+                    let oldassetPath = ["trust_boundaries", cell.trust_boundarieskey];
+                    let object = JSON.parse(JSON.stringify(self.editorUi.editor.graph.model.threagile.getIn(oldassetPath)));
+                    self.editorUi.editor.graph.model.threagile.deleteIn(oldassetPath);
+                    cell.trust_boundarieskey=newValue;
+
+                    let newassetPath        = ["trust_boundaries", cell.trust_boundarieskey];
+                    self.editorUi.editor.graph.model.threagile.setIn(newassetPath, object);
+                    let restoreIntegrity    = self.editorUi.editor.graph.model.threagile.toString();
+                    self.editorUi.editor.graph.model.threagile =  YAML.parseDocument(restoreIntegrity); 
                   }
+                  else{
+                    self.editorUi.editor.graph.model.threagile.setIn(["trust_boundaries", cell.trust_boundarieskey,property],newValue);  
+                }
                 }
               }
             },
@@ -10212,7 +10280,6 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
     container.appendChild(sections[sectionName]);
   }
 
-  var cell = graph.getSelectionCell();
   if (cell.isVertex()) {
     var cellGeometry = cell.getGeometry();
 
@@ -10278,11 +10345,12 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
           vertexGeometry.y + vertexGeometry.height <= cellY + cellHeight
         );
       });
-
+      var technicalAssetsArray = [];
       vertices.forEach(function (vertex) {
         var vertexGeometry = vertex.getGeometry();
-        var style = graph.getModel().getStyle(vertex);
+        
 
+        var style = graph.getModel().getStyle(vertex);
         if (
           vertexGeometry != null &&
           vertex !== cell &&
@@ -10300,21 +10368,20 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
           addVertexToTable(vertex);
         }
       });
-
+      self.editorUi.editor.graph.model.threagile.setIn(["trust_boundaries",cell.trust_boundarieskey, "technical_assets_inside"], technicalAssetsArray);
+      
       function addVertexToTable(vertex) {
         var row = document.createElement("tr");
-
         var cellValue = document.createElement("td");
         cellValue.textContent = vertex.getValue();
         cellValue.style.padding = "8px";
         cellValue.style.width = "200px";
         row.appendChild(cellValue);
-
+        let id = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets",cellValue.textContent,"id"])
+        technicalAssetsArray.push(id);
         table.appendChild(row);
       }
-
       tableContainer.appendChild(table);
-
       container.appendChild(tableContainer);
     }
   }
@@ -10336,19 +10403,23 @@ BoundaryFormatPanel.prototype.addBoundaryMenuDynamic = function (
   nestedHeaderCell.colSpan = 2;
   nestedHeaderRow.appendChild(nestedHeaderCell);
   nestedTable.appendChild(nestedHeaderRow);
+  var rectanglesArray= [];
 
   innerRectangles.forEach(function (rectangle) {
+    
     var row = document.createElement("tr");
-
     var cellValue = document.createElement("td");
     cellValue.textContent = rectangle.getValue();
     cellValue.style.padding = "8px";
     cellValue.style.width = "200px";
     cellValue.style.boxSizing = "border-box";
     row.appendChild(cellValue);
-
+    let id = self.editorUi.editor.graph.model.threagile.getIn(["trust_boundaries",cellValue.textContent,"id"])
+    rectanglesArray.push(id);
     nestedTable.appendChild(row);
   });
+  self.editorUi.editor.graph.model.threagile.setIn(["trust_boundaries",cell.trust_boundarieskey, "trust_boundaries_nested"], rectanglesArray);
+    
 
   nestedTableContainer.appendChild(nestedTable);
 
@@ -10968,495 +11039,7 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
   container.appendChild(receivedSecion);
   return container;
 };
-/*
- 
-CommunicationFormatPanel.prototype.addCommunicationeMenu2 = function (
-  container
-) {
-  let self = this;
-  // Add General header
-  var generalHeader = document.createElement("div");
-  generalHeader.innerHTML = "General";
-  generalHeader.style.padding = "10px 0px 6px 0px";
-  generalHeader.style.whiteSpace = "nowrap";
-  generalHeader.style.overflow = "hidden";
-  generalHeader.style.width = "200px";
-  generalHeader.style.fontWeight = "bold";
-  container.appendChild(generalHeader);
 
-  // Add Description button
-  var descriptionButton = mxUtils.button(
-    "Description:",
-    mxUtils.bind(this, function (evt) {
-      this.editorUi.actions.get("editAssetDescription").funct();
-    })
-  );
-
-  descriptionButton.innerHTML = "Description";
-  descriptionButton.style.width = "200px";
-
-  container.appendChild(descriptionButton);
-
-  // Add line break
-  container.appendChild(document.createElement("br"));
-
-  // Add Properties section
-  var propertiesSection = createSection("Properties");
-  container.appendChild(propertiesSection);
-
-  // Add Type properties
-  var typeProperties = {
-    Type: {
-      description: "Type",
-      type: "select",
-      options: [
-        {
-          group: "Categories",
-          options: ["external-entity", "process", "datastore"],
-          defaultValue: "external-entity",
-        },
-      ],
-      section: "Properties",
-      tooltip: "Choose the type of the component.",
-    },
-    Size: {
-      description: "Size",
-      type: "select",
-      options: [
-        {
-          group: "Sizes",
-          options: ["system", "service", "application", "component"],
-          defaultValue: "system",
-        },
-      ],
-      section: "Properties",
-      tooltip: "Choose the size of the component.",
-    },
-    Machine: {
-      description: "Machine",
-      type: "select",
-      options: [
-        {
-          group: "Machine Types",
-          options: ["physical", "virtual", "container", "serverless"],
-          defaultValue: "physical",
-        },
-      ],
-      section: "Properties",
-      tooltip: "Choose the type of machine.",
-    },
-    Encryption: {
-      description: "Encryption",
-      type: "select",
-      options: [
-        {
-          group: "Encryption Types",
-          options: [
-            "none",
-            "data-with-symmetric-shared-key",
-            "data-with-asymmetric-shared-key",
-            "data-with-enduser-individual-key",
-          ],
-          defaultValue: "none",
-        },
-      ],
-      section: "Properties",
-      tooltip: "Choose the type of encryption.",
-    },
-    Owner: {
-      description: "Owner",
-      type: "button",
-      section: "General",
-      tooltip: "Specify the owner of the component.",
-      defaultValue: "<Your Name>",
-    },
-    Internet: {
-      description: "Internet",
-      type: "checkbox",
-      section: "General",
-      tooltip: "Check if the component is connected to the internet.",
-      defaultValue: false,
-    },
-  };
-  var customListener = {
-    install: function (apply) {
-      this.listener = function () {};
-    },
-    destroy: function () {},
-  };
-
-  let sections = {};
-  for (let property in typeProperties) {
-    let sectionName = typeProperties[property].section;
-    if (!sections[sectionName]) {
-      sections[sectionName] = createSection(sectionName);
-    }
-    let typeItem = document.createElement("li");
-    typeItem.style.display = "flex";
-    typeItem.style.alignItems = "baseline";
-    typeItem.style.marginBottom = "8px";
-
-    let propertyName = document.createElement("span");
-    propertyName.innerHTML = property;
-    propertyName.style.width = "100px";
-    propertyName.style.marginRight = "10px";
-
-    let propertyType = typeProperties[property].type;
-
-    if (propertyType === "select") {
-      const propertySelect = property;
-      typeItem.appendChild(propertyName);
-      let selectContainer = document.createElement("div");
-      selectContainer.style.display = "flex";
-      selectContainer.style.alignItems = "center";
-      selectContainer.style.marginLeft = "auto";
-      let selectDropdown = document.createElement("select");
-      selectDropdown.style.width = "100px";
-      selectDropdown.title = typeProperties[property].tooltip;
-      selectContainer.appendChild(selectDropdown);
-
-      let optionGroups = typeProperties[property].options;
-      for (var i = 0; i < optionGroups.length; i++) {
-        let optgroup = document.createElement("optgroup");
-        optgroup.label = optionGroups[i].group;
-        let options = optionGroups[i].options;
-        for (let j = 0; j < options.length; j++) {
-          let option = document.createElement("option");
-          option.value = options[j];
-          option.text = options[j];
-          optgroup.appendChild(option);
-        }
-        selectDropdown.appendChild(optgroup);
-      }
-      let cell = self.editorUi.editor.graph.getSelectionCell();
-      if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
-        selectDropdown.value = cell.technicalAsset[propertySelect];
-      }
-      let createChangeListener = function (selectDropdown, propertySelect) {
-        return function (evt) {
-          var vals = selectDropdown.value;
-
-          if (vals != null) {
-            var cells = self.editorUi.editor.graph.getSelectionCells();
-            if (cells != null && cells.length > 0) {
-              var cell = self.editorUi.editor.graph.getSelectionCell();
-              if (!cell.technicalAsset) {
-                cell.technicalAsset = {
-                  [propertySelect]: selectDropdown.value,
-                };
-              } else {
-                cell.technicalAsset[propertySelect] = selectDropdown.value;
-              }
-            }
-          }
-          mxEvent.consume(evt);
-        };
-      };
-      mxEvent.addListener(
-        selectDropdown,
-        "change",
-        createChangeListener(selectDropdown, propertySelect)
-      );
-      typeItem.appendChild(selectContainer);
-      sections[sectionName].appendChild(typeItem);
-    } else if (propertyType === "checkbox") {
-      let optionElement = this.createOption(
-        property,
-        createCustomOption(self, property),
-        setCustomOption(self, property),
-        customListener
-      );
-      optionElement.querySelector('input[type="checkbox"]').title =
-        typeProperties[property].tooltip;
-
-      sections[sectionName].appendChild(optionElement);
-    } else if (propertyType === "button") {
-      let button = mxUtils.button(
-        property,
-        mxUtils.bind(this, function (evt) {
-          let cells = self.editorUi.editor.graph.getSelectionCells();
-          let cell = cells && cells.length > 0 ? cells[0] : null;
-          
-          let dataValue =
-            cell && cell.technicalAsset && cell.technicalAsset[property]
-              ? cell.technicalAsset[property]
-              : typeProperties[property].defaultValue;
-
-          var dlg = new TextareaDialog(
-            this.editorUi,
-            property + ":",
-            dataValue,
-            function (newValue) {
-              if (newValue != null) {
-                if (cell) {
-                  if (property === "Id") {
-                    var adjustedValue = newValue
-                      .replace(/</g, "&lt;")
-                      .replace(/>/g, "&gt;");
-                    let model = self.editorUi.editor.graph.model;
-                    model.beginUpdate();
-                    try {
-                      model.setValue(cell, adjustedValue);
-
-                      self.editorUi.editor.graph.refresh(cell);
-
-                      self.editorUi.editor.graph.refresh();
-                    } finally {
-                      model.endUpdate();
-                    }
-                  }
-                  if (!cell.technicalAsset) {
-                    cell.technicalAsset = {
-                      [property]: newValue,
-                    };
-                  } else {
-                    cell.technicalAsset[property] = newValue;
-                  }
-                }
-              }
-            },
-            null,
-            null,
-            400,
-            220
-          );
-          this.editorUi.showDialog(dlg.container, 420, 300, true, true);
-          dlg.init();
-        })
-      );
-      button.title = typeProperties[property].tooltip;
-      button.style.width = "200px";
-      typeItem.appendChild(button);
-      sections[sectionName].appendChild(typeItem);
-    }
-  }
-  for (let sectionName in sections) {
-    container.appendChild(sections[sectionName]);
-  }
-
-  var ciaProperties = {
-    Confidentiality: {
-      description: "Confidentility",
-      type: "select",
-      options: [
-        "public",
-        "internal",
-        "restricted",
-        "confidential",
-        "strictly-confidential",
-      ],
-    },
-    Integrity: {
-      description: "Integritity",
-      type: "select",
-      options: [
-        "archive",
-        "operational",
-        "important",
-        "critical",
-        "mission-critical",
-      ],
-    },
-    Availability: {
-      description: "Availiablity",
-      type: "select",
-      options: [
-        "archive",
-        "operational",
-        "important",
-        "critical",
-        "mission-critical",
-      ],
-    },
-  };
-  // Add CIA section
-  var ciaSection = createSection("CIA");
-  ciaSection.style.marginLeft = "0"; // Set left margin to 0
-  container.appendChild(ciaSection);
-  for (var property in ciaProperties) {
-    var typeItem = document.createElement("li");
-    typeItem.style.display = "flex";
-    typeItem.style.alignItems = "baseline";
-    typeItem.style.marginBottom = "8px";
-
-    var propertyName = document.createElement("span");
-    propertyName.innerHTML = property;
-    propertyName.style.width = "100px";
-    propertyName.style.marginRight = "10px";
-
-    var propertyType = ciaProperties[property].type;
-
-    if (propertyType === "select") {
-      const propertySelect = property;
-      typeItem.appendChild(propertyName);
-      var selectContainer = document.createElement("div");
-      selectContainer.style.display = "flex";
-      selectContainer.style.alignItems = "center";
-      selectContainer.style.marginLeft = "auto";
-
-      var selectDropdown = document.createElement("select");
-      selectDropdown.style.width = "100px";
-      selectContainer.appendChild(selectDropdown);
-
-      var options = ciaProperties[property].options;
-      for (var i = 0; i < options.length; i++) {
-        var option = document.createElement("option");
-        option.value = options[i];
-        option.text = options[i];
-        selectDropdown.appendChild(option);
-      }
-      var cell = self.editorUi.editor.graph.getSelectionCell();
-      if (cell && cell.technicalAsset && cell.technicalAsset[propertySelect]) {
-        selectDropdown.value = cell.technicalAsset[propertySelect];
-      }
-      var createChangeListener = function (selectDropdown, propertySelect) {
-        return function (evt) {
-          var vals = selectDropdown.value;
-
-          if (vals != null) {
-            var cells = self.editorUi.editor.graph.getSelectionCells();
-            if (cells != null && cells.length > 0) {
-              var cell = self.editorUi.editor.graph.getSelectionCell();
-              if (!cell.technicalAsset) {
-                cell.technicalAsset = {
-                  [propertySelect]: selectDropdown.value,
-                };
-              } else {
-                cell.technicalAsset[propertySelect] = selectDropdown.value;
-              }
-            }
-          }
-          mxEvent.consume(evt);
-        };
-      };
-      mxEvent.addListener(
-        selectDropdown,
-        "change",
-        createChangeListener(selectDropdown, propertySelect)
-      );
-      typeItem.appendChild(selectContainer);
-    }
-    ciaSection.appendChild(typeItem);
-  }
-  var justificationCIA = mxUtils.button(
-    "Justification of the rating",
-    mxUtils.bind(this, function (evt) {
-      this.editorUi.actions.get("editAssetJustificationOftheRating").funct();
-    })
-  );
-
-  justificationCIA.innerHTML = "Justification of the rating";
-  justificationCIA.style.width = "200px";
-
-  ciaSection.appendChild(justificationCIA);
-  // ...
-  //
-  var usageSection = createSection("Usage:");
-
-  usageSection.appendChild(document.createElement("br"));
-  container.appendChild(usageSection);
-
-
-  var usageLabel = document.createElement("span");
-  usageLabel.style.width = "100px";
-  usageLabel.style.marginRight = "10px";
-  usageLabel.innerHTML = "Usage:";
-
-  usageSection.appendChild(usageLabel);
-  var usageSelect = document.createElement("select");
-  usageSection.appendChild(usageSelect);
-
-  var usageOptions = ["business", "devops"];
-  for (var i = 0; i < usageOptions.length; i++) {
-    var option = document.createElement("option");
-    option.value = usageOptions[i];
-    option.text = usageOptions[i];
-    usageSelect.appendChild(option);
-  }
-  var cell = self.editorUi.editor.graph.getSelectionCell();
-  if (cell && cell.technicalAsset && cell.technicalAsset.usage) {
-    usageSelect.value = cell.technicalAsset.usage;
-  }
-  mxEvent.addListener(usageSelect, "change", function (evt) {
-    var vals = usageSelect.value;
-
-    if (vals != null) {
-      var cells = self.editorUi.editor.graph.getSelectionCells();
-      if (cells != null && cells.length > 0) {
-        var cell = self.editorUi.editor.graph.getSelectionCell();
-        if (!cell.technicalAsset) {
-          cell.technicalAsset = {
-            usage: usageSelect.value,
-          };
-        } else {
-          cell.technicalAsset.usage = usageSelect.value;
-        }
-      }
-    }
-    mxEvent.consume(evt);
-  });
-  usageSection.appendChild(
-    this.createOption(
-      "Used as client by human",
-      createCustomOption(self, "Usedasclientbyhuman"),
-      setCustomOption(self, "Usedasclientbyhuman"),
-      customListener
-    )
-  );
-  //Justification of out of scope
-  var justificationOutOfScope = mxUtils.button(
-    "Justification ouf of Scope",
-    mxUtils.bind(this, function (evt) {
-      this.editorUi.actions.get("editAssetJustificationOutOfScope").funct();
-    })
-  );
-
-  justificationOutOfScope.innerHTML = "Justification out of Scope";
-  justificationOutOfScope.style.width = "199px";
-
-  // Multi tenant
-  usageSection.appendChild(
-    this.createOption(
-      "Multi tenant",
-      createCustomOption(self, "Multitenant"),
-      setCustomOption(self, "Multitenant"),
-      customListener
-    )
-  );
-  // Redundant
-  usageSection.appendChild(
-    this.createOption(
-      "redundant",
-      createCustomOption(self, "redundant"),
-      setCustomOption(self, "redundant"),
-      customListener
-    )
-  );
-
-  // Custom developed parts
-  usageSection.appendChild(
-    this.createOption(
-      "Custom developed parts",
-      createCustomOption(self, "customdevelopedparts"),
-      setCustomOption(self, "customdevelopedparts"),
-      customListener
-    )
-  );
-
-  usageSection.appendChild(
-    this.createOption(
-      "Out of Scope",
-      createCustomOption(self, "Outofscope"),
-      setCustomOption(self, "Outofscope"),
-      customListener
-    )
-  );
-
-  usageSection.appendChild(justificationOutOfScope);
-  return container;
-};
-
-*/
 AssetFormatPanel = function (format, editorUi, container) {
   BaseFormatPanel.call(this, format, editorUi, container);
   this.init();
@@ -12000,7 +11583,9 @@ DiagramFormatPanel.prototype.addDataMenu = function (container,UUID = undefined)
 
 AssetFormatPanel.prototype.addThreagileMenu = function (container) {
   let self = this;
+  
 
+  
   let main = document.createElement("div");
   var typeProperties = {
     key: {

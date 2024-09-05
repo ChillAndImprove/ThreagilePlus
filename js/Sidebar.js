@@ -1111,7 +1111,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       "ellipse;whiteSpace=wrap;html=1;align=center;fillColor=#FFFFB7;verticalAlign=middle;fontSize=12;fontColor=#000000;fontStyle=1;",
             120,
       80,
-      "Tech Asset",
+      "key-123456",
       "<asset>",
       null,
       null,
@@ -1122,7 +1122,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       "shape=hexagon;whiteSpace=wrap;html=1;fillColor=#BDDFDF;align=center;verticalAlign=middle;fontSize=12;fontColor=#000000;fontStyle=1;",
       120,
       80,
-      "Tech Asset",  // This is the label text inside the hexagon
+      "key-123456",  // This is the label text inside the hexagon
       "<asset>",
       true,
       true,
@@ -1133,7 +1133,7 @@ Sidebar.prototype.addGeneralPalette = function (expand) {
       "shape=cylinder3;whiteSpace=wrap;fillColor=#C5C5C5;html=1;align=center;verticalAlign=middle;spacingTop=10;fontSize=12;fontColor=#000000;fontStyle=1;", // Adjusted style
       100,
       120,
-      "Tech Asset",  // This is the label text inside the cylinder
+      "key-123456",  // This is the label text inside the cylinder
       "<asset>",
       true,
       true,
