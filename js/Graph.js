@@ -1810,6 +1810,7 @@ Graph.prototype.standalone = false;
  * Installs child layout styles.
  */
 Graph.prototype.init = function (container) {
+  //mxLog.show();
   mxGraph.prototype.init.apply(this, arguments);
 
   // Intercepts links with no target attribute and opens in new window

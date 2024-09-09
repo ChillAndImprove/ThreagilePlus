@@ -934,6 +934,7 @@ EditorUi = function (editor, container, lightbox) {
         if (cellStyle) {
           if (cellStyle.includes('ellipse')) {
               console.log('An ellipse was added.');
+              console.log(graph.getGraphBounds());
               // Additional logic for Ellipse
           } else if (cellStyle.includes('hexagon')) {
               console.log('A hexagon was added.');

@@ -230,6 +230,18 @@ Swal.fire({
                   return;
               }
                 jsonObj = JSON.parse(temp);
+
+
+
+
+
+
+
+
+
+
+
+
               } catch (error) {
                 console.error("Couldn't parse JSON-Object: ", error);
                 setTimeout(loadingBar.hideLoadingBar, 500);
@@ -239,43 +251,24 @@ Swal.fire({
                 return;
               }
               dot = window.printDataFlowDiagramGraphvizDOT();
-              //let jsonObj = dotParser.parse(dot);
               let dotJson = dotParser.parse(dot)[0];
-              //First data import
               jsonObj = keysToSnakeCase(jsonObj);
 
-              //endWASM();
 
               let cnt = 0;
               graph.getModel().diagramData = new Object();
               graph.getModel().diagramData.data_assets = new Map();
               loadingBar.updateProgress(30, 'Loading data_assets...');
-              let dataAssets = graph.model.threagile.getIn(["data_assets"]).items;
-              dataAssets.forEach((item) => {
-                  let key = item.key.value;  // Get the key of this data asset
-                  let dataAsset = item.value.toJSON();  // Convert the YAML node to a JSON object to easily access properties
-              
-                  // Set the properties in diagramData for each data asset
-                  graph.getModel().diagramData.data_assets.set(key, {
-                      visible: false,
-                      quantity: dataAsset.quantity,
-                      confidentiality: dataAsset.confidentiality,
-                      integrity: dataAsset.integrity,
-                      availability: dataAsset.availability,
-                      origin: dataAsset.origin,
-                      owner: dataAsset.owner,
-                      description: dataAsset.description,
-                      usage: dataAsset.usage,
-                      tags: dataAsset.tags,
-                      justification_cia_rating: dataAsset.justification_cia_rating
-                  });
-              });
 
+               
               //Technology Asset Import
 
               let cells = [];
               let nodeIdMap = {};
               var vizInstance = new Viz();
+              function applyTransform(coord, scale, translate) {
+                return (coord * scale) + translate;
+              }
               vizInstance
                 .renderString(dot)
                 .then(function (result) {
@@ -283,6 +276,11 @@ Swal.fire({
                   let svg = result;
                   let parser = new DOMParser();
                   let svgDoc = parser.parseFromString(svg, "image/svg+xml");
+
+
+
+                            
+                  //NEw
 
                   let edgeSVGs = svgDoc.querySelectorAll(".edge");
                   let nodes = svgDoc.querySelectorAll(".node");
@@ -303,6 +301,7 @@ Swal.fire({
                     let fill = polygon.getAttribute("fill");
                     let stroke = polygon.getAttribute("stroke");
                     let strokeWidth = polygon.getAttribute("stroke-width");
+                    
                     let coordinatesArray = points
                       .split(" ")
                       .map(function (point) {
@@ -311,7 +310,15 @@ Swal.fire({
                         var y = parseFloat(coords[1]);
                         return { x: x, y: y };
                       });
-
+                    
+                   /*
+                      let coordinatesArray = points.split(" ").map(point => {
+                        var coords = point.split(",");
+                        var x = applyTransform(parseFloat(coords[0]), scale, translateX);
+                        var y = applyTransform(parseFloat(coords[1]), scale, translateY);
+                        return { x, y };
+                      });
+                      */
                     let minX = Math.min.apply(
                       null,
                       coordinatesArray.map((coord) => coord.x)
@@ -328,6 +335,8 @@ Swal.fire({
                       null,
                       coordinatesArray.map((coord) => coord.y)
                     );
+
+                 
 
                     let width = maxX - minX;
                     let height = maxY - minY;
@@ -427,7 +436,7 @@ Swal.fire({
 
                       let width = maxX - minX;
                       let height = maxY - minY;
-
+                      console.log(maxY);
                       coordinates[nodeId] = {
                         x: minX,
                         y: minY,
@@ -442,20 +451,35 @@ Swal.fire({
                     } else if (is3DCylinder) {
                       let firstPath = paths[0];
                       let d = firstPath.getAttribute("d");
-                      let values = d.match(/[0-9\.]+/g);
+                      // Updated regex to correctly handle negative values and decimal points
+                      let values = d.match(/-?[0-9]*\.?[0-9]+/g);
                       let valuesFloat = values.map(parseFloat);
-
-                      let x = valuesFloat[0];
-                      let y = valuesFloat[1];
-                      let width = valuesFloat[6] - x;
-                      let height = valuesFloat[8] - y;
+                      
+                      // Initialize variables to find the bounds of the path
+                      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                      
+                      // Loop through all extracted values assuming pairs of x, y coordinates
+                      for (let i = 0; i < valuesFloat.length; i += 2) {
+                        let x = valuesFloat[i];
+                        let y = valuesFloat[i + 1];
+                        minX = Math.min(minX, x);
+                        maxX = Math.max(maxX, x);
+                        minY = Math.min(minY, y);
+                        maxY = Math.max(maxY, y);
+                      }
+                      
+                      // Calculate width and height based on min and max values
+                      let width = maxX - minX;
+                      let height = maxY - minY;
+                      
+                      // Extract other attributes
                       let fill = firstPath.getAttribute("fill");
                       let stroke = firstPath.getAttribute("stroke");
                       let strokeWidth = firstPath.getAttribute("stroke-width");
-
+                      
                       coordinates[nodeId] = {
-                        x: x,
-                        y: y,
+                        x: minX, // Changed to minX for correct positioning
+                        y: minY, // Changed to minY for correct positioning
                         width: width,
                         height: height,
                         nodeTitle: nodeTitle,
@@ -464,6 +488,7 @@ Swal.fire({
                         stroke: stroke,
                         strokeWidth: strokeWidth,
                       };
+                      
                     }
                   }
 
@@ -473,8 +498,9 @@ Swal.fire({
 
                   let parent = graph.getDefaultParent();
 
+                           const defaultStrokeWidth = 2; // Default stroke width
 
-                    for (let nodeId in coordinates) {
+                  for (let nodeId in coordinates) {
                       let nodeCoords = coordinates[nodeId];
 
                       let minX, minY, maxX, maxY;
@@ -502,7 +528,8 @@ Swal.fire({
                         maxX = nodeCoords.x + nodeCoords.width;
                         maxY = nodeCoords.y + nodeCoords.height;
                       }
-
+                      console.log(nodeCoords);
+//TODO: graph.getPageSize().height, we should focus on minY, i guess, the conversation does not work correctly
                       let nodeElement = svgDoc.querySelector("#" + nodeId);
                       let paths = nodeElement.querySelectorAll("path");
                       let textElement = nodeElement.querySelector(
@@ -515,15 +542,18 @@ Swal.fire({
                         );
                       }
                       let text = textElement.textContent;
-                      // Check if it's a 3D cylinder
                       let is3DCylinder = paths.length === 2;
-
-                      //var textWithCoords = `${text} (x: ${minX}, y: ${minY}) width: ${width} height: ${height}`;
+                      console.log(text);
+                      console.log(nodeCoords);
                       let vertex;
                       if (is3DCylinder) {
                         let widthScaleFactor = 2.0;
                         let heightScaleFactor = 0.07;
-
+                        if(nodeCoords.strokeWidth==null)
+                          {
+                            debugger;
+                          }
+                        let strokeWith = nodeCoords.strokeWidth===null? defaultStrokeWidth: nodeCoords.strokeWidth;
                         // Create a 3D cylinder vertex
                         let style =
                           "shape=datastore;fontStyle=1;fontSize=18;shadow=1;fillColor=" +
@@ -531,9 +561,19 @@ Swal.fire({
                           ";strokeColor=" +
                           nodeCoords.stroke +
                           ";strokeWidth=" +
-                          nodeCoords.strokeWidth;
+                          strokeWith;
 
-
+                          vertex = graph.insertVertex(
+                            parent,
+                            null,
+                            text,
+                            minX,
+                            minY,
+                            Math.abs(maxX - minX),
+                            Math.abs(maxY - minY),
+                            style
+                          );
+                        /*
                         vertex = graph.insertVertex(
                           parent,
                           null,
@@ -544,16 +584,24 @@ Swal.fire({
                           Math.abs(maxY - minY) * heightScaleFactor,
                           style
                         );
+                        */
+                        console.log(`x: ${vertex.geometry.x}, y: ${vertex.geometry.y}, width: ${vertex.geometry.width}, height: ${vertex.geometry.height}`);
               } else if (nodeCoords.shape === "ellipse") {
                         let widthScaleFactor = 0.6;
                         let heightScaleFactor = 0.6;
+                        if(nodeCoords.strokeWidth==null)
+                          {
+                            debugger;
+                          }
+                        let strokeWith = nodeCoords.strokeWidth===null? defaultStrokeWidth: nodeCoords.strokeWidth;
+
                         let style =
                           "shape=ellipse;fontStyle=1;fontSize=18;shadow=1;fillColor=" +
                           nodeCoords.fill +
                           ";strokeColor=" +
                           nodeCoords.stroke +
                           ";strokeWidth=" +
-                          nodeCoords.strokeWidth;
+                          strokeWith;
 
                         vertex = graph.insertVertex(
                           parent,
@@ -565,17 +613,25 @@ Swal.fire({
                           Math.abs(maxY - minY),
                           style
                         );
+                        console.log(`x: ${vertex.geometry.x}, y: ${vertex.geometry.y}, width: ${vertex.geometry.width}, height: ${vertex.geometry.height}`);
         
                       } else {
                         let widthScaleFactor = 0.6;
                         let heightScaleFactor = 0.6;
+                        if(nodeCoords.strokeWidth==null)
+                        {
+                          debugger;
+                        }
+                        let strokeWith = nodeCoords.strokeWidth===null? defaultStrokeWidth: nodeCoords.strokeWidth;
+                        
+
                         let style =
                           "shape=hexagon;fontStyle=1;fontSize=18;shadow=1;fillColor=" +
                           nodeCoords.fill +
                           ";strokeColor=" +
                           nodeCoords.stroke +
                           ";strokeWidth=" +
-                          nodeCoords.strokeWidth;
+                          strokeWith;
 
                         vertex = graph.insertVertex(
                           parent,
@@ -587,16 +643,16 @@ Swal.fire({
                           Math.abs(maxY - minY),
                           style
                         );
-        
+                        console.log(`x: ${vertex.geometry.x}, y: ${vertex.geometry.y}, width: ${vertex.geometry.width}, height: ${vertex.geometry.height}`);
                       }
                       loadingBar.updateProgress(60, 'Loading technical_assets...');
 
-		if (graph.model.threagile.hasIn(["technical_assets", text])) {
-		    vertex.technicalAsset = text;
-		}
-		  
-		vertex.setVertex(true);  
-		nodeIdMap[nodeCoords.nodeTitle] = vertex;
+                      if (graph.model.threagile.hasIn(["technical_assets", text])) {
+                          vertex.technicalAsset = text;
+                      }
+                        
+                      vertex.setVertex(true);  
+                      nodeIdMap[nodeCoords.nodeTitle] = vertex;
 	
                       let bounds = graph.getCellGeometry(vertex);
                       let textWidth = mxUtils.getSizeForString(
@@ -720,10 +776,10 @@ Swal.fire({
                         }
                       }
                     });
-		const endTime = performance.now();
-		console.log(`Call to doSomething took ${endTime - startTime} milliseconds.`);
-    loadingBar.updateProgress(100, 'Import complete.');
-    setTimeout(loadingBar.hideLoadingBar, 500);
+                    const endTime = performance.now();
+                    console.log(`Call to doSomething took ${endTime - startTime} milliseconds.`);
+                    loadingBar.updateProgress(100, 'Import complete.');
+                    setTimeout(loadingBar.hideLoadingBar, 500);
 
 
                     let cells = graph.getModel().cells;
@@ -736,9 +792,11 @@ Swal.fire({
                       }
                     }
                
-		graph.getModel().endUpdate();
-		graph.fit();
-                  
+            		graph.getModel().endUpdate();
+		            graph.fit();
+                graph.refresh();
+                graph.view.revalidate();
+
                 })
                 .catch(function (error) {
                   setTimeout(loadingBar.hideLoadingBar, 500);
@@ -753,13 +811,16 @@ Swal.fire({
           }
         } catch (e) {
           mxUtils.alert(
-            mxResources.get("invalidOrMissingFile") + ": " + e.message
+            e.message
           );
         }
 	 finally {
-		    graph.setEnabled(layoutEnabled);
+		         graph.setEnabled(layoutEnabled);
                     graph.setEventsEnabled(eventsEnabled);
                     graph.fit();
+                    graph.refresh();
+                    graph.view.revalidate();
+         
       }
 
        

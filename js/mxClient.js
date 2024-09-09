@@ -52469,6 +52469,7 @@ mxGraphView.prototype.getBoundingBox = function(state, recurse)
 			{
 				var bounds = this.getBoundingBox(this.getState(model.getChildAt(state.cell, i)));
 				
+		
 				if (bounds != null)
 				{
 					if (bbox == null)
@@ -52486,6 +52487,7 @@ mxGraphView.prototype.getBoundingBox = function(state, recurse)
 	
 	return bbox;
 };
+
 
 /**
  * Function: createBackgroundPageShape

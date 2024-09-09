@@ -10702,11 +10702,11 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
           data_assets_sent: [],
           data_assets_received: [],
       };
-      const path = ['technical_assets', cell.source.technicalAsset.key, 'communication_link',comId];
+      const path = ['technical_assets', cell.source.technicalAsset.key, 'communication_links',comId];
        Object.keys(communicationLinkProperties).forEach(property => {
         self.editorUi.editor.graph.model.threagile.setIn([...path, property], communicationLinkProperties[property]);
     });
-      cell.communicationAsset = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link",comId]);
+      cell.communicationAsset = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_links",comId]);
       cell.communicationAssetKey = comId;
     }
       }
@@ -10778,7 +10778,7 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
         return function (evt) {
           var vals = selectDropdown.value;
           if (vals != null) {
-               self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.source.technicalAsset.key,"communication_link", cell.communicationAssetKey, propertySelect], selectDropdown.value);
+               self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.source.technicalAsset.key,"communication_links", cell.communicationAssetKey, propertySelect], selectDropdown.value);
           }
           mxEvent.consume(evt);
         };
@@ -10798,7 +10798,7 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
           var cells = self.editorUi.editor.graph.getSelectionCells();
           if (cells != null && cells.length > 0) {  
             let cell = self.editorUi.editor.graph.getSelectionCell();
-            return self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link",cell.communicationAssetKey, parameter]);
+            return self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_links",cell.communicationAssetKey, parameter]);
           }
 
         };
@@ -10811,7 +10811,7 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
           var cells = self.editorUi.editor.graph.getSelectionCells();
           if (cells != null && cells.length > 0) {
             let cell = self.editorUi.editor.graph.getSelectionCell();
-          self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.source.technicalAsset.key,"communication_link", cell.communicationAssetKey, parameter],checked);
+          self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.source.technicalAsset.key,"communication_links", cell.communicationAssetKey, parameter],checked);
           }
           
           
@@ -10839,9 +10839,9 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
         mxUtils.bind(this, function (evt) {
           
           let cell = self.editorUi.editor.graph.getSelectionCell();
-          let commAsset =self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link",cell.communicationAssetKey]);
+          let commAsset =self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_links",cell.communicationAssetKey]);
             if (typeof cell.communicationAsset.toJSON === 'function') {
-              commAsset = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_link",cell.communicationAssetKey]).toJSON();
+              commAsset = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", cell.source.technicalAsset.key,"communication_links",cell.communicationAssetKey]).toJSON();
             }
 
           let dataValue =
@@ -10878,18 +10878,18 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
                     if(property == "key")
                     {
                       restartWasm();
-                      let oldassetPath = ["technical_assets", cell.source.technicalAsset.key,"communication_link",cell.communicationAssetKey];
+                      let oldassetPath = ["technical_assets", cell.source.technicalAsset.key,"communication_links",cell.communicationAssetKey];
                       let object = JSON.parse(JSON.stringify(self.editorUi.editor.graph.model.threagile.getIn(oldassetPath)));
                       self.editorUi.editor.graph.model.threagile.deleteIn(oldassetPath);
                       cell.communicationAssetKey=newValue;
 
-                      let newassetPath        = ["technical_assets", cell.source.technicalAsset.key,"communication_link", cell.communicationAssetKey];
+                      let newassetPath        = ["technical_assets", cell.source.technicalAsset.key,"communication_links", cell.communicationAssetKey];
                       self.editorUi.editor.graph.model.threagile.setIn(newassetPath, object);
                       cell.communicationAsset = self.editorUi.editor.graph.model.threagile.getIn(newassetPath);
                       let restoreIntegrity    = self.editorUi.editor.graph.model.threagile.toString();
                       self.editorUi.editor.graph.model.threagile =  YAML.parseDocument(restoreIntegrity);
                     }else{
-                     self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.source.technicalAsset.key,"communication_link",cell.communicationAssetKey, property], newValue);
+                     self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", cell.source.technicalAsset.key,"communication_links",cell.communicationAssetKey, property], newValue);
                   }
                    }
               }
@@ -10978,13 +10978,13 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
     function addComSent(e){
       let dataId= diagramData[e.detail.data.value].id;
       commAsset.data_assets_sent.push(dataId);
-      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_link",cell.communicationAssetKey, "data_assets_sent"],commAsset.data_assets_sent );
+      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_links",cell.communicationAssetKey, "data_assets_sent"],commAsset.data_assets_sent );
 
     }
     function removeComSent(e){
       let dataId= diagramData[e.detail.data.value].id;
       commAsset.data_assets_sent.remove(dataId);
-      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_link",cell.communicationAssetKey, "data_assets_sent"],commAsset.data_assets_sent );
+      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_links",cell.communicationAssetKey, "data_assets_sent"],commAsset.data_assets_sent );
 
     }
     tagify1.on("add", addComSent).on("remove", removeComSent);
@@ -11027,12 +11027,12 @@ CommunicationFormatPanel.prototype.addCommunicationMenuDynamic = function (
     function addComReceived(e){
       let dataId= diagramData[e.detail.data.value].id;
       commAsset.data_assets_received.push(dataId);
-      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_link",cell.communicationAssetKey,"data_assets_received"],commAsset.data_assets_received );
+      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_links",cell.communicationAssetKey,"data_assets_received"],commAsset.data_assets_received );
     }
     function removeComReceived(e){
       let dataId= diagramData[e.detail.data.value].id;
       commAsset.data_assets_received.remove(dataId);
-      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_link",cell.communicationAssetKey,"data_assets_received"],commAsset.data_assets_received );
+      self.editorUi.editor.graph.model.threagile.setIn(["technical_assets", self.editorUi.editor.graph.getSelectionCells()[0].source.technicalAsset.key,"communication_links",cell.communicationAssetKey,"data_assets_received"],commAsset.data_assets_received );
 
     }
   tagify2.on("add", addComReceived).on("remove", removeComReceived);
