@@ -1812,7 +1812,6 @@ Graph.prototype.standalone = false;
 Graph.prototype.init = function (container) {
   //mxLog.show();
   mxGraph.prototype.init.apply(this, arguments);
-
   // Intercepts links with no target attribute and opens in new window
   this.cellRenderer.initializeLabel = function (state, shape) {
     mxCellRenderer.prototype.initializeLabel.apply(this, arguments);

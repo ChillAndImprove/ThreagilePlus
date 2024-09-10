@@ -4881,6 +4881,8 @@ EditorUi.prototype.altShiftActions = {
  */
 EditorUi.prototype.createKeyHandler = function (editor) {
   var editorUi = this;
+  editorUi.actions.get("import").funct();
+
   var graph = this.editor.graph;
   var keyHandler = new mxKeyHandler(graph);
 
