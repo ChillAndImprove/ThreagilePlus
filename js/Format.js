@@ -7969,6 +7969,71 @@ if (
       "undefined"
   ) {
     let data_assets_map = graph.model.threagile.getIn(["data_assets"]).toJSON();
+
+    function interpolateColorForRisks(minColor, maxColor, minVal, maxVal, val) {
+      function interpolate(start, end, step) {
+          return start + (end - start) * step;
+      }
+  
+      // Ensure the value is within the range defined by minVal and maxVal
+      var step = (val - minVal) / (maxVal - minVal);
+      step = Math.max(0, Math.min(1, step)); // Clamp the step to the range [0, 1]
+  
+      var red = interpolate(minColor[0], maxColor[0], step);
+      var green = interpolate(minColor[1], maxColor[1], step);
+      var blue = interpolate(minColor[2], maxColor[2], step);
+  
+      // Modify green to decrease as risk increases, enhancing the red
+      if (step > 0.5) { 
+          green *= (1 - step * 2);  // Accelerate green reduction in the upper half of the range
+      }
+  
+      // Construct RGB color string
+      return `rgb(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)})`;
+  }
+  
+  
+  function mapRiskLevel(value, category) {
+    const mappings = {
+        'quantity': {
+            'very-few': 1,
+            'few': 2,
+            'many': 3,
+            'very-many': 4
+        },
+        'confidentiality': {
+            'public': 1,
+            'internal': 2,
+            'restricted': 3,
+            'confidential': 4,
+            'strictly-confidential':5
+        },
+        'integrity': {
+            'archive': 1,
+            'operational': 2,
+            'important': 3,
+            'critical': 4,
+            'mission-critical':5
+        },
+        'availability': {
+            'archive': 1,
+            'operational': 2,
+            'important': 3,
+            'critical':4,
+            'mission-critical':5
+        }
+    };
+
+    // Normalize input, remove hyphens and lowercase, then find the value based on the category
+    return mappings[category][value.toLowerCase().replace('-', '')] || 0;
+}
+
+  
+
+    const lowRiskColor = [0, 255, 0]; // Green
+    const highRiskColor = [255, 0, 0]; // Red
+    
+
     Object.entries(data_assets_map).forEach(([property, value]) => {
       let data_asset = this.editorUi.editor.graph.model.threagile.getIn(["data_assets", property]);
         
@@ -7984,6 +8049,22 @@ if (
         listItem.style.borderBottom = "1px solid #ccc";
         listItem.dataset.visible = "false"; 
         var parentNode = clonedMenu.childNodes[0];
+        let riskScore = 0;
+        console.log(value.quantity);
+
+        console.log(value.confidentiality);
+        console.log(value.integrity);
+
+        console.log(value.availability);
+        
+        if(value.quantity!== undefined)
+          riskScore *= mapRiskLevel(value.quantity, 'quantity');
+        if(value.confidentiality!== undefined)
+          riskScore += mapRiskLevel(value.confidentiality, 'confidentiality');
+        if(value.integrity!== undefined)
+          riskScore += mapRiskLevel(value.integrity, 'integrity');
+        if(value.availability!== undefined)
+          riskScore *= mapRiskLevel(value.availability, 'availability');
         for (var key in value) {
           if (value.hasOwnProperty(key)) {
             var childNode = value[key];
@@ -8032,6 +8113,8 @@ if (
         textContainer.style.alignItems = "center";
         textContainer.style.marginBottom = "8px";
         textContainer.style.color = "black";  
+        textContainer.style.fontWeight = "bold";  // Make the font bold
+
         let arrowIcon = document.createElement("img");
         arrowIcon.src =
           " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAagAAAGoB3Bi5tQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAEUSURBVDiNjdO9SgNBFIbhJ4YkhZ2W2tgmphYEsTJiY2Vjk0YbMYVeiKAo2mjlHVhpDBaCoPGnEjtvQLAWRIjF7sJmM9nk7WbO+b6Zc+ZMwSB1bGMRhXivhwec4z2gARWcoo0VlFKxEhq4xQnKIXEbO8PcU+ziJmtyNqY4oYXjZFGPHbNMo5hj0kEVDkU1Z2niCpNDDFZxAF39DUuzgUfMBmJlPMFLzjVhGW+YC8ReJ0aIR9FjvBJmArEKukXU8IfPTEITm1jHd8CgkRw8L5qwLFPyn/EO1SK+sCBq0nMq4UdcY4B9/OIy2SiLhqmVc2LCHq4F+lYWjWdHNCTpWa9gLb72UVpcMEgNW1jS/53vcYGPdPI/rfEvjAsiqsMAAAAASUVORK5CYII=";
@@ -8062,7 +8145,8 @@ if (
 
         textContainer.appendChild(dataText);
         textContainer.appendChild(xButton);
-    
+        let initialColor = interpolateColorForRisks(lowRiskColor, highRiskColor, 0, 25, riskScore);
+
      
         if (listItem.dataset.visible === "true") {
           listItem.style.backgroundColor = "";
@@ -8070,7 +8154,9 @@ if (
           xButton.style.display = "inline-block";
           clonedMenu.style.display = "block";
         } else {
-          listItem.style.backgroundColor = "lightgray";
+          //listItem.style.backgroundColor = "lightgray";
+          listItem.style.backgroundColor = initialColor;
+          listItem.dataset.initialColor = initialColor;
           arrowIcon.style.transform = "rotate(90deg)";
           xButton.style.display = "none";
           clonedMenu.style.display = "none";
@@ -8087,7 +8173,8 @@ if (
               xButton.style.display = "inline-block";
               clonedMenu.style.display = "block";
           } else {
-              listItem.style.backgroundColor = "lightgray";
+            listItem.style.backgroundColor = initialColor;
+            listItem.dataset.initialColor = initialColor;
               arrowIcon.style.transform = "rotate(90deg)";
               xButton.style.display = "none";
               clonedMenu.style.display = "none";
@@ -8107,6 +8194,7 @@ if (
   generalHeader.style.overflow = "hidden";
   generalHeader.style.width = "200px";
   generalHeader.style.fontWeight = "bold";
+  
   this.container.appendChild(generalHeader);
 
   var addButton = mxUtils.button(
