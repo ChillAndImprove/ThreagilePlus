@@ -362,7 +362,7 @@ Swal.fire({
                       );
                       clusterVertex.setConnectable(false);
                     if (titleCluster.textContent) {
-                        clusterVertex.trust_boundaries = titleCluster.textContent;
+                        clusterVertex.trust_boundarieskey = titleCluster.textContent;
                     }	
 
                     }
@@ -549,10 +549,7 @@ Swal.fire({
                       if (is3DCylinder) {
                         let widthScaleFactor = 2.0;
                         let heightScaleFactor = 0.07;
-                        if(nodeCoords.strokeWidth==null)
-                          {
-                            debugger;
-                          }
+                    
                         let strokeWith = nodeCoords.strokeWidth===null? defaultStrokeWidth: nodeCoords.strokeWidth;
                         // Create a 3D cylinder vertex
                         let style =
@@ -573,27 +570,13 @@ Swal.fire({
                             Math.abs(maxY - minY),
                             style
                           );
-                        /*
-                        vertex = graph.insertVertex(
-                          parent,
-                          null,
-                          text,
-                          minX - Math.abs(maxX - minX) * widthScaleFactor,
-                          -minY,
-                          Math.abs(maxX - minX) * widthScaleFactor,
-                          Math.abs(maxY - minY) * heightScaleFactor,
-                          style
-                        );
-                        */
-                        console.log(`x: ${vertex.geometry.x}, y: ${vertex.geometry.y}, width: ${vertex.geometry.width}, height: ${vertex.geometry.height}`);
+                          vertex.technicalAsset = {}; 
+                          vertex.technicalAsset["id"] = graph.model.threagile.getIn(["technical_assets",vertex.value,"id"]);
+                          vertex.technicalAsset["key"] = vertex.value;
               } else if (nodeCoords.shape === "ellipse") {
                         let widthScaleFactor = 0.6;
                         let heightScaleFactor = 0.6;
-                        if(nodeCoords.strokeWidth==null)
-                          {
-                            debugger;
-                          }
-                        let strokeWith = nodeCoords.strokeWidth===null? defaultStrokeWidth: nodeCoords.strokeWidth;
+                                 let strokeWith = nodeCoords.strokeWidth===null? defaultStrokeWidth: nodeCoords.strokeWidth;
 
                         let style =
                           "shape=ellipse;fontStyle=1;fontSize=18;shadow=1;fillColor=" +
@@ -613,15 +596,13 @@ Swal.fire({
                           Math.abs(maxY - minY),
                           style
                         );
-                        console.log(`x: ${vertex.geometry.x}, y: ${vertex.geometry.y}, width: ${vertex.geometry.width}, height: ${vertex.geometry.height}`);
-        
+                        vertex.technicalAsset = {}; 
+                        vertex.technicalAsset["id"] = graph.model.threagile.getIn(["technical_assets",vertex.value,"id"]);
+                        vertex.technicalAsset["key"] = vertex.value;
                       } else {
                         let widthScaleFactor = 0.6;
                         let heightScaleFactor = 0.6;
-                        if(nodeCoords.strokeWidth==null)
-                        {
-                          debugger;
-                        }
+                  
                         let strokeWith = nodeCoords.strokeWidth===null? defaultStrokeWidth: nodeCoords.strokeWidth;
                         
 
@@ -643,13 +624,12 @@ Swal.fire({
                           Math.abs(maxY - minY),
                           style
                         );
-                        console.log(`x: ${vertex.geometry.x}, y: ${vertex.geometry.y}, width: ${vertex.geometry.width}, height: ${vertex.geometry.height}`);
+                        vertex.technicalAsset = {}; 
+                        vertex.technicalAsset["id"] = graph.model.threagile.getIn(["technical_assets",vertex.value,"id"]);
+                        vertex.technicalAsset["key"] = vertex.value;
                       }
                       loadingBar.updateProgress(60, 'Loading technical_assets...');
 
-                      if (graph.model.threagile.hasIn(["technical_assets", text])) {
-                          vertex.technicalAsset = text;
-                      }
                         
                       vertex.setVertex(true);  
                       nodeIdMap[nodeCoords.nodeTitle] = vertex;
@@ -748,6 +728,29 @@ Swal.fire({
                         targetVertex,
                         edgeStyle
                       );
+                      
+                      if (
+                        sourceVertex.technicalAsset !== undefined &&
+                        targetVertex.technicalAsset !== undefined
+                      ) {
+                        let data = graph.model.threagile.getIn(["technical_assets", sourceVertex.technicalAsset.key, "communication_links"]).toJSON();
+                        Object.entries(data).forEach(([key, value])=>
+                         {
+                        if (
+                          targetVertex.technicalAsset.id ===
+                          value.target
+                        ) {
+                          edge.communicationAssetKey =key;
+                          edge.communicationAsset    =   graph.model.threagile.getIn(["technical_assets", sourceVertex.technicalAsset.key, "communication_links", key]);
+
+                            
+                        }
+                      
+                       }
+                       ); 
+                       
+                      }
+                      
                       // Assign waypoints to edge if they exist
                       if (pathPoints) {
                         let edgeGeometry = edge.getGeometry();
@@ -755,26 +758,8 @@ Swal.fire({
                         edgeGeometry.points = pathPoints;
                         graph.getModel().setGeometry(edge, edgeGeometry);
                       }
-                      if (
-                        sourceVertex.technicalAsset !== undefined &&
-                        targetVertex.technicalAsset !== undefined
-                      ) {
-                        for (links in sourceVertex.technicalAsset
-                          .communication_links) {
-                          if (
-                            targetVertex.technicalAsset.id ===
-                            sourceVertex.technicalAsset.communication_links[
-                              links
-                            ].target_id
-                          ) {
-                            edge.communicationAsset =
-                              sourceVertex.technicalAsset.communication_links[
-                                links
-                              ];
-                            break;
-                          }
-                        }
-                      }
+        
+                        
                     });
                     const endTime = performance.now();
                     console.log(`Call to doSomething took ${endTime - startTime} milliseconds.`);

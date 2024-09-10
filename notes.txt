@@ -1,0 +1,72 @@
+getGraphBounds returns NaN and thus there happens an error somewhere:w
+
+ this.addAction(
+    "fitWindow",
+    function () {
+      var bounds = graph.isSelectionEmpty()
+        ? graph.getGraphBounds()
+        : graph.getBoundingBox(graph.getSelectionCells());
+      var t = graph.view.translate;
+      var s = graph.view.scale;
+
+
+Maybe this afterwards
+mxClient.js:mxGraph.prototype.validateGraph = function(cell, context)
+
+validateGraph
+
+
+Found it, happens because of strikeWidth lol
+mxGraphView.prototype.getBoundingBox = function(state, recurse)
+{
+        recurse = (recurse != null) ? recurse : true;
+        var bbox = null;
+        
+        if (state != null)
+        {
+                if (state.shape != null && state.shape.boundingBox != null)
+                {
+                        bbox = state.shape.boundingBox.clone();
+                }
+                
+                // Adds label bounding box to graph bounds
+                if (state.text != null && state.text.boundingBox != null)
+                {
+                        if (bbox != null)
+                        {
+                                bbox.add(state.text.boundingBox);
+                        }
+                        else
+                        {
+                                bbox = state.text.boundingBox.clone();
+                        }
+                }
+                
+                if (recurse)
+                {
+                        var model = this.graph.getModel();
+                        var childCount = model.getChildCount(state.cell);
+                        
+                        for (var i = 0; i < childCount; i++)
+                        {
+                                var bounds = this.getBoundingBox(this.getState(model.getChildAt(state.cell, i)));
+                                
+                                if (bounds != null)
+                                {
+                                        if (bbox == null)
+                                        {
+                                                bbox = bounds;
+                                        }
+                                        else
+                                        {
+                                                bbox.add(bounds);
+                                        }
+                                }
+                        }
+                }
+        }
+        
+        return bbox;
+};
+
+

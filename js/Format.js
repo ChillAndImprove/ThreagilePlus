@@ -8824,10 +8824,11 @@ if (undefinedAsset)
     
     if (!cell.technicalAsset) { // Check if technicalAsset does not exist
       cell.technicalAsset = {}; // Initialize it as an empty object
-     }
+      cell.technicalAsset["id"] = uniqueID ;
+      cell.technicalAsset["key"] = technicalAssetId;
+ 
+    }
      
-     cell.technicalAsset["id"] = uniqueID ;
-     cell.technicalAsset["key"] = technicalAssetId;
 
     }
     if(graph.model.threagile.hasIn(['technical_assets','__DELETE_ME__',] )){
@@ -12247,8 +12248,12 @@ if(assetId)
 {
   let arr = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId.key, "data_assets_processed"]);
   // diagramData has multiple objects those have ids, arr is an arry of ids find the keys of diagramData from the arr ids
+  
   if(arr)
     {
+      if (typeof arr.toJSON === 'function') {
+        arr = arr.toJSON();
+    } 
     let matchingKeys = Object.keys(diagramData)
     .filter(key => arr.includes(diagramData[key].id))  // Filter keys where their object's id is in arr
     .map(key => key);  // Map to the keys themselves
@@ -12286,10 +12291,15 @@ receivedSecion.appendChild(document.createElement("br"));
 if(assetId)
   {
     let arr = self.editorUi.editor.graph.model.threagile.getIn(["technical_assets", assetId.key, "data_assets_stored"]);
+   
     // diagramData has multiple objects those have ids, arr is an arry of ids find the keys of diagramData from the arr ids
     if(arr)
       {
-      let matchingKeys = Object.keys(diagramData)
+    
+        if (typeof arr.toJSON === 'function') {
+          arr = arr.toJSON();
+      } 
+        let matchingKeys = Object.keys(diagramData)
       .filter(key => arr.includes(diagramData[key].id))  // Filter keys where their object's id is in arr
       .map(key => key);  // Map to the keys themselves
       inputElement2.value = matchingKeys;
