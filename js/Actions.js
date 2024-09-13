@@ -742,8 +742,6 @@ Swal.fire({
                         ) {
                           edge.communicationAssetKey =key;
                           edge.communicationAsset    =   graph.model.threagile.getIn(["technical_assets", sourceVertex.technicalAsset.key, "communication_links", key]);
-
-                            
                         }
                       
                        }

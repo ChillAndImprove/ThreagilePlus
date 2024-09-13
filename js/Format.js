@@ -9007,7 +9007,6 @@ if(parsedString.includes("$$__ERROR__$$"))
       }
   });
 }
-      // Convert the parsed string to JSON
       let jsonObj = JSON.parse(parsedString);
 
       // End timing and calculate the duration
@@ -9015,7 +9014,6 @@ if(parsedString.includes("$$__ERROR__$$"))
       console.log('JSON.parse() time: ' + (end - start) + ' ms');
       window.applyRAAJS();
       yaml = JSON.parse(window.applyRiskGenerationJS());
-      // let jsonObj = JSON.parse(applyRiskGenerationJS());
 
       let span = document.createElement("span");
       span.innerHTML = "<b>Relative Attacker Attractivness:</b> ";
@@ -9055,20 +9053,16 @@ if(parsedString.includes("$$__ERROR__$$"))
             return start + (end - start) * step;
         }
     
-        // Ensure the value is within the range defined by minVal and maxVal
         var step = (val - minVal) / (maxVal - minVal);
-        step = Math.max(0, Math.min(1, step)); // Clamp the step to the range [0, 1]
-    
+        step = Math.max(0, Math.min(1, step)); 
         var red = interpolate(minColor[0], maxColor[0], step);
         var green = interpolate(minColor[1], maxColor[1], step);
         var blue = interpolate(minColor[2], maxColor[2], step);
     
-        // Modify green to decrease as risk increases, enhancing the red
         if (step > 0.5) { 
-            green *= (1 - step * 2);  // Accelerate green reduction in the upper half of the range
+            green *= (1 - step * 2);  
         }
     
-        // Construct RGB color string
         return `rgb(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)})`;
     }
     
@@ -9101,7 +9095,6 @@ if(parsedString.includes("$$__ERROR__$$"))
           }
       };
   
-      // Normalize input, remove hyphens and lowercase, then find the value based on the category
       return mappings[category][value.toLowerCase().replace('-', '')] || 0;
   }
   
@@ -9141,9 +9134,10 @@ if(parsedString.includes("$$__ERROR__$$"))
             id = technicalAsset ? technicalAsset.title : undefined; 
           }
         }
+        let RAA = jsonObj.TechnicalAssets[id].RAA;
         let gauge = new JustGage({
           id: "gaugeElement",
-          value: jsonObj.TechnicalAssets[id].RAA,
+          value: RAA == 1 ? 0: RAA,
           min: 0,
           max: 100,
           decimals: 2,
@@ -9162,7 +9156,6 @@ if(parsedString.includes("$$__ERROR__$$"))
           riskScore += mapRiskLevel(value.severity, 'severity');
           riskScore += mapRiskLevel(value.exploitation_impact, 'impact');
           riskScore += mapRiskLevel(value.exploitation_likelihood, 'likelihood');
-          // Using multiplication to increase impact based on probability
           riskScore *= mapRiskLevel(value.data_breach_probability, 'probability');
           let maxRiskScore = (5 + 4 + 5) * 3; // Severity + Impact + Likelihood, multiplied by Probability
       
@@ -9185,19 +9178,17 @@ if(parsedString.includes("$$__ERROR__$$"))
           let initialColor = interpolateColorForRisks(lowRiskColor, highRiskColor, 0, 25, riskScore);
           listItem.style.backgroundColor = initialColor;
           listItem.dataset.initialColor = initialColor;
-          
+          listItem.metaData = value;
+
           let parentNode = clonedMenu.childNodes[0];
           for (var key in value) {
             if (value.hasOwnProperty(key)) {
               var childNode = value[key];
               for (var i = 0; i < parentNode.childNodes.length; i++) {
                     var currentChildNode = parentNode.childNodes[i];
-        
-                    if (currentChildNode.nodeType === Node.ELEMENT_NODE) {
-                        // Check if the ID of the current element starts with 'exploitation_'
+                            if (currentChildNode.nodeType === Node.ELEMENT_NODE) {
                         if (currentChildNode.id && currentChildNode.id.startsWith("exploitation_")) {
                             console.log('Original ID:', currentChildNode.id); // Optional: log original ID
-                            // Remove the 'exploitation_' prefix from the ID
                             currentChildNode.id = currentChildNode.id.substring("exploitation_".length);
                             console.log('Updated ID:', currentChildNode.id); // Optional: log updated ID
                         }
@@ -9210,11 +9201,9 @@ if(parsedString.includes("$$__ERROR__$$"))
                                 let nextChildNode = currentChildNode.children[1].children[0];
         
                                 for (let i = 0; i < nextChildNode.options.length; i++) {
-                                  // Check if the current option's value matches the childNode value
                                   if (nextChildNode.options[i].value === childNode) {
-                                      // Set the selectedIndex to the current index if there is a match
                                       nextChildNode.selectedIndex = i;
-                                      break; // Exit the loop once the match is found and set
+                                      break;
                                   }
                               }
                               }
@@ -9245,17 +9234,10 @@ if(parsedString.includes("$$__ERROR__$$"))
           textContainer.appendChild(dataText);
 
           textContainer.appendChild(dataText);
-          let current = false;
-          /*
-          if (current["visible"] === undefined) {
-            current["visible"] = true;
-          }
+          let current = { visible: false };
+            
           
-          */
-          let state = current;
-          
-          
-          if (state) {
+          if (current.visible) {
             listItem.style.backgroundColor = "";
             arrowIcon.style.transform = "rotate(270deg)";
             clonedMenu.style.display = "block";
@@ -9268,26 +9250,109 @@ if(parsedString.includes("$$__ERROR__$$"))
           listItem.appendChild(textContainer);
           listItem.appendChild(clonedMenu);
           function toggleContent() {
-            current.visible = !current.visible;  // Toggle the visibility state
 
-            console.log('Current visibility:', current.visible); // Check the toggle action
-            if (!state) {
+            if (!current.visible) {
               console.log('Expanding: Removing background color');
-              listItem.style.backgroundColor = "";  // Restore initial color
+              listItem.style.backgroundColor = "";  
               arrowIcon.style.transform = "rotate(270deg)";
               clonedMenu.style.display = "block";
+              listItem.focus(); 
             } else {
               console.log('Collapsing: Setting background color to', listItem.dataset.initialColor);
-              listItem.style.backgroundColor = listItem.dataset.initialColor;  // Restore initial color
+              listItem.style.backgroundColor = listItem.dataset.initialColor;  
               
-              //listItem.style.backgroundColor = "lightgray";
               arrowIcon.style.transform = "rotate(90deg)";
               clonedMenu.style.display = "none";
             }
+            current.visible = !current.visible;
           }
           arrowIcon.addEventListener("click", toggleContent);
           dataText.addEventListener("click", toggleContent);
+          listItem.setAttribute('tabindex', '0');  
+          // Global or higher scoped variable to keep track of highlighted cells
+          if(self.editorUi.editor.graph.highlightedCells===undefined){
+            self.editorUi.editor.graph.highlightedCells= [];
+          }
 
+          function handleFocusIn() {
+            console.log('Item focused');
+            listItem.style.outline = '2px solid blue';
+            const separators = /[@><]/;
+
+            const elements = listItem.metaData.synthetic_id.split(separators);
+
+            var model = graph.getModel();  // Get the model associated with the graph
+            var allCells = model.cells;    // Get all cells from the model
+            function convertStyleToString(styleObj) {
+              var styleString = "";
+              for (var key in styleObj) {
+                  if (styleObj.hasOwnProperty(key)) {
+                      styleString += key + "=" + styleObj[key] + ";";
+                  }
+              }
+              return styleString;
+          }
+            // Function to highlight a cell
+            function highlightCell(cell) {
+              var model = graph.getModel();
+              model.beginUpdate();
+              try {
+                  var style = graph.getCellStyle(cell);
+                  style.strokeColor = '#FF0000'; // Set the stroke color directly
+          
+                  var styleString = Object.keys(style).map(function(key) {
+                      return key + '=' + style[key];
+                  }).join(';') + ';'; // Ensure the final semicolon
+          
+                  model.setStyle(cell, styleString);
+              } finally {
+                  model.endUpdate();
+              }
+                self.editorUi.editor.graph.highlightedCells.push(cell);  // Store reference to highlighted cell
+            }
+
+            for (var key in allCells) {
+              if (allCells.hasOwnProperty(key)) {
+                var cell = allCells[key];  // Get the cell object
+
+                if (model.isEdge(cell)) {
+                  var communicationAssetKey = cell.getAttribute('communicationAssetKey');
+                  // Store edge information if necessary
+                } else if (model.isVertex(cell)) {
+                  var style = cell.getStyle();
+                  if (style && !style.includes('shape=rectangle')) {
+                    var technicalAssetId = cell.technicalAsset.id;
+                    if (elements.includes(technicalAssetId)) {
+                      highlightCell(cell);
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          function handleFocusOut() {
+            console.log('Item focus out');
+            listItem.style.outline = 'none';
+            let highlightedCells = self.editorUi.editor.graph.highlightedCells;
+            // Function to remove highlight from a cell
+            function removeHighlight(cell) {
+              var style = graph.getCellStyle(cell);
+              var originalStyle = mxUtils.setStyle(style, 'strokeColor', 'none');  // Reset to no stroke or original stroke
+              graph.setCellStyle(originalStyle, [cell]);
+            }
+
+            // Remove highlight from all highlighted cells
+            highlightedCells.forEach(cell => {
+              removeHighlight(cell);
+            });
+
+            // Clear the array after removing highlights
+            highlightedCells = [];
+          }
+  
+          listItem.addEventListener('focusin', handleFocusIn);
+          listItem.addEventListener('focusout', handleFocusOut);
           list.appendChild(listItem);
         }
       }
@@ -9404,11 +9469,7 @@ if(parsedString.includes("$$__ERROR__$$"))
 
           textContainer.appendChild(dataText);
           let current = false;
-          /*
-          if (current["visible"] === undefined) {
-            current["visible"] = true;
-          }
-            */
+     
           let state = current;
           if (state) {
             listItem.style.backgroundColor = "";

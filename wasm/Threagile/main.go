@@ -615,10 +615,49 @@ func applyRiskGenerationJS(this js.Value, inputs []js.Value) interface{} {
 	for _, category := range model.SortedRiskCategories() {
 		risks := model.SortedRisksOfCategory(category)
 		for _, risk := range risks {
-			model.GeneratedRisksBySyntheticId[strings.ToLower(risk.SyntheticId)] = risk
+			deepCopiedRisk := risk.Clone()
+			model.GeneratedRisksBySyntheticId[strings.ToLower(risk.SyntheticId)] = *deepCopiedRisk
 		}
 	}
-	jsonBytes, err := json.Marshal(model.AllRisks())
+	risks := model.AllRisks()
+	risksForMarshaling := make([]model.RiskForMarshaling, len(risks))
+
+	for i, risk := range risks {
+		risksForMarshaling[i] = model.RiskForMarshaling{
+			Category: model.RiskCategoryForMarshaling{
+				Id:                         risk.Category.Id,
+				Title:                      risk.Category.Title,
+				Description:                risk.Category.Description,
+				Impact:                     risk.Category.Impact,
+				ASVS:                       risk.Category.ASVS,
+				CheatSheet:                 risk.Category.CheatSheet,
+				Action:                     risk.Category.Action,
+				Mitigation:                 risk.Category.Mitigation,
+				Check:                      risk.Category.Check,
+				DetectionLogic:             risk.Category.DetectionLogic,
+				RiskAssessment:             risk.Category.RiskAssessment,
+				FalsePositives:             risk.Category.FalsePositives,
+				Function:                   risk.Category.Function,
+				STRIDE:                     risk.Category.STRIDE,
+				ModelFailurePossibleReason: risk.Category.ModelFailurePossibleReason,
+				CWE:                        risk.Category.CWE,
+			},
+			RiskStatus:                      risk.RiskStatus,
+			Severity:                        risk.Severity,
+			ExploitationLikelihood:          risk.ExploitationLikelihood,
+			ExploitationImpact:              risk.ExploitationImpact,
+			Title:                           risk.Title,
+			SyntheticId:                     risk.SyntheticId,
+			MostRelevantDataAssetId:         risk.MostRelevantDataAssetId,
+			MostRelevantTechnicalAssetId:    risk.MostRelevantTechnicalAssetId,
+			MostRelevantTrustBoundaryId:     risk.MostRelevantTrustBoundaryId,
+			MostRelevantSharedRuntimeId:     risk.MostRelevantSharedRuntimeId,
+			MostRelevantCommunicationLinkId: risk.MostRelevantCommunicationLinkId,
+			DataBreachProbability:           risk.DataBreachProbability,
+			DataBreachTechnicalAssetIDs:     risk.DataBreachTechnicalAssetIDs,
+		}
+	}
+	jsonBytes, err := json.Marshal(risksForMarshaling)
 	if err != nil {
 		return err
 	}
