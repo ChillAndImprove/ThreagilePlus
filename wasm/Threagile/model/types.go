@@ -854,7 +854,7 @@ const (
 	CLI
 	Task
 	Function
-	Gateway // TODO rename to API-Gateway to be more clear?
+	Gateway
 	IoTDevice
 	MessageQueue
 	StreamProcessing

@@ -9279,45 +9279,104 @@ if(parsedString.includes("$$__ERROR__$$"))
             listItem.style.outline = '2px solid blue';
             const separators = /[@><]/;
 
-            const elements = listItem.metaData.synthetic_id.split(separators);
-
-            var model = graph.getModel();  // Get the model associated with the graph
-            var allCells = model.cells;    // Get all cells from the model
-            function convertStyleToString(styleObj) {
-              var styleString = "";
-              for (var key in styleObj) {
-                  if (styleObj.hasOwnProperty(key)) {
-                      styleString += key + "=" + styleObj[key] + ";";
-                  }
-              }
-              return styleString;
-          }
-            // Function to highlight a cell
-            function highlightCell(cell) {
-              var model = graph.getModel();
-              model.beginUpdate();
-              try {
-                  var style = graph.getCellStyle(cell);
-                  style.strokeColor = '#FF0000'; // Set the stroke color directly
+            function findCommunicationLinkName(communicationLink, graphJson) {
+              const { source, target } = (communicationLink);
           
-                  var styleString = Object.keys(style).map(function(key) {
-                      return key + '=' + style[key];
-                  }).join(';') + ';'; // Ensure the final semicolon
-          
-                  model.setStyle(cell, styleString);
-              } finally {
-                  model.endUpdate();
-              }
-                self.editorUi.editor.graph.highlightedCells.push(cell);  // Store reference to highlighted cell
+              const technicalAssets = graphJson.technical_assets;
+                  // Iterate over the keys of the technical assets to find the correct asset
+              for (let key in technicalAssets) {
+                if (technicalAssets[key].id === source) {
+                    sourceAsset = technicalAssets[key];
+                    break; // Exit the loop once the matching asset is found
+                }
             }
 
+            if (!sourceAsset) {
+                return null;
+            }
+
+            // Variable to store the found communication link
+            let matchingLink = null;
+
+            // Iterate over the keys of the communication links to find the matching link
+            for (let key in sourceAsset.communication_links) {
+                if (sourceAsset.communication_links[key].target === target) {
+                    matchingLink = sourceAsset.communication_links[key];
+                    break; // Exit the loop once the matching link is found
+                }
+            }       
+              if (matchingLink) {
+                  return matchingLink;
+              } else {
+                  return null;
+              }
+          }
+          
+
+          function extractComponents(link) {
+            let separatorIndex = link.indexOf('>'); // Find the index of the first '>'
+            if (separatorIndex === -1) {
+                return null; // Return null if '>' is not found
+            }
+        
+            // Extract everything before and after the first '>'
+            let source = link.substring(0, separatorIndex);
+            let target = link.substring(separatorIndex + 1);
+        
+            return {
+                source: source,
+                target: target
+            };
+        }
+        
+
+            const elements = listItem.metaData.synthetic_id.split(separators);
+            const comm = listItem.metaData.most_relevant_communication_link;
+            const components = extractComponents(comm);
+            let communicationLinkName;
+            if(components!= null)
+            {
+              let threat = self.editorUi.editor.graph.model.threagile;
+              if (typeof threat.toJSON === 'function') {
+                threat= threat.toJSON();
+              }
+              communicationLinkName = findCommunicationLinkName(components, threat);
+            }
+            var model = graph.getModel();  
+            var allCells = model.cells;   
+
+            
+            function highlightCell(cell) {
+              var graph = this.editorUi.editor.graph;
+              let highlight = new mxCellHighlight(graph, '#FF0000', 8); // Increased width to 8
+              highlight.opacity = 90; // Optional: Set opacity to 90% for stronger visual impact
+              highlight.highlight(graph.view.getState(cell)); // Apply highlight to the cell state
+      
+             
+                  highlight.highlight(graph.view.getState(cell)); // Apply highlight to the cell state
+              
+          
+              if (!graph.highlightedCells) {
+                  graph.highlightedCells = []; // Initialize if not already set
+              }
+              graph.highlightedCells.push(highlight); // Keep track of highlighted cells
+          }
+          
+          self.editorUi.editor.graph.model.beginUpdate();
             for (var key in allCells) {
               if (allCells.hasOwnProperty(key)) {
                 var cell = allCells[key];  // Get the cell object
 
-                if (model.isEdge(cell)) {
-                  var communicationAssetKey = cell.getAttribute('communicationAssetKey');
-                  // Store edge information if necessary
+                if (communicationLinkName && model.isEdge(cell)) {
+                  
+
+                  let object = cell.communicationAsset;
+                  if (typeof object.toJSON === 'function') {
+                    object = object.toJSON();
+                  }
+                  if (communicationLinkName.description === object.description && communicationLinkName.target ===object.target  ) {
+                     highlightCell(cell);
+                  }
                 } else if (model.isVertex(cell)) {
                   var style = cell.getStyle();
                   if (style && !style.includes('shape=rectangle')) {
@@ -9329,6 +9388,7 @@ if(parsedString.includes("$$__ERROR__$$"))
                 }
               }
             }
+            self.editorUi.editor.graph.model.endUpdate();
           }
 
           function handleFocusOut() {
@@ -9337,15 +9397,14 @@ if(parsedString.includes("$$__ERROR__$$"))
             let highlightedCells = self.editorUi.editor.graph.highlightedCells;
             // Function to remove highlight from a cell
             function removeHighlight(cell) {
-              var style = graph.getCellStyle(cell);
-              var originalStyle = mxUtils.setStyle(style, 'strokeColor', 'none');  // Reset to no stroke or original stroke
-              graph.setCellStyle(originalStyle, [cell]);
+              cell.destroy();
             }
 
-            // Remove highlight from all highlighted cells
+            self.editorUi.editor.graph.model.beginUpdate();
             highlightedCells.forEach(cell => {
               removeHighlight(cell);
             });
+            self.editorUi.editor.graph.model.endUpdate();
 
             // Clear the array after removing highlights
             highlightedCells = [];
@@ -9353,6 +9412,7 @@ if(parsedString.includes("$$__ERROR__$$"))
   
           listItem.addEventListener('focusin', handleFocusIn);
           listItem.addEventListener('focusout', handleFocusOut);
+  
           list.appendChild(listItem);
         }
       }
