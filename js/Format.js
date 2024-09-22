@@ -12539,7 +12539,11 @@ function onAddTagPro(e){
   let proAssetID = self.editorUi.editor.graph.getSelectionCell().technicalAsset;;
   const model = self.editorUi.editor.graph.model.threagile;
   let dataId = model.getIn(["data_assets", e.detail.data.value, "id"]);
+
   let dataAssetsProcessed = model.getIn(["technical_assets", proAssetID.key, "data_assets_processed"]) || [];
+  if (typeof dataAssetsProcessed.toJSON === 'function') {
+    dataAssetsProcessed= dataAssetsProcessed.toJSON();
+  }
   if (!Array.isArray(dataAssetsProcessed)) {
     dataAssetsProcessed = dataAssetsProcessed ? [dataAssetsProcessed] : [];
   }
@@ -12553,6 +12557,9 @@ function onRemoveTagPro(e){
   const model = self.editorUi.editor.graph.model.threagile;
   let dataId = model.getIn(["data_assets", e.detail.data.value, "id"]);
   let dataAssetsProcessed = model.getIn(["technical_assets", proassetKey.key, "data_assets_processed"]) || [];
+  if (typeof dataAssetsProcessed.toJSON === 'function') {
+    dataAssetsProcessed= dataAssetsProcessed.toJSON();
+  }
   if (!Array.isArray(dataAssetsProcessed)) {
     dataAssetsProcessed = dataAssetsProcessed ? [dataAssetsProcessed] : [];
   }
@@ -12569,6 +12576,10 @@ function onRemoveTagStored(e) {
   const model = self.editorUi.editor.graph.model.threagile;
   let dataId = model.getIn(["data_assets", e.detail.data.value, "id"]);
   let dataAssetsStored = model.getIn(["technical_assets", id.key, "data_assets_stored"]) || [];
+  if (typeof dataAssetsStored.toJSON === 'function') {
+    dataAssetsStored= dataAssetsStored.toJSON();
+  }
+  
   if (!Array.isArray(dataAssetsStored)) {
     dataAssetsStored = dataAssetsStored ? [dataAssetsStored] : [];
   }
@@ -12587,6 +12598,9 @@ function onAddTagStored(e) {
   const model = self.editorUi.editor.graph.model.threagile;
   let dataId = model.getIn(["data_assets", e.detail.data.value, "id"]);
   let dataAssetsStored = model.getIn(["technical_assets", id.key, "data_assets_stored"]) || [];
+  if (typeof dataAssetsStored.toJSON === 'function') {
+    dataAssetsStored= dataAssetsStored.toJSON();
+  }
   if (!Array.isArray(dataAssetsStored)) {
     dataAssetsStored = dataAssetsStored ? [dataAssetsStored] : [];
   }
