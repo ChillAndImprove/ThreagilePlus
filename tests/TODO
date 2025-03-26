@@ -1,0 +1,27 @@
+I know, super n00by, but right now this is a one man show
+TODO:
+Tests:
+- Add more tests with all of these menus
+    - Asset
+        - Dont focus on the CIA, we will remove that, we should probably do that now, 
+        just make it non changable and get the values from the data assets
+    - Vertices
+    - TrustBoundary
+- User movements
+    - Add a test where you create a node
+    - Add a test where you delete a node
+    - Add a test where you undo ctrl z
+    - Add a test where you copy a node
+    - Add a test where you paste a node
+    - Add a test where trag a node from a trust boundary back and forth
+
+
+Features
+- I feel like the components shold look better, but we gonna do this at the end
+- I feel like data assets menu looks horrendous, but we will fix that later
+
+
+
+
+FINAL GOAL
+Post this stuff on hackernews ;) Would be fun
