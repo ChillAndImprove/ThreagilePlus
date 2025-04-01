@@ -27,6 +27,32 @@ class TestOpenGraph():
   def teardown_method(self, method):
     self.driver.quit()
 
+  def edit_and_verify_field(self, xpath, input_text, verify_key, verify_field=None, expected_value=None, save_button_xpath=None):
+    # Click the edit button
+    WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath))).click()
+
+    # Enter the new text
+    active = self.driver.switch_to.active_element
+    active.send_keys(Keys.CONTROL, 'a')
+    active.send_keys(input_text)
+
+    # If a save/confirm button needs to be clicked
+    if save_button_xpath:
+        WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, save_button_xpath))
+        ).click()
+
+    # Retrieve updated data
+    threagile_data = self.driver.execute_script("return editorUi.editor.graph.model.threagile.toJSON();")
+    technical_assets = threagile_data.get("technical_assets", {})
+    assert isinstance(technical_assets, dict), "technical_assets is not a dict"
+    assert verify_key in technical_assets, f"Expected technical asset key '{verify_key}' not found"
+
+    # Optionally verify a specific field value
+    if verify_field and expected_value is not None:
+        actual_value = technical_assets[verify_key].get(verify_field)
+        assert actual_value == expected_value, f"Expected {verify_field} '{expected_value}', got '{actual_value}'"
+
   def select_and_assert(self, select_xpath, expected_value, asset_key="foo", attribute="type"):
     """
     Helper to select a value from a <select> and assert that the asset has the expected value for a given attribute.
@@ -58,7 +84,7 @@ class TestOpenGraph():
         actions.move_by_offset(x, y).click().perform()
         actions.move_by_offset(-x, -y).perform()
 
-    self.driver.get("http://0.0.0.0:8000/indexTest.html")
+    self.driver.get("http://0.0.0.0:8000/indexTests.html")
     self.driver.set_window_size(1854, 1011)
     self.driver.switch_to.frame(0)
     self.driver.find_element(By.CSS_SELECTOR, "td:nth-child(1) > .geBtn").click()
@@ -71,32 +97,21 @@ class TestOpenGraph():
     # Click to create asset
     relative_click(1215, 103, ref_width, ref_height, width, height)
 
-    # Click on edit name
-    xpath = "/html/body/div[4]/div[2]/div/div/div[1]/li[1]/button"
-    WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath))).click()
-    self.driver.switch_to.active_element.send_keys(Keys.CONTROL, 'a')
-    self.driver.switch_to.active_element.send_keys("foo")
-    relative_click(1097, 506, ref_width, ref_height, width, height)
+    self.edit_and_verify_field(
+    xpath="/html/body/div[4]/div[2]/div/div/div[1]/li[1]/button",
+    input_text="foo",
+    verify_key="foo"
+    )
 
-    # Check technical assets
-    threagile_data = self.driver.execute_script("return editorUi.editor.graph.model.threagile.toJSON();")
-    technical_assets = threagile_data.get("technical_assets", {})
-    assert isinstance(technical_assets, dict)
-    assert "foo" in technical_assets, "Expected technical asset key 'foo' not found"
-
-    # Edit description
-    xpath = "/html/body/div[4]/div[2]/div/div/div[1]/li[3]/button"
-    WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath))).click()
-    self.driver.switch_to.active_element.send_keys(Keys.CONTROL, 'a')
-    self.driver.switch_to.active_element.send_keys("foo")
-
-
-    WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[10]/table/tbody/tr[3]/td/button[2]"))).click()
- 
-    threagile_data = self.driver.execute_script("return editorUi.editor.graph.model.threagile.toJSON();")
-    technical_assets = threagile_data.get("technical_assets", {})
-    foo_asset = technical_assets["foo"]
-    assert foo_asset.get("description") == "foo", f"Expected description 'foo', got '{foo_asset.get('description')}'"
+    # Edit description (with a save button)
+    self.edit_and_verify_field(
+        xpath="/html/body/div[4]/div[2]/div/div/div[1]/li[3]/button",
+        input_text="foo",
+        verify_key="foo",
+        verify_field="description",
+        expected_value="foo",
+        save_button_xpath="/html/body/div[10]/table/tbody/tr[3]/td/button[2]"
+    )
 
     # === Use helper to test <select> changes ===
     self.select_and_assert("/html/body/div[4]/div[2]/div/div/div[2]/li[1]/div/select", "datastore", "foo", "type")
