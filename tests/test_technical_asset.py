@@ -99,6 +99,7 @@ class TestOpenGraph():
 
     self.edit_and_verify_field(
     xpath="/html/body/div[4]/div[2]/div/div/div[1]/li[1]/button",
+    save_button_xpath="/html/body/div[10]/table/tbody/tr[3]/td/button[2]",
     input_text="foo",
     verify_key="foo"
     )
