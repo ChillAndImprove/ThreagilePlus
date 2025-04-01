@@ -32,7 +32,29 @@
 			})(files[i]);
 		}
 	};
+	function useDefaultGraph(){
+		const url =window.location.protocol +"//"+ window.location.host+"/wasm/Threagile/threagile.yaml";
+		fetch(url)
+		.then(response => {
+			if (!response.ok) {
+				throw new Error("Network response was not ok");
+			}
+			return response.text();
+		})
+		.then(data => {
+			// Create a simulated file from the fetched content
+			const blob = new Blob([data], { type: "text/yaml" });
+			const file = new File([blob], "threagile.yaml", { type: "text/yaml" });
 
+			// Pass it into the existing handleFiles function
+			handleFiles([file]);
+		})
+		.catch(error => {
+			console.error("Error loading default YAML:", error);
+			alert("Could not load the default example file.");
+		});
+
+	}
 	// Handles form-submit by preparing to process response
 	function handleSubmit()
 	{
@@ -196,8 +218,7 @@
 	};
 </script>
 <body onload="main();">
-<form method="POST" enctype="multipart/form-data" action="" name="openForm"
-	id="openForm" onsubmit="return handleSubmit();" accept-charset="UTF-8"  >
+<form method="POST" enctype="multipart/form-data" action="" name="openForm" id="openForm" onsubmit="return handleSubmit();" accept-charset="UTF-8"  >
 <table style="width:100%;">
 <tr>
 <td style="height:40px;vertical-align:top;" colspan="2">
@@ -208,8 +229,12 @@
 <td colspan="2" height="120px" id="openSupported" style="font-family:arial;color:grey;font-size:9pt;vertical-align:top;text-align:left;">
 </td>
 </tr>
+
 <tr>
 <td>
+	<button type="button" class="geBtn" onclick="useDefaultGraph()" >
+    Example
+  </button>
 </td>
 <td style="vertical-align:middle;text-align:right;white-space:nowrap;">
 <input type="button" id="cancelButton" class="geBtn" value="Cancel" onclick="hideWindow(true);">
