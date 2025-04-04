@@ -1,3 +1,4 @@
+from pudb import set_trace;
 import pytest
 import time
 import json
@@ -18,6 +19,7 @@ def browser_and_setup(request):
     # ✅ Setup browser once
     options = Options()
     options.add_argument("--window-size=1854,1011")
+    #options.add_argument("--headless=new")
     driver = webdriver.Chrome(options)
 
     # ✅ Navigate and click on asset once
@@ -78,8 +80,6 @@ def browser_and_setup(request):
     except Exception as e:
         print(f"[Teardown Warning] {e}")
 
-    yield driver
-    driver.quit()
     
 @pytest.mark.usefixtures("browser_and_setup")
 class TestOpenGraph():
@@ -104,8 +104,19 @@ class TestOpenGraph():
             :param asset_key: Sub-key under the root.
             :param nested_path_prefix: List of keys leading to the data asset list.
             """
-            assert isinstance(nested_path_prefix, list), "nested_path_prefix must be a list"
+            def get_nested_value(data, root_key, asset_key, nested_path):
+                assert isinstance(nested_path, str), "nested_path must be a string key"
 
+                try:
+                    return data[root_key][asset_key][nested_path]
+                except (KeyError, TypeError):
+                    return None
+
+            assert isinstance(nested_path_prefix, list), "nested_path_prefix must be a list"
+            threagile_data = self.driver.execute_script("return editorUi.editor.graph.model.threagile.toJSON();")
+            old_nested = get_nested_value(threagile_data, root_key, asset_key, nested_path_prefix[0])
+            old_len = len(old_nested) if hasattr(old_nested, '__len__') else None
+            set_trace()
             # Step 1: Click the first element (e.g., open dropdown)
             clickable_1 = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, click_xpath_1))
@@ -128,54 +139,39 @@ class TestOpenGraph():
             print(f"Selected label: {value}")
             print(f"Expecting data_asset_id: {data_asset_id}")
 
+            # Step 4: Fetch model data
+            threagile_data = self.driver.execute_script("return editorUi.editor.graph.model.threagile.toJSON();")
+            new_nested = get_nested_value(threagile_data, root_key, asset_key, nested_path_prefix[0])
+            new_len = len(new_nested) if hasattr(new_nested, '__len__') else None
+            if old_len is None or new_len is None:
+                raise ValueError(
+                    f"Cannot compare lengths at path '{root_key} -> {asset_key} -> {nested_path}' "
+                    f"because one of them is None (old_len: {old_len}, new_len: {new_len})"
+                )
+
+            if new_len <= old_len:
+                raise AssertionError(
+                    f"Expected length at path '{root_key} -> {asset_key} -> {nested_path}' "
+                    f"to increase, but it did not (before: {old_len}, after: {new_len})"
+                )
+
             # Step 3: Build full nested path
             nested_path = nested_path_prefix + [data_asset_id]
 
-            # Step 4: Fetch model data
-            threagile_data = self.driver.execute_script("return editorUi.editor.graph.model.threagile.toJSON();")
 
-            # Step 5: Traverse and assert path exists
-            current = threagile_data
-            try:
-                current = current[root_key]
-                current = current[asset_key]
+            data = threagile_data[root_key][asset_key][nested_path[0]]
+            found = False
+            for i, key in enumerate(data):
+                print(f"🔍 Step {i} — Key type: {type(key).__name__}, Key value: {key}")
+                
+                if key == data_asset_id:
+                    print(f"✅ Found 'data_asset_id': {key} at step {i}")
+                    found = True
+                    break
 
-                for i, key in enumerate(nested_path):
-                    print(f"🔍 Step {i} — Key: {key}")
-                    print(f"   Current type: {type(current).__name__}")
-                    print(f"   Current value: {current}")
+            if not found:
+                raise AssertionError(f"❌ 'data_asset_id' ({data_asset_id}) not found in data keys.")
 
-                    if isinstance(current, dict):
-                        if key not in current:
-                            raise AssertionError(f"Key '{key}' not found in dict at path index {i}")
-                        current = current[key]
-
-                    elif isinstance(current, list):
-                        if isinstance(key, str):
-                            if key not in current:
-                                raise AssertionError(
-                                    f"Value '{key}' not found in list at path index {i}.\nList contents: {current}"
-                                )
-                            key = current.index(key)
-                        elif not isinstance(key, int):
-                            raise AssertionError(f"Expected string or integer index at path index {i}, but got: {key}")
-
-                        if key >= len(current):
-                            raise AssertionError(f"List index '{key}' out of range at path index {i}")
-                        current = current[key]
-
-                    else:
-                        raise AssertionError(
-                            f"Unexpected structure at path index {i}. "
-                            f"Expected dict or list but got {type(current).__name__} — value: {current}"
-                        )
-
-                # ✅ Successfully traversed the path
-                return
-
-            except KeyError as e:
-                full_path = f"{root_key} -> {asset_key} -> {' -> '.join(map(str, nested_path))}"
-                raise AssertionError(f"❌ KeyError: Expected item at path '{full_path}', but it was not found. Missing key: {e}")
 
 
 
@@ -453,12 +449,11 @@ class TestOpenGraph():
             asset_key='foo',
             nested_path_prefix=['data_assets_processed']
         )
-
-    def test_add_tag_customer_contracts(self):
+    def test_add_tag_contract_contracts(self):
         self.click_and_assert_nested_key_exists(
             click_xpath_1='/html/body/div[4]/div[2]/div/div/div[5]/tags/span',
             click_xpath_2='/html/body/div[9]/div/div[1]',
-            data_asset_id="customer-contracts",
+            data_asset_id="contract-contracts",
             root_key='technical_assets',
             asset_key='foo',
             nested_path_prefix=['data_assets_processed']
